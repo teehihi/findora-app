@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Findora</string>
+
+    <!-- Splash -->
+    <string name="splash_search_hint">Tìm kiếm</string>
+    <string name="splash_tagline">TÌM KIẾM ĐỒ THẤT LẠC THÔNG MINH</string>
+
+    <!-- Auth - chung -->
+    <string name="auth_email_label">Địa chỉ Email</string>
+    <string name="auth_email_hint">ten@example.com</string>
+    <string name="auth_password_label">Mật khẩu</string>
+    <string name="auth_password_hint">••••••••</string>
+    <string name="auth_forgot">Quên mật khẩu?</string>
+    <string name="auth_or">hoặc tiếp tục với</string>
+
+    <!-- Auth - Login -->
+    <string name="login_title">Chào mừng trở lại</string>
+    <string name="login_subtitle">Vui lòng nhập thông tin để đăng nhập</string>
+    <string name="login_btn">Đăng nhập</string>
+    <string name="login_no_account">Chưa có tài khoản? </string>
+    <string name="login_switch_register">Đăng ký ngay</string>
+
+    <!-- Auth - Register -->
+    <string name="register_title">Tạo tài khoản</string>
+    <string name="register_subtitle">Vui lòng nhập đầy đủ thông tin</string>
+    <string name="register_btn">Đăng ký</string>
+    <string name="register_fullname_label">Họ và tên</string>
+    <string name="register_fullname_hint">Nguyễn Văn A</string>
+    <string name="register_phone_label">Số điện thoại</string>
+    <string name="register_phone_hint">0901234567</string>
+    <string name="register_have_account">Đã có tài khoản? </string>
+    <string name="register_switch_login">Đăng nhập</string>
+
+    <!-- Messages -->
+    <string name="msg_fill_all">Vui lòng nhập đầy đủ thông tin</string>
+    <string name="msg_login_failed">Đăng nhập thất bại</string>
+    <string name="msg_register_success">Đăng ký thành công!</string>
+    <string name="msg_register_failed">Đăng ký thất bại</string>
+    <string name="msg_save_failed">Lưu thông tin thất bại</string>
+</resources>
