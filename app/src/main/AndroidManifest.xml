@@ -31,6 +31,9 @@
         <activity
             android:name=".ProfileActivity"
             android:exported="false" />
+        <activity
+            android:name=".PostDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

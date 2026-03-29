@@ -98,4 +98,8 @@
     <string name="retry">Thử lại</string>
     <string name="cancel">Hủy</string>
     <string name="ok">OK</string>
+
+    <!-- Post Detail -->
+    <string name="detail_contact_owner">Liên hệ</string>
+    <string name="detail_chat">Nhắn tin</string>
 </resources>

@@ -225,20 +225,32 @@ public class MainActivity extends AppCompatActivity {
         resetChip(chipLost, getString(R.string.chip_lost));
         resetChip(chipFound, getString(R.string.chip_found));
 
-        // Set Active (Solid Blue)
+        // Set Active with specific color for each filter
         TextView activeChip;
+        int activeBackground;
         switch (activeFilter) {
-            case "lost":  activeChip = chipLost;  break;
-            case "found": activeChip = chipFound; break;
-            default:      activeChip = chipAll;   break;
+            case "lost":
+                activeChip = chipLost;
+                activeBackground = R.drawable.bg_chip_active_lost;
+                break;
+            case "found":
+                activeChip = chipFound;
+                activeBackground = R.drawable.bg_chip_active_found;
+                break;
+            default:
+                activeChip = chipAll;
+                activeBackground = R.drawable.bg_chip_active_all;
+                break;
         }
-        activeChip.setBackgroundResource(R.drawable.bg_chip_active);
+        activeChip.setBackgroundResource(activeBackground);
         activeChip.setTextColor(ContextCompat.getColor(this, R.color.white));
+        activeChip.setTypeface(null, Typeface.BOLD);
     }
 
     private void resetChip(TextView chip, String text) {
         chip.setBackgroundResource(R.drawable.bg_chip_inactive);
         chip.setTextColor(ContextCompat.getColor(this, R.color.primary));
+        chip.setTypeface(null, Typeface.NORMAL);
         chip.setText(text);
     }
 

@@ -1,6 +1,7 @@
 package hcmute.edu.vn.findora.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,15 +47,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.tvTitle.setText(post.getTitle());
         holder.tvDescription.setText(post.getDescription());
 
-        // Badge: LOST (Red) / FOUND (Blue)
+        // Badge: LOST (Red) / FOUND (Green)
         if ("lost".equals(post.getType())) {
-            holder.tvType.setText("LOST");
-            holder.tvType.setBackgroundResource(R.drawable.bg_chip_active);
-            holder.tvType.getBackground().setTint(context.getResources().getColor(R.color.badge_lost_bg));
+            holder.tvType.setText("THẤT LẠC");
+            holder.tvType.setBackgroundResource(R.drawable.bg_badge_lost);
         } else {
-            holder.tvType.setText("FOUND");
-            holder.tvType.setBackgroundResource(R.drawable.bg_chip_active);
-            holder.tvType.getBackground().setTint(context.getResources().getColor(R.color.badge_found_bg));
+            holder.tvType.setText("TÌM THẤY");
+            holder.tvType.setBackgroundResource(R.drawable.bg_badge_found);
         }
 
         // Placeholder for image (until Firebase Storage is implemented)
@@ -64,11 +63,24 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         if (post.getCreatedAt() != null) {
             Date date = post.getCreatedAt().toDate();
             // Using placeholder logic for relative time for now
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm • dd/MM/yyyy", Locale.getDefault());
             holder.tvCreatedAt.setText(sdf.format(date).toUpperCase() + " • RECENT");
         } else {
             holder.tvCreatedAt.setText("RECENT");
         }
+
+        // Handle item click to open detailed view
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, hcmute.edu.vn.findora.PostDetailActivity.class);
+            intent.putExtra("title", post.getTitle());
+            intent.putExtra("description", post.getDescription());
+            intent.putExtra("type", post.getType());
+            intent.putExtra("userId", post.getUserId());
+            if (post.getCreatedAt() != null) {
+                intent.putExtra("timestamp", post.getCreatedAt().getSeconds() * 1000L);
+            }
+            context.startActivity(intent);
+        });
     }
 
     @Override
