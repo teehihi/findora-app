@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- iOS Icon Button: transparent oval với ripple xanh nhạt -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#1A007AFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</ripple>

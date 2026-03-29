@@ -1,9 +1,42 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Findora" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Stitch Modern Design System Theme -->
+    <style name="Base.Theme.Findora" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Colors -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="android:colorBackground">@color/background</item>
+
+        <!-- Navigation Bar (StatusBar & SystemNav) -->
+        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+
+        <!-- Disable Material 3 BottomNav Active Indicator pill -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
     </style>
 
     <style name="Theme.Findora" parent="Base.Theme.Findora" />
+
+    <!-- Style to remove M3 pill indicator from BottomNavigationView -->
+    <style name="Widget.App.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemActiveIndicatorStyle">@style/App.BottomNav.ActiveIndicator</item>
+        <item name="materialThemeOverlay">@style/App.BottomNav.Theme</item>
+    </style>
+
+    <style name="App.BottomNav.ActiveIndicator" parent="">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:height">0dp</item>
+        <item name="android:width">0dp</item>
+    </style>
+    
+    <style name="App.BottomNav.Theme" parent="">
+        <!-- Control active/inactive label text size (iOS style is 11-12sp) -->
+        <item name="textAppearanceCaption">@style/App.BottomNav.Text</item>
+    </style>
+    
+    <style name="App.BottomNav.Text" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
 </resources>

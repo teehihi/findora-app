@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Dark mode: giữ cùng primary blue, nền tối -->
     <style name="Base.Theme.Findora" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">#0A84FF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
     </style>
 </resources>

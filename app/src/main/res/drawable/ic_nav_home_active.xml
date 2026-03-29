@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="28"
+    android:viewportHeight="28">
+    <!-- iOS style filled home icon -->
+    <path
+        android:fillColor="#007AFF"
+        android:pathData="M14,3.5L4.5,11.5V23.5C4.5,24.33 5.17,25 6,25H11V17.5C11,16.67 11.67,16 12.5,16H15.5C16.33,16 17,16.67 17,17.5V25H22C22.83,25 23.5,24.33 23.5,23.5V11.5L14,3.5Z" />
+</vector>

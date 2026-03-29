@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Plus icon shifted left to compensate for FAB offset -->
+    <group android:translateX="-1">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M12,5 L12,11 L6,11 L6,13 L12,13 L12,19 L14,19 L14,13 L20,13 L20,11 L14,11 L14,5 Z" />
+    </group>
+</vector>

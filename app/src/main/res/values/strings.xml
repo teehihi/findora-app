@@ -37,4 +37,65 @@
     <string name="msg_register_success">Đăng ký thành công!</string>
     <string name="msg_register_failed">Đăng ký thất bại</string>
     <string name="msg_save_failed">Lưu thông tin thất bại</string>
+
+    <!-- Main/Home -->
+    <string name="location_hcmc">Thành phố Hồ Chí Minh</string>
+    <string name="home_heading">Hôm nay bạn tìm gì?</string>
+    <string name="home_heading_finding">tìm</string>
+    <string name="search_hint">Tìm ví, chìa khóa, thú cưng bị mất…</string>
+    <string name="chip_all">Tất cả</string>
+    <string name="chip_lost">Thất lạc</string>
+    <string name="chip_found">Tìm thấy</string>
+    <string name="ai_assistant">TRỢ LÝ AI THÔNG MINH</string>
+    <string name="ai_coming_soon">Tính năng AI đang được phát triển.\nSắp ra mắt!</string>
+    <string name="ai_description">AI sẽ tự động so khớp đồ thất lạc gần bạn.</string>
+    <string name="recent_reports">Bài đăng gần đây</string>
+    <string name="updated_now">Cập nhật vừa xong</string>
+    <string name="explore_all">Xem tất cả</string>
+    <string name="empty_title">Chưa có báo cáo nào</string>
+    <string name="empty_subtitle">Đăng một món đồ thất lạc hoặc tìm thấy để bắt đầu</string>
+
+    <!-- Profile -->
+    <string name="profile_edit">Chỉnh sửa</string>
+    <string name="profile_share">Chia sẻ</string>
+    <string name="profile_active_posts">BÀI ĐĂNG</string>
+    <string name="profile_items_returned">ĐỒ ĐÃ TRẢ LẠI</string>
+    <string name="profile_account_overview">TỔNG QUAN TÀI KHOẢN</string>
+    <string name="profile_my_posts">Bài đăng của tôi</string>
+    <string name="profile_my_posts_desc">Quản lý các bài đăng đang hoạt động</string>
+    <string name="profile_saved_items">Mục đã lưu</string>
+    <string name="profile_saved_items_desc">Các mục bạn đang theo dõi</string>
+    <string name="profile_settings">Cài đặt</string>
+    <string name="profile_settings_desc">Tùy chọn và bảo mật</string>
+    <string name="profile_logout">Đăng xuất</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Trang chủ</string>
+    <string name="nav_search">Tìm kiếm</string>
+    <string name="nav_post">Đăng bài</string>
+    <string name="nav_chat">Trò chuyện</string>
+    <string name="nav_profile">Hồ sơ</string>
+
+    <!-- Create Post -->
+    <string name="create_post_title">Đăng bài</string>
+    <string name="post_ai_assisted">HỖ TRỢ AI</string>
+    <string name="post_type_lost">Thất lạc</string>
+    <string name="post_type_found">Tìm thấy</string>
+    <string name="post_item_name">Tên đồ vật</string>
+    <string name="post_title_hint">VD: Ví da màu nâu</string>
+    <string name="post_description_label">Mô tả</string>
+    <string name="post_description_hint">Mô tả chi tiết dấu hiệu, nội dung hoặc nhãn hiệu…</string>
+    <string name="post_location_label">Địa điểm</string>
+    <string name="post_location_hint">Nơi bạn thất lạc/tìm thấy</string>
+    <string name="post_upload_image">Tải ảnh lên</string>
+    <string name="post_submit">Đăng bài</string>
+    <string name="post_agreement">Bằng việc đăng bài, bạn đồng ý với Nguyên tắc Cộng đồng và Chính sách Bảo mật của chúng tôi.</string>
+
+    <!-- Common -->
+    <string name="notifications">Thông báo</string>
+    <string name="loading">Đang tải…</string>
+    <string name="error">Đã xảy ra lỗi</string>
+    <string name="retry">Thử lại</string>
+    <string name="cancel">Hủy</string>
+    <string name="ok">OK</string>
 </resources>
