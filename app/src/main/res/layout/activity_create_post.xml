@@ -83,6 +83,7 @@
 
             <!-- ── Image Upload Placeholder ── -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cvImageUpload"
                 android:layout_width="match_parent"
                 android:layout_height="240dp"
                 app:cardCornerRadius="24dp"
@@ -90,6 +91,7 @@
                 android:layout_marginBottom="24dp">
                 
                 <ImageView
+                    android:id="@+id/ivImagePreview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_img_placeholder"

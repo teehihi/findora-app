@@ -14,17 +14,19 @@ public class Post {
     private String type;         // Loại: "lost" (mất đồ) hoặc "found" (tìm thấy đồ)
     private String userId;       // UID của người đăng
     private Timestamp createdAt; // Thời gian đăng bài
+    private String imageUrl;     // URL ảnh tải lên Firebase Storage
 
     // Constructor rỗng - bắt buộc phải có để Firestore tự động ánh xạ dữ liệu
     public Post() {}
 
     // Constructor đầy đủ - dùng khi tạo bài đăng mới
-    public Post(String title, String description, String type, String userId, Timestamp createdAt) {
+    public Post(String title, String description, String type, String userId, Timestamp createdAt, String imageUrl) {
         this.title = title;
         this.description = description;
         this.type = type;
         this.userId = userId;
         this.createdAt = createdAt;
+        this.imageUrl = imageUrl;
     }
 
     // Getters và Setters
@@ -45,4 +47,7 @@ public class Post {
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

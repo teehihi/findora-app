@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 
   activity_post_detail.xml - Findora Post Details
-  Premium Figma-accurate design.
+  Precisely styled to match the Stitch Figma Design.
 -->
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,7 +10,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="#F4F5F7"> <!-- Light gray screen background -->
 
     <!-- Sticky Bottom Actions -->
     <LinearLayout
@@ -19,9 +19,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:padding="20dp"
-        android:background="@color/background"
-        android:elevation="8dp">
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:background="#FFFFFF"
+        android:elevation="16dp">
 
         <TextView
             android:id="@+id/btnContact"
@@ -29,16 +30,16 @@
             android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginEnd="12dp"
-            android:background="@drawable/bg_button_secondary_ios"
+            android:background="@drawable/bg_btn_outline_ios"
             android:gravity="center"
-            android:text="@string/detail_contact_owner"
+            android:text="Liên hệ"
             android:textColor="@color/on_surface"
             android:textStyle="bold"
             android:textSize="16sp"
             android:drawableStart="@drawable/ic_person"
-            android:paddingStart="16dp"
+            android:paddingStart="24dp"
             android:paddingEnd="16dp"
-            android:drawablePadding="8dp"
+            android:drawablePadding="-8dp"
             app:drawableTint="@color/on_surface" />
 
         <TextView
@@ -48,14 +49,14 @@
             android:layout_weight="1"
             android:background="@drawable/bg_button_primary_ios"
             android:gravity="center"
-            android:text="@string/detail_chat"
+            android:text="Trò chuyện"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="16sp"
             android:drawableStart="@drawable/ic_chat"
-            android:paddingStart="16dp"
+            android:paddingStart="20dp"
             android:paddingEnd="16dp"
-            android:drawablePadding="8dp"
+            android:drawablePadding="-8dp"
             app:drawableTint="@color/white" />
 
     </LinearLayout>
@@ -64,38 +65,46 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/bottomActions"
-        android:clipToPadding="false">
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Top Image Area -->
+            <!-- Top Area: Image bleeding under Toolbar -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="360dp">
+                android:layout_height="wrap_content">
 
+                <!-- Image Area -->
+                <!-- Spans full width and height of the FrameLayout, sits under toolbar -->
                 <ImageView
                     android:id="@+id/ivDetailImage"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="320dp"
                     android:src="@drawable/bg_img_placeholder"
                     android:scaleType="centerCrop" />
 
-                <!-- Toolbar Layout -->
+                <!-- Toolbar Layout (Floating on top of image) -->
                 <RelativeLayout
+                    android:id="@+id/detailToolbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingTop="16dp"
-                    android:paddingHorizontal="16dp">
+                    android:paddingBottom="8dp"
+                    android:paddingHorizontal="24dp">
 
                     <ImageButton
                         android:id="@+id/btnBack"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
                         android:src="@drawable/ic_chevron_left"
-                        android:background="@drawable/bg_ios_icon_btn"
+                        android:padding="10dp"
+                        android:scaleType="fitCenter"
+                        android:background="@drawable/bg_circle_white"
+                        android:elevation="6dp"
                         app:tint="@color/primary" />
 
                     <LinearLayout
@@ -105,165 +114,183 @@
                         android:orientation="horizontal">
                         
                         <ImageButton
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="8dp"
-                            android:src="@drawable/ic_notifications" 
-                            android:background="@drawable/bg_ios_icon_btn"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="12dp"
+                            android:src="@drawable/ic_share" 
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:background="@drawable/bg_circle_white"
+                            android:elevation="6dp"
                             app:tint="@color/primary" />
 
                         <ImageButton
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@drawable/ic_settings"
-                            android:background="@drawable/bg_ios_icon_btn"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:src="@drawable/ic_more_vert"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:background="@drawable/bg_circle_white"
+                            android:elevation="6dp"
                             app:tint="@color/primary" />
                     </LinearLayout>
                 </RelativeLayout>
+            </FrameLayout>
 
-                <!-- Badge positioned on the card part -->
+            <!-- Main White Card overlapping the image slightly -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-30dp"
+                android:background="@drawable/bg_rounded_top_white"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="32dp"
+                android:paddingBottom="40dp">
+
+                <!-- Badge -->
                 <TextView
                     android:id="@+id/tvDetailType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|start"
-                    android:layout_margin="20dp"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="4dp"
-                    android:text="LOST"
-                    android:textSize="10sp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="MẤT"
+                    android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="@color/white"
-                    android:background="@drawable/bg_chip_active" />
+                    android:textColor="#D32F2F"
+                    android:background="@drawable/bg_badge_lost" />
 
-            </FrameLayout>
-
-            <!-- Main Content Area -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingTop="20dp"
-                android:paddingBottom="40dp">
-
+                <!-- Title -->
                 <TextView
                     android:id="@+id/tvDetailTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:text="iPhone 13 – Blue Case"
                     android:textSize="26sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="@color/on_surface" />
 
+                <!-- Posted Time Header -->
                 <TextView
                     android:id="@+id/tvDetailTimeHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Posted 30 minutes ago"
+                    android:text="Đăng lúc 30 phút trước"
                     android:textSize="14sp"
                     android:textColor="@color/on_surface_variant"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="6dp" />
 
                 <!-- Description Heading -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Description"
+                    android:text="Mô tả chi tiết"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/on_surface"
-                    android:layout_marginTop="24dp" />
+                    android:layout_marginTop="32dp" />
 
                 <TextView
                     android:id="@+id/tvDetailDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Lost near the central park playground around 4 PM. It has a blue silicone case and a cracked screen protector."
+                    android:text="Lost near the central park playground around 4 PM..."
                     android:textSize="15sp"
                     android:textColor="@color/on_surface_variant"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="4dp" />
+                    android:layout_marginTop="12dp"
+                    android:lineSpacingExtra="6dp" />
 
-                <!-- Info Cards (Time/Category) -->
+                <!-- Info Cards (Time & Category) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="24dp">
+                    android:layout_marginTop="28dp">
 
+                    <!-- Time Card -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginEnd="12dp"
-                        android:padding="16dp"
-                        android:background="@drawable/bg_card_info"
+                        android:paddingVertical="18dp"
+                        android:paddingHorizontal="16dp"
+                        android:background="@drawable/bg_info_card"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_notifications" 
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_time_circle" 
+                            android:padding="2dp"
                             app:tint="@color/primary" />
                         
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:layout_marginStart="12dp">
+                            android:layout_marginStart="14dp">
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="TIME"
+                                android:text="THỜI GIAN"
                                 android:textSize="10sp"
                                 android:textColor="@color/outline"
-                                android:textStyle="bold" />
+                                android:fontFamily="sans-serif-medium" />
                             <TextView
                                 android:id="@+id/tvInfoTime"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Today, 4:00 PM"
-                                android:textSize="13sp"
+                                android:layout_marginTop="2dp"
+                                android:text="Hôm nay, 16:00"
+                                android:textSize="12sp"
+                                android:maxLines="1"
                                 android:textStyle="bold"
                                 android:textColor="@color/on_surface" />
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Category Card -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:padding="16dp"
-                        android:background="@drawable/bg_card_info"
+                        android:paddingVertical="18dp"
+                        android:paddingHorizontal="16dp"
+                        android:background="@drawable/bg_info_card"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_nav_home_inactive"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_category_shapes"
+                            android:padding="2dp"
                             app:tint="@color/primary" />
                         
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:layout_marginStart="12dp">
+                            android:layout_marginStart="14dp">
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="CATEGORY"
+                                android:text="DANH MỤC"
                                 android:textSize="10sp"
                                 android:textColor="@color/outline"
-                                android:textStyle="bold" />
+                                android:fontFamily="sans-serif-medium" />
                             <TextView
                                 android:id="@+id/tvInfoCategory"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Electronics"
-                                android:textSize="13sp"
+                                android:layout_marginTop="2dp"
+                                android:text="Đồ điện tử"
+                                android:textSize="12sp"
+                                android:maxLines="1"
                                 android:textStyle="bold"
                                 android:textColor="@color/on_surface" />
                         </LinearLayout>
@@ -274,11 +301,11 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp">
+                    android:layout_marginTop="32dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Location"
+                        android:text="Khu vực"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/on_surface" />
@@ -288,71 +315,77 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:text="Central Park, NYC"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         android:textColor="@color/primary"
                         android:textStyle="bold" />
                 </RelativeLayout>
 
-                <!-- Map Placeholder -->
-                <ImageView
-                    android:id="@+id/ivMapPlaceholder"
+                <!-- Map Placeholder (Rounded) -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="180dp"
-                    android:layout_marginTop="12dp"
-                    android:scaleType="centerCrop"
-                    android:background="@drawable/bg_img_placeholder"
-                    android:src="@drawable/recent_activity_bg" />
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp">
+                    <ImageView
+                        android:id="@+id/ivMapPlaceholder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/recent_activity_bg" />
+                </androidx.cardview.widget.CardView>
 
                 <!-- User Profile Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="40dp"
+                    android:layout_marginTop="32dp"
+                    android:background="@drawable/bg_info_card"
                     android:gravity="center_vertical"
-                    android:padding="4dp">
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
 
                     <ImageView
                         android:id="@+id/ivUserAvatar"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
                         android:src="@drawable/ic_person"
                         android:padding="8dp"
-                        android:background="@drawable/bg_ios_icon_btn"
+                        android:background="@drawable/bg_circle_white"
                         app:tint="@color/primary" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="16dp"
                         android:orientation="vertical">
                         <TextView
                             android:id="@+id/tvUserName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Marcus Thompson"
-                            android:textSize="16sp"
+                            android:textSize="15sp"
                             android:textStyle="bold"
                             android:textColor="@color/on_surface" />
                         <TextView
                             android:id="@+id/tvUserStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Active 5m ago • Verified Owner"
+                            android:text="Vừa truy cập • Đã xác thực"
                             android:textSize="12sp"
-                            android:textColor="@color/on_surface_variant" />
+                            android:textColor="@color/on_surface_variant" 
+                            android:layout_marginTop="2dp" />
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:src="@drawable/ic_chevron_right"
                         app:tint="@color/outline" />
-
                 </LinearLayout>
 
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
 </RelativeLayout>

@@ -14,8 +14,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.text.SimpleDateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import android.content.Intent;
+import android.widget.Toast;
+import com.google.firebase.auth.FirebaseAuth;
 
 /**
  * Màn hình chi tiết bài đăng - Stitch Design Style.
@@ -35,10 +40,16 @@ public class PostDetailActivity extends AppCompatActivity {
 
         db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
 
-        // Edge-to-edge support
+        // Edge-to-edge support 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, 0, systemBars.right, 0);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom); // Trả lại top padding để chừa thanh Status bar ra
+            return insets;
+        });
+
+        // Xoá bỏ khoản đẩy thêm của toolbar vì main đã đẩy rồi
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.detailToolbar), (v, insets) -> {
+            v.setPadding(v.getPaddingLeft(), dpToPx(16), v.getPaddingRight(), v.getPaddingBottom());
             return insets;
         });
 
@@ -60,6 +71,10 @@ public class PostDetailActivity extends AppCompatActivity {
         tvInfoTime          = findViewById(R.id.tvInfoTime);
         tvInfoCategory      = findViewById(R.id.tvInfoCategory);
         btnBack             = findViewById(R.id.btnBack);
+    }
+    
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     private void displayData() {
@@ -85,36 +100,102 @@ public class PostDetailActivity extends AppCompatActivity {
 
         // Badge: LOST (Red) / FOUND (Blue)
         if ("lost".equals(type)) {
-            tvDetailType.setText("LOST");
-            tvDetailType.getBackground().setTint(ContextCompat.getColor(this, R.color.badge_lost_bg));
+            tvDetailType.setText("MẤT");
+            tvDetailType.setBackgroundResource(R.drawable.bg_badge_lost);
+            tvDetailType.setTextColor(android.graphics.Color.parseColor("#D32F2F"));
         } else {
-            tvDetailType.setText("FOUND");
-            tvDetailType.getBackground().setTint(ContextCompat.getColor(this, R.color.badge_found_bg));
+            tvDetailType.setText("NHẶT ĐƯỢC");
+            tvDetailType.setBackgroundResource(R.drawable.bg_badge_found); // assuming safe fallback or tint over light blue
+            tvDetailType.setTextColor(android.graphics.Color.parseColor("#1976D2"));
         }
 
         // Format times
         if (timestamp > 0) {
             Date date = new Date(timestamp);
             
-            // "Posted 30 minutes ago" style (using simple format for now)
+            // "Đăng lúc 14:30" style
             SimpleDateFormat relativeSdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            tvDetailTimeHeader.setText("Posted at " + relativeSdf.format(date));
+            tvDetailTimeHeader.setText("Đăng lúc " + relativeSdf.format(date));
             
-            // "Today, 4:00 PM" style
-            SimpleDateFormat infoSdf = new SimpleDateFormat("E, h:mm a", Locale.getDefault());
+            // "14:30, 20/05/2024" style
+            SimpleDateFormat infoSdf = new SimpleDateFormat("HH:mm, dd/MM/yyyy", new Locale("vi", "VN"));
             tvInfoTime.setText(infoSdf.format(date));
         } else {
-            tvDetailTimeHeader.setText("Posted recently");
+            tvDetailTimeHeader.setText("Vừa đăng");
             tvInfoTime.setText("N/A");
         }
 
         // Placeholders as requested
-        tvDetailLocation.setText("Ben Thanh Market Area"); 
-        tvInfoCategory.setText("Personal Item");
-        tvUserStatus.setText("Active recently • Verified User");
+        tvDetailLocation.setText("Đang cập nhật (Sắp ra mắt)"); 
+        tvInfoCategory.setText("Đồ cá nhân");
+        tvUserStatus.setText("Vừa truy cập • Đã xác thực");
 
-        // Placeholder image
-        ivDetailImage.setImageResource(R.drawable.bg_img_placeholder);
+        // Load image using Glide if available
+        String imageUrl = getIntent().getStringExtra("imageUrl");
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            com.bumptech.glide.Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.bg_img_placeholder) // While loading
+                .error(R.drawable.recent_activity_bg)       // If URL is broken
+                .centerCrop()
+                .into(ivDetailImage);
+        } else {
+            // Nếu bài đăng không có ảnh, hiển thị 1 ảnh đại diện đẹp hơn thay vì khung xám
+            ivDetailImage.setImageResource(R.drawable.recent_activity_bg);
+        }
+        
+        setupOwnerActions(getIntent().getExtras(), title, description, type, imageUrl, userId);
+    }
+
+    private void setupOwnerActions(Bundle extras, String title, String description, String type, String imageUrl, String postUserId) {
+        TextView btnContact = findViewById(R.id.btnContact);
+        TextView btnChat = findViewById(R.id.btnChat);
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        
+        if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
+            // Hiển thị nút sửa
+            btnChat.setText("Chỉnh sửa");
+            // Set drawable to settings gear icon as edit icon might not exist
+            btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
+            btnChat.setOnClickListener(v -> {
+                Intent editIntent = new Intent(this, CreatePostActivity.class);
+                editIntent.putExtra("editPostId", extras.getString("postId", ""));
+                editIntent.putExtra("title", title);
+                editIntent.putExtra("description", description);
+                editIntent.putExtra("type", type);
+                editIntent.putExtra("imageUrl", imageUrl);
+                startActivity(editIntent);
+                finish(); // Close detail view
+            });
+
+            // Hiển thị nút xóa
+            btnContact.setText("Xóa bài");
+            // Do NOT overwrite background here to keep the outline style intact
+            int iosRed = android.graphics.Color.parseColor("#FF3B30");
+            btnContact.setTextColor(iosRed);
+            
+            android.graphics.drawable.Drawable trashIcon = ContextCompat.getDrawable(this, R.drawable.ic_trash_ios);
+            if (trashIcon != null) {
+                // Remove xml tint and force the iOS Red color explicitly on the drawable
+                androidx.core.graphics.drawable.DrawableCompat.setTint(
+                        androidx.core.graphics.drawable.DrawableCompat.wrap(trashIcon).mutate(), iosRed);
+                btnContact.setCompoundDrawablesWithIntrinsicBounds(trashIcon, null, null, null);
+                // Also remove the built-in app:drawableTint set in xml
+                btnContact.getCompoundDrawables()[0].setTintList(null);
+            }
+            
+            btnContact.setOnClickListener(v -> {
+                String postId = extras.getString("postId", "");
+                if (postId != null && !postId.isEmpty()) {
+                    db.collection("posts").document(postId).delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, "Đã xóa bài đăng thành công", Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi dọn dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                }
+            });
+        }
     }
 
     private void fetchPosterName(String userId) {

@@ -16,6 +16,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.bumptech.glide.Glide;
+
 import hcmute.edu.vn.findora.R;
 import hcmute.edu.vn.findora.model.Post;
 
@@ -56,8 +58,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.tvType.setBackgroundResource(R.drawable.bg_badge_found);
         }
 
-        // Placeholder for image (until Firebase Storage is implemented)
-        holder.ivPostImage.setImageResource(R.drawable.bg_img_placeholder);
+        // Load image using Glide
+        if (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) {
+            holder.flImageContainer.setVisibility(View.VISIBLE);
+            Glide.with(context)
+                 .load(post.getImageUrl())
+                 .placeholder(R.drawable.bg_img_placeholder)
+                 .centerCrop()
+                 .into(holder.ivPostImage);
+        } else {
+            holder.flImageContainer.setVisibility(View.GONE);
+            // Optionally, clear Glide to prevent recycled views showing wrong info
+            Glide.with(context).clear(holder.ivPostImage);
+        }
 
         // Created time: "2 HOURS AGO" style
         if (post.getCreatedAt() != null) {
@@ -72,12 +85,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         // Handle item click to open detailed view
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, hcmute.edu.vn.findora.PostDetailActivity.class);
+            intent.putExtra("postId", post.getId());
             intent.putExtra("title", post.getTitle());
             intent.putExtra("description", post.getDescription());
             intent.putExtra("type", post.getType());
             intent.putExtra("userId", post.getUserId());
             if (post.getCreatedAt() != null) {
                 intent.putExtra("timestamp", post.getCreatedAt().getSeconds() * 1000L);
+            }
+            if (post.getImageUrl() != null) {
+                intent.putExtra("imageUrl", post.getImageUrl());
             }
             context.startActivity(intent);
         });
@@ -91,6 +108,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     public static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvType, tvTitle, tvDescription, tvCreatedAt;
         ImageView ivPostImage;
+        android.widget.FrameLayout flImageContainer;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -99,6 +117,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvDescription = itemView.findViewById(R.id.tvDescription);
             tvCreatedAt   = itemView.findViewById(R.id.tvCreatedAt);
             ivPostImage   = itemView.findViewById(R.id.ivPostImage);
+            flImageContainer = itemView.findViewById(R.id.flImageContainer);
         }
     }
 }

@@ -3,6 +3,7 @@ package hcmute.edu.vn.findora;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,6 +47,15 @@ public class ProfileActivity extends AppCompatActivity {
         fabCreatePost.setOnClickListener(v -> {
             startActivity(new Intent(this, CreatePostActivity.class));
         });
+
+        // My Posts Menu
+        View btnMyPosts = findViewById(R.id.btnMyPosts);
+        if (btnMyPosts != null) {
+            btnMyPosts.setOnClickListener(v -> {
+                startActivity(new Intent(this, MyPostsActivity.class));
+            });
+        }
+
 
         // Bottom nav
         bottomNav.setSelectedItemId(R.id.nav_profile);

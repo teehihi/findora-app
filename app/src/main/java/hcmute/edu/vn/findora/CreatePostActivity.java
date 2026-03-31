@@ -23,6 +23,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+
+import android.net.Uri;
+import android.provider.MediaStore;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.cardview.widget.CardView;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * Màn hình tạo bài đăng mới - Stitch Design 2024.
@@ -43,10 +52,19 @@ public class CreatePostActivity extends AppCompatActivity {
 
     // State
     private String selectedType = "lost";
+    private Uri selectedImageUri = null;
+    private String editPostId = null;
+    private String existingImageUrl = null;
 
     // Firebase
     private FirebaseAuth      auth;
     private FirebaseFirestore db;
+    private FirebaseStorage   storage;
+
+    // UI - Upload
+    private CardView cvImageUpload;
+    private ImageView ivImagePreview;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +79,7 @@ public class CreatePostActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         db   = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
 
         btnBack      = findViewById(R.id.btnBack);
         btnLost      = findViewById(R.id.btnLost);
@@ -72,16 +91,52 @@ public class CreatePostActivity extends AppCompatActivity {
         etTitle      = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
         btnSubmit    = findViewById(R.id.btnSubmit);
+        cvImageUpload = findViewById(R.id.cvImageUpload);
+        ivImagePreview = findViewById(R.id.ivImagePreview);
+        
+        cvImageUpload.setOnClickListener(v -> pickImage.launch("image/*"));
 
         btnBack.setOnClickListener(v -> finish());
         
-        // Default state
-        setTypeSelected("lost");
+        // Handle Edit Mode
+        Bundle extras = getIntent().getExtras();
+        if (extras != null && extras.containsKey("editPostId")) {
+            editPostId = extras.getString("editPostId");
+            etTitle.setText(extras.getString("title", ""));
+            etDescription.setText(extras.getString("description", ""));
+            setTypeSelected(extras.getString("type", "lost"));
+            btnSubmit.setText("Cập nhật bài đăng");
+
+            existingImageUrl = extras.getString("imageUrl", "");
+            if (existingImageUrl != null && !existingImageUrl.isEmpty()) {
+                com.bumptech.glide.Glide.with(this)
+                        .load(existingImageUrl)
+                        .centerCrop()
+                        .into(ivImagePreview);
+                ivImagePreview.setImageTintList(null);
+            }
+        } else {
+            // Default state
+            setTypeSelected("lost");
+        }
         
         btnLost.setOnClickListener(v  -> setTypeSelected("lost"));
         btnFound.setOnClickListener(v -> setTypeSelected("found"));
         btnSubmit.setOnClickListener(v -> submitPost());
     }
+    
+    // ActivityResultLauncher for picking image
+    private final ActivityResultLauncher<String> pickImage = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    selectedImageUri = uri;
+                    ivImagePreview.setImageURI(selectedImageUri);
+                    ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    ivImagePreview.setImageTintList(null); // Remove tint to show original image colors
+                }
+            }
+    );
 
     /**
      * Cập nhật UI toggle button (Lost / Found).
@@ -143,18 +198,60 @@ public class CreatePostActivity extends AppCompatActivity {
         postData.put("createdAt",   Timestamp.now());
 
         btnSubmit.setEnabled(false);
-        btnSubmit.setText("Posting...");
+        btnSubmit.setText("Đang xử lý...");
 
-        db.collection("posts")
-                .add(postData)
-                .addOnSuccessListener(ref -> {
-                    Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    btnSubmit.setEnabled(true);
-                    btnSubmit.setText("Post Item");
-                });
+        if (selectedImageUri != null) {
+            String filename = UUID.randomUUID().toString() + ".jpg";
+            StorageReference storageRef = storage.getReference()
+                    .child("images/" + auth.getCurrentUser().getUid() + "/" + filename);
+
+            storageRef.putFile(selectedImageUri)
+                    .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                        postData.put("imageUrl", uri.toString());
+                        savePostToFirestore(postData);
+                    }))
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Image Upload Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText(editPostId != null ? "Cập nhật bài đăng" : "Đăng bài");
+                    });
+        } else {
+            if (existingImageUrl != null && !existingImageUrl.isEmpty()) {
+                postData.put("imageUrl", existingImageUrl); // keep old image if no new one
+            }
+            savePostToFirestore(postData);
+        }
+    }
+
+    private void savePostToFirestore(Map<String, Object> postData) {
+        if (editPostId != null && !editPostId.isEmpty()) {
+            // Update
+            // Bỏ createdAt vì đang cập nhật (hoặc giữ nguyên cũng được do Firestore merge)
+            postData.remove("createdAt");
+            db.collection("posts").document(editPostId)
+                    .update(postData)
+                    .addOnSuccessListener(ref -> {
+                        Toast.makeText(this, "Đã cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Cập nhật bài đăng");
+                    });
+        } else {
+            // Add new
+            db.collection("posts")
+                    .add(postData)
+                    .addOnSuccessListener(ref -> {
+                        Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Đăng bài");
+                    });
+        }
     }
 }
