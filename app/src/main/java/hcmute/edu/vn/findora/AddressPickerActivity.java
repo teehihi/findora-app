@@ -309,6 +309,8 @@ public class AddressPickerActivity extends AppCompatActivity {
         URL url = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
+        conn.setRequestProperty("User-Agent", "FindoraApp/1.0 (hcmute.edu.vn.findora)");
+        conn.setRequestProperty("Accept", "application/json");
         conn.setConnectTimeout(10000);
         conn.setReadTimeout(10000);
         
