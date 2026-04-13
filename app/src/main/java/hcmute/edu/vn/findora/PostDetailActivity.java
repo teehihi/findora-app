@@ -27,11 +27,13 @@ import com.google.firebase.auth.FirebaseAuth;
  */
 public class PostDetailActivity extends AppCompatActivity {
 
-    private ImageView ivDetailImage;
+    private ImageView ivDetailImage, ivMapPlaceholder;
     private TextView tvDetailType, tvDetailTitle, tvDetailTimeHeader, tvDetailDescription, tvDetailLocation, tvUserName, tvUserStatus;
     private TextView tvInfoTime, tvInfoCategory;
     private ImageButton btnBack;
     private com.google.firebase.firestore.FirebaseFirestore db;
+    private org.osmdroid.views.MapView mapViewDetail;
+    private androidx.cardview.widget.CardView cvMapPreview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,17 +45,17 @@ public class PostDetailActivity extends AppCompatActivity {
         // Edge-to-edge support 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom); // Trả lại top padding để chừa thanh Status bar ra
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // Xoá bỏ khoản đẩy thêm của toolbar vì main đã đẩy rồi
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.detailToolbar), (v, insets) -> {
             v.setPadding(v.getPaddingLeft(), dpToPx(16), v.getPaddingRight(), v.getPaddingBottom());
             return insets;
         });
 
         initViews();
+        initializeMap();
         displayData();
 
         btnBack.setOnClickListener(v -> finish());
@@ -71,6 +73,49 @@ public class PostDetailActivity extends AppCompatActivity {
         tvInfoTime          = findViewById(R.id.tvInfoTime);
         tvInfoCategory      = findViewById(R.id.tvInfoCategory);
         btnBack             = findViewById(R.id.btnBack);
+        mapViewDetail       = findViewById(R.id.mapViewDetail);
+        ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
+        cvMapPreview        = findViewById(R.id.cvMapPreview);
+    }
+    
+    private void initializeMap() {
+        // Initialize osmdroid configuration
+        Context ctx = getApplicationContext();
+        org.osmdroid.config.Configuration.getInstance().load(ctx, 
+            android.preference.PreferenceManager.getDefaultSharedPreferences(ctx));
+        
+        // Setup map
+        mapViewDetail.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
+        mapViewDetail.setMultiTouchControls(true);
+        mapViewDetail.setBuiltInZoomControls(false);
+        mapViewDetail.getController().setZoom(15.0);
+    }
+    
+    private void displayMapLocation(double lat, double lng, String address) {
+        // Hide placeholder, show map
+        ivMapPlaceholder.setVisibility(View.GONE);
+        mapViewDetail.setVisibility(View.VISIBLE);
+        
+        // Move camera to location
+        org.osmdroid.util.GeoPoint point = new org.osmdroid.util.GeoPoint(lat, lng);
+        mapViewDetail.getController().setCenter(point);
+        mapViewDetail.getController().setZoom(15.0);
+        
+        // Add marker
+        org.osmdroid.views.overlay.Marker marker = new org.osmdroid.views.overlay.Marker(mapViewDetail);
+        marker.setPosition(point);
+        marker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, 
+                        org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
+        marker.setTitle(address != null ? address : "Vị trí");
+        mapViewDetail.getOverlays().add(marker);
+        mapViewDetail.invalidate();
+        
+        // Update location text
+        if (address != null && !address.isEmpty()) {
+            tvDetailLocation.setText(address);
+        } else {
+            tvDetailLocation.setText(String.format(Locale.getDefault(), "%.6f, %.6f", lat, lng));
+        }
     }
     
     private int dpToPx(int dp) {
@@ -90,6 +135,27 @@ public class PostDetailActivity extends AppCompatActivity {
         tvDetailTitle.setText(title);
         tvDetailDescription.setText(description);
         
+        // Check for location data
+        if (extras.containsKey("lat") && extras.containsKey("lng")) {
+            double lat = extras.getDouble("lat");
+            double lng = extras.getDouble("lng");
+            String address = extras.getString("address", "");
+            
+            if (lat != 0 && lng != 0) {
+                displayMapLocation(lat, lng, address);
+            } else {
+                // No location, show placeholder
+                ivMapPlaceholder.setVisibility(View.VISIBLE);
+                mapViewDetail.setVisibility(View.GONE);
+                tvDetailLocation.setText("Đang cập nhật (Sắp ra mắt)");
+            }
+        } else {
+            // No location, show placeholder
+            ivMapPlaceholder.setVisibility(View.VISIBLE);
+            mapViewDetail.setVisibility(View.GONE);
+            tvDetailLocation.setText("Đang cập nhật (Sắp ra mắt)");
+        }
+        
         // Fetch real name from Firestore
         if (!userId.isEmpty()) {
             tvUserName.setText("Loading...");
@@ -105,7 +171,7 @@ public class PostDetailActivity extends AppCompatActivity {
             tvDetailType.setTextColor(android.graphics.Color.parseColor("#D32F2F"));
         } else {
             tvDetailType.setText("NHẶT ĐƯỢC");
-            tvDetailType.setBackgroundResource(R.drawable.bg_badge_found); // assuming safe fallback or tint over light blue
+            tvDetailType.setBackgroundResource(R.drawable.bg_badge_found);
             tvDetailType.setTextColor(android.graphics.Color.parseColor("#1976D2"));
         }
 
@@ -113,11 +179,9 @@ public class PostDetailActivity extends AppCompatActivity {
         if (timestamp > 0) {
             Date date = new Date(timestamp);
             
-            // "Đăng lúc 14:30" style
             SimpleDateFormat relativeSdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
             tvDetailTimeHeader.setText("Đăng lúc " + relativeSdf.format(date));
             
-            // "14:30, 20/05/2024" style
             SimpleDateFormat infoSdf = new SimpleDateFormat("HH:mm, dd/MM/yyyy", new Locale("vi", "VN"));
             tvInfoTime.setText(infoSdf.format(date));
         } else {
@@ -125,8 +189,6 @@ public class PostDetailActivity extends AppCompatActivity {
             tvInfoTime.setText("N/A");
         }
 
-        // Placeholders as requested
-        tvDetailLocation.setText("Đang cập nhật (Sắp ra mắt)"); 
         tvInfoCategory.setText("Đồ cá nhân");
         tvUserStatus.setText("Vừa truy cập • Đã xác thực");
 
@@ -135,12 +197,11 @@ public class PostDetailActivity extends AppCompatActivity {
         if (imageUrl != null && !imageUrl.isEmpty()) {
             com.bumptech.glide.Glide.with(this)
                 .load(imageUrl)
-                .placeholder(R.drawable.bg_img_placeholder) // While loading
-                .error(R.drawable.recent_activity_bg)       // If URL is broken
+                .placeholder(R.drawable.bg_img_placeholder)
+                .error(R.drawable.recent_activity_bg)
                 .centerCrop()
                 .into(ivDetailImage);
         } else {
-            // Nếu bài đăng không có ảnh, hiển thị 1 ảnh đại diện đẹp hơn thay vì khung xám
             ivDetailImage.setImageResource(R.drawable.recent_activity_bg);
         }
         
@@ -153,9 +214,7 @@ public class PostDetailActivity extends AppCompatActivity {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         
         if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
-            // Hiển thị nút sửa
             btnChat.setText("Chỉnh sửa");
-            // Set drawable to settings gear icon as edit icon might not exist
             btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
             btnChat.setOnClickListener(v -> {
                 Intent editIntent = new Intent(this, CreatePostActivity.class);
@@ -164,23 +223,27 @@ public class PostDetailActivity extends AppCompatActivity {
                 editIntent.putExtra("description", description);
                 editIntent.putExtra("type", type);
                 editIntent.putExtra("imageUrl", imageUrl);
+                
+                // Pass location data
+                if (extras.containsKey("lat") && extras.containsKey("lng")) {
+                    editIntent.putExtra("lat", extras.getDouble("lat"));
+                    editIntent.putExtra("lng", extras.getDouble("lng"));
+                    editIntent.putExtra("address", extras.getString("address", ""));
+                }
+                
                 startActivity(editIntent);
-                finish(); // Close detail view
+                finish();
             });
 
-            // Hiển thị nút xóa
             btnContact.setText("Xóa bài");
-            // Do NOT overwrite background here to keep the outline style intact
             int iosRed = android.graphics.Color.parseColor("#FF3B30");
             btnContact.setTextColor(iosRed);
             
             android.graphics.drawable.Drawable trashIcon = ContextCompat.getDrawable(this, R.drawable.ic_trash_ios);
             if (trashIcon != null) {
-                // Remove xml tint and force the iOS Red color explicitly on the drawable
                 androidx.core.graphics.drawable.DrawableCompat.setTint(
                         androidx.core.graphics.drawable.DrawableCompat.wrap(trashIcon).mutate(), iosRed);
                 btnContact.setCompoundDrawablesWithIntrinsicBounds(trashIcon, null, null, null);
-                // Also remove the built-in app:drawableTint set in xml
                 btnContact.getCompoundDrawables()[0].setTintList(null);
             }
             
@@ -192,7 +255,7 @@ public class PostDetailActivity extends AppCompatActivity {
                             Toast.makeText(this, "Đã xóa bài đăng thành công", Toast.LENGTH_SHORT).show();
                             finish();
                         })
-                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi dọn dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 }
             });
         }
@@ -216,5 +279,29 @@ public class PostDetailActivity extends AppCompatActivity {
             .addOnFailureListener(e -> {
                 tvUserName.setText("Error loading name");
             });
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mapViewDetail != null) {
+            mapViewDetail.onResume();
+        }
+    }
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mapViewDetail != null) {
+            mapViewDetail.onPause();
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mapViewDetail != null) {
+            mapViewDetail.onDetach();
+        }
     }
 }

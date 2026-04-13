@@ -298,41 +298,47 @@
                 </LinearLayout>
 
                 <!-- Location Header -->
-                <RelativeLayout
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Khu vực"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/on_surface" />
-                    <TextView
-                        android:id="@+id/tvDetailLocation"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="Central Park, NYC"
-                        android:textSize="14sp"
-                        android:textColor="@color/primary"
-                        android:textStyle="bold" />
-                </RelativeLayout>
+                    android:layout_marginTop="32dp"
+                    android:text="Khu vực"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_surface" />
+                
+                <TextView
+                    android:id="@+id/tvDetailLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Central Park, NYC"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold" />
 
                 <!-- Map Placeholder (Rounded) -->
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/cvMapPreview"
                     android:layout_width="match_parent"
                     android:layout_height="180dp"
                     android:layout_marginTop="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp">
+                    
+                    <org.osmdroid.views.MapView
+                        android:id="@+id/mapViewDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                    
+                    <!-- Fallback image if no location -->
                     <ImageView
                         android:id="@+id/ivMapPlaceholder"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/recent_activity_bg" />
+                        android:src="@drawable/recent_activity_bg"
+                        android:visibility="gone" />
                 </androidx.cardview.widget.CardView>
 
                 <!-- User Profile Section -->

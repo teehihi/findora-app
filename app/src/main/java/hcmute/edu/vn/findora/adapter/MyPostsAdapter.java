@@ -101,6 +101,14 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
             if (post.getCreatedAt() != null) {
                 intent.putExtra("timestamp", post.getCreatedAt().getSeconds() * 1000L);
             }
+            // Pass location data
+            if (post.getLat() != null && post.getLng() != null) {
+                intent.putExtra("lat", post.getLat());
+                intent.putExtra("lng", post.getLng());
+                if (post.getAddress() != null) {
+                    intent.putExtra("address", post.getAddress());
+                }
+            }
             context.startActivity(intent);
         });
 

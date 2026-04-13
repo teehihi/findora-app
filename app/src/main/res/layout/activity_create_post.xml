@@ -194,6 +194,62 @@
                 android:textSize="15sp"
                 android:layout_marginBottom="24dp" />
 
+            <!-- ── Location Section ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vị trí"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+            
+            <Button
+                android:id="@+id/btnSelectLocation"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="📍 Chọn vị trí"
+                android:textAllCaps="false"
+                android:textSize="15sp"
+                android:textColor="@color/primary"
+                android:background="@drawable/bg_search_field"
+                app:backgroundTint="@null"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+            
+            <TextView
+                android:id="@+id/tvSelectedAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="13sp"
+                android:textColor="@color/on_surface"
+                android:padding="12dp"
+                android:background="@drawable/bg_info_card"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+            
+            <!-- Map Preview -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvMapPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+                
+                <org.osmdroid.views.MapView
+                    android:id="@+id/mapViewPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                
+                <!-- Overlay to indicate it's clickable -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent" />
+            </androidx.cardview.widget.CardView>
+
             <!-- ── Action Button ── -->
             <Button
                 android:id="@+id/btnSubmit"

@@ -15,6 +15,11 @@ public class Post {
     private String userId;       // UID của người đăng
     private Timestamp createdAt; // Thời gian đăng bài
     private String imageUrl;     // URL ảnh tải lên Firebase Storage
+    
+    // Location fields
+    private Double lat;          // Latitude (vĩ độ)
+    private Double lng;          // Longitude (kinh độ)
+    private String address;      // Địa chỉ đọc được (từ Geocoder)
 
     // Constructor rỗng - bắt buộc phải có để Firestore tự động ánh xạ dữ liệu
     public Post() {}
@@ -50,4 +55,14 @@ public class Post {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    // Location getters and setters
+    public Double getLat() { return lat; }
+    public void setLat(Double lat) { this.lat = lat; }
+    
+    public Double getLng() { return lng; }
+    public void setLng(Double lng) { this.lng = lng; }
+    
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 }

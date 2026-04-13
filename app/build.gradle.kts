@@ -48,4 +48,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    
+    // OSMDroid - OpenStreetMap (HOÀN TOÀN MIỄN PHÍ, KHÔNG CẦN API KEY)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

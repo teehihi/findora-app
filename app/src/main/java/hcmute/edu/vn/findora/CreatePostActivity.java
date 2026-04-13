@@ -49,12 +49,23 @@ public class CreatePostActivity extends AppCompatActivity {
     // UI - Inputs
     private EditText etTitle, etDescription;
     private android.widget.Button btnSubmit;
+    private android.widget.Button btnSelectLocation;
+    private TextView tvSelectedAddress;
+    private org.osmdroid.views.MapView mapViewPreview;
+    private androidx.cardview.widget.CardView cvMapPreview;
 
     // State
     private String selectedType = "lost";
     private Uri selectedImageUri = null;
     private String editPostId = null;
     private String existingImageUrl = null;
+    
+    // Location data
+    private Double selectedLat = null;
+    private Double selectedLng = null;
+    private String selectedAddress = null;
+    
+    private static final int MAP_REQUEST_CODE = 1002;
 
     // Firebase
     private FirebaseAuth      auth;
@@ -93,8 +104,16 @@ public class CreatePostActivity extends AppCompatActivity {
         btnSubmit    = findViewById(R.id.btnSubmit);
         cvImageUpload = findViewById(R.id.cvImageUpload);
         ivImagePreview = findViewById(R.id.ivImagePreview);
+        btnSelectLocation = findViewById(R.id.btnSelectLocation);
+        tvSelectedAddress = findViewById(R.id.tvSelectedAddress);
+        mapViewPreview = findViewById(R.id.mapViewPreview);
+        cvMapPreview = findViewById(R.id.cvMapPreview);
+        
+        // Initialize map preview
+        initializeMapPreview();
         
         cvImageUpload.setOnClickListener(v -> pickImage.launch("image/*"));
+        btnSelectLocation.setOnClickListener(v -> openMapActivity());
 
         btnBack.setOnClickListener(v -> finish());
         
@@ -114,6 +133,21 @@ public class CreatePostActivity extends AppCompatActivity {
                         .centerCrop()
                         .into(ivImagePreview);
                 ivImagePreview.setImageTintList(null);
+            }
+            
+            // Load existing location if available
+            if (extras.containsKey("lat") && extras.containsKey("lng")) {
+                selectedLat = extras.getDouble("lat");
+                selectedLng = extras.getDouble("lng");
+                selectedAddress = extras.getString("address", "");
+                if (selectedAddress != null && !selectedAddress.isEmpty()) {
+                    tvSelectedAddress.setText(selectedAddress);
+                    tvSelectedAddress.setVisibility(View.VISIBLE);
+                }
+                // Update map preview
+                if (selectedLat != 0 && selectedLng != 0) {
+                    updateMapPreview(selectedLat, selectedLng);
+                }
             }
         } else {
             // Default state
@@ -196,6 +230,15 @@ public class CreatePostActivity extends AppCompatActivity {
         postData.put("type",        selectedType);
         postData.put("userId",      auth.getCurrentUser().getUid());
         postData.put("createdAt",   Timestamp.now());
+        
+        // Add location data if available
+        if (selectedLat != null && selectedLng != null) {
+            postData.put("lat", selectedLat);
+            postData.put("lng", selectedLng);
+            if (selectedAddress != null && !selectedAddress.isEmpty()) {
+                postData.put("address", selectedAddress);
+            }
+        }
 
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Đang xử lý...");
@@ -252,6 +295,86 @@ public class CreatePostActivity extends AppCompatActivity {
                         btnSubmit.setEnabled(true);
                         btnSubmit.setText("Đăng bài");
                     });
+        }
+    }
+    
+    private void openMapActivity() {
+        Intent intent = new Intent(this, AddressPickerActivity.class);
+        startActivityForResult(intent, MAP_REQUEST_CODE);
+    }
+    
+    private void initializeMapPreview() {
+        // Initialize osmdroid configuration
+        android.content.Context ctx = getApplicationContext();
+        org.osmdroid.config.Configuration.getInstance().load(ctx, 
+            android.preference.PreferenceManager.getDefaultSharedPreferences(ctx));
+        
+        // Setup map preview
+        mapViewPreview.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
+        mapViewPreview.setMultiTouchControls(true);
+        mapViewPreview.setBuiltInZoomControls(false);
+        mapViewPreview.getController().setZoom(15.0);
+        
+        // Disable interaction (read-only preview)
+        mapViewPreview.setClickable(false);
+    }
+    
+    private void updateMapPreview(double lat, double lng) {
+        // Show map preview
+        cvMapPreview.setVisibility(View.VISIBLE);
+        
+        // Move camera to location
+        org.osmdroid.util.GeoPoint point = new org.osmdroid.util.GeoPoint(lat, lng);
+        mapViewPreview.getController().setCenter(point);
+        mapViewPreview.getController().setZoom(15.0);
+        
+        // Add marker
+        mapViewPreview.getOverlays().clear();
+        org.osmdroid.views.overlay.Marker marker = new org.osmdroid.views.overlay.Marker(mapViewPreview);
+        marker.setPosition(point);
+        marker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, 
+                        org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
+        mapViewPreview.getOverlays().add(marker);
+        mapViewPreview.invalidate();
+        
+        // Make map preview clickable to edit location
+        cvMapPreview.setOnClickListener(v -> openMapActivity());
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == MAP_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            selectedLat = data.getDoubleExtra("latitude", 0);
+            selectedLng = data.getDoubleExtra("longitude", 0);
+            selectedAddress = data.getStringExtra("address");
+            
+            if (selectedAddress != null && !selectedAddress.isEmpty()) {
+                tvSelectedAddress.setText(selectedAddress);
+                tvSelectedAddress.setVisibility(View.VISIBLE);
+            }
+            
+            // Update map preview
+            if (selectedLat != 0 && selectedLng != 0) {
+                updateMapPreview(selectedLat, selectedLng);
+            }
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mapViewPreview != null) {
+            mapViewPreview.onResume();
+        }
+    }
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mapViewPreview != null) {
+            mapViewPreview.onPause();
         }
     }
 }
