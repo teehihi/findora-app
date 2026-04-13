@@ -20,6 +20,7 @@ public class ProfileActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
     private TextView tvUserName, tvUserEmail, tvActivePosts, tvItemsReturned;
+    private android.widget.ImageView ivAvatar;
     private BottomNavigationView bottomNav;
     private FloatingActionButton fabCreatePost;
 
@@ -35,13 +36,19 @@ public class ProfileActivity extends AppCompatActivity {
         tvUserEmail = findViewById(R.id.tvUserEmail);
         tvActivePosts = findViewById(R.id.tvActivePosts);
         tvItemsReturned = findViewById(R.id.tvItemsReturned);
+        ivAvatar = findViewById(R.id.ivAvatar);
         bottomNav = findViewById(R.id.bottomNav);
         fabCreatePost = findViewById(R.id.fabCreatePost);
 
-        loadUserInfo();
-        loadUserStats();
-
         findViewById(R.id.btnLogout).setOnClickListener(v -> logout());
+
+        // Edit Profile
+        TextView btnEditProfile = findViewById(R.id.btnEditProfile);
+        if (btnEditProfile != null) {
+            btnEditProfile.setOnClickListener(v -> {
+                startActivity(new Intent(this, EditProfileActivity.class));
+            });
+        }
 
         // FAB
         fabCreatePost.setOnClickListener(v -> {
@@ -55,7 +62,6 @@ public class ProfileActivity extends AppCompatActivity {
                 startActivity(new Intent(this, MyPostsActivity.class));
             });
         }
-
 
         // Bottom nav
         bottomNav.setSelectedItemId(R.id.nav_profile);
@@ -71,6 +77,13 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUserInfo();
+        loadUserStats();
+    }
+
     private void loadUserInfo() {
         FirebaseUser user = auth.getCurrentUser();
         if (user != null) {
@@ -83,9 +96,20 @@ public class ProfileActivity extends AppCompatActivity {
                     if (documentSnapshot.exists()) {
                         String fullName = documentSnapshot.getString("fullName");
                         String email = documentSnapshot.getString("email");
+                        String photoUrl = documentSnapshot.getString("photoUrl");
                         
                         tvUserName.setText(fullName != null ? fullName : "User");
                         tvUserEmail.setText(email != null ? email : "");
+
+                        if (photoUrl != null && !photoUrl.isEmpty() && ivAvatar != null) {
+                            com.bumptech.glide.Glide.with(this)
+                                    .load(photoUrl)
+                                    .transform(new com.bumptech.glide.load.resource.bitmap.CircleCrop())
+                                    .into(ivAvatar);
+                        } else if (ivAvatar != null) {
+                            // Clear
+                            ivAvatar.setImageResource(R.drawable.ic_person);
+                        }
                     } else {
                         // Fallback to Auth if Firestore doc doesn't exist
                         tvUserName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
