@@ -24,7 +24,7 @@ public class AuthActivity extends AppCompatActivity {
     private FirebaseFirestore db;
 
     private TextView tvTitle, tvSubtitle, tvForgot, tvSwitchPrompt, tvSwitchAction;
-    private MaterialButton btnSubmit;
+    private MaterialButton btnSubmit, btnGoogle, btnFacebook;
     private TextInputEditText etEmail, etPassword, etFullName, etPhone;
 
     // Register-only views
@@ -46,6 +46,8 @@ public class AuthActivity extends AppCompatActivity {
         tvSwitchPrompt = findViewById(R.id.tvSwitchPrompt);
         tvSwitchAction = findViewById(R.id.tvSwitchAction);
         btnSubmit = findViewById(R.id.btnSubmit);
+        btnGoogle = findViewById(R.id.btnGoogle);
+        btnFacebook = findViewById(R.id.btnFacebook);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etFullName = findViewById(R.id.etFullName);
@@ -78,7 +80,145 @@ public class AuthActivity extends AppCompatActivity {
                 registerUser(email, password, fullName, phone);
             }
         });
+
+        // Forgot Password
+        tvForgot.setOnClickListener(v -> forgotPassword());
+
+        // Google & Facebook - thông báo chưa khả dụng
+        btnGoogle.setOnClickListener(v ->
+            Toast.makeText(this, "Đăng nhập Google sẽ sớm được hỗ trợ", Toast.LENGTH_SHORT).show()
+        );
+        btnFacebook.setOnClickListener(v ->
+            Toast.makeText(this, "Đăng nhập Facebook sẽ sớm được hỗ trợ", Toast.LENGTH_SHORT).show()
+        );
     }
+
+
+    // ========== Forgot Password ==========
+
+    private void forgotPassword() {
+        String currentEmail = getTextFrom(etEmail);
+
+        // Tạo BottomSheetDialog chuyên nghiệp
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = 
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        bottomSheet.setContentView(R.layout.dialog_forgot_password);
+
+        // Bind views trong dialog
+        com.google.android.material.textfield.TextInputEditText etResetEmail = bottomSheet.findViewById(R.id.etResetEmail);
+        com.google.android.material.textfield.TextInputLayout tilResetEmail = bottomSheet.findViewById(R.id.tilResetEmail);
+        com.google.android.material.button.MaterialButton btnSendReset = bottomSheet.findViewById(R.id.btnSendReset);
+        TextView tvCancelReset = bottomSheet.findViewById(R.id.tvCancelReset);
+
+        // Điền sẵn email nếu user đã nhập
+        if (etResetEmail != null && !currentEmail.isEmpty()) {
+            etResetEmail.setText(currentEmail);
+        }
+
+        // Nút Hủy
+        if (tvCancelReset != null) {
+            tvCancelReset.setOnClickListener(v -> bottomSheet.dismiss());
+        }
+
+        // Nút Gửi
+        if (btnSendReset != null && etResetEmail != null && tilResetEmail != null) {
+            btnSendReset.setOnClickListener(v -> {
+                String email = etResetEmail.getText() != null ? etResetEmail.getText().toString().trim() : "";
+
+                if (email.isEmpty()) {
+                    tilResetEmail.setError("Vui lòng nhập email");
+                    etResetEmail.requestFocus();
+                    return;
+                }
+
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    tilResetEmail.setError("Email không hợp lệ");
+                    etResetEmail.requestFocus();
+                    return;
+                }
+
+                tilResetEmail.setError(null);
+
+                // Disable và đổi text nút
+                btnSendReset.setEnabled(false);
+                btnSendReset.setText("Đang gửi...");
+
+                // Kiểm tra email có tồn tại trong Firestore
+                db.collection("users")
+                        .whereEqualTo("email", email)
+                        .limit(1)
+                        .get()
+                        .addOnSuccessListener(querySnapshot -> {
+                            if (querySnapshot.isEmpty()) {
+                                btnSendReset.setEnabled(true);
+                                btnSendReset.setText("Gửi link đặt lại");
+                                tilResetEmail.setError("Email này chưa đăng ký tài khoản");
+                                etResetEmail.requestFocus();
+                            } else {
+                                sendResetEmail(email, bottomSheet);
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            sendResetEmail(email, bottomSheet);
+                        });
+            });
+        }
+
+        bottomSheet.show();
+    }
+
+    private void sendResetEmail(String email, com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet) {
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    bottomSheet.dismiss();
+                    if (task.isSuccessful()) {
+                        showResetResultDialog(true, email, null);
+                    } else {
+                        String errorMsg = task.getException() != null 
+                                ? task.getException().getMessage() 
+                                : "Lỗi không xác định";
+                        showResetResultDialog(false, email, errorMsg);
+                    }
+                });
+    }
+
+    private void showResetResultDialog(boolean success, String email, String errorMsg) {
+        com.google.android.material.bottomsheet.BottomSheetDialog resultSheet = 
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        resultSheet.setContentView(R.layout.dialog_reset_result);
+
+        android.widget.ImageView ivResultIcon = resultSheet.findViewById(R.id.ivResultIcon);
+        TextView tvResultTitle = resultSheet.findViewById(R.id.tvResultTitle);
+        TextView tvResultDesc = resultSheet.findViewById(R.id.tvResultDesc);
+        TextView tvResultEmail = resultSheet.findViewById(R.id.tvResultEmail);
+        com.google.android.material.button.MaterialButton btnDone = resultSheet.findViewById(R.id.btnDone);
+
+        if (success) {
+            if (ivResultIcon != null) ivResultIcon.setImageResource(R.drawable.ic_email_sent);
+            if (tvResultTitle != null) tvResultTitle.setText("Email đã được gửi!");
+            if (tvResultDesc != null) tvResultDesc.setText("Link đặt lại mật khẩu đã được gửi đến.\nVui lòng kiểm tra Hộp thư đến hoặc thư mục Spam.");
+            if (tvResultEmail != null) tvResultEmail.setText(email);
+        } else {
+            if (ivResultIcon != null) ivResultIcon.setImageResource(R.drawable.ic_info);
+            if (tvResultTitle != null) tvResultTitle.setText("Gửi thất bại");
+            if (tvResultDesc != null) tvResultDesc.setText("Không thể gửi email đặt lại mật khẩu.\n" + (errorMsg != null ? errorMsg : ""));
+            if (tvResultEmail != null) tvResultEmail.setVisibility(View.GONE);
+            if (btnDone != null) btnDone.setText("Thử lại");
+        }
+
+        if (btnDone != null) {
+            btnDone.setOnClickListener(v -> {
+                resultSheet.dismiss();
+                if (!success) {
+                    forgotPassword(); // Mở lại dialog quên mật khẩu
+                }
+            });
+        }
+
+        resultSheet.show();
+    }
+
+    // ========== Email/Password Auth ==========
 
     private String getTextFrom(TextInputEditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";
