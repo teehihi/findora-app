@@ -258,6 +258,39 @@ public class PostDetailActivity extends AppCompatActivity {
                         .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 }
             });
+        } else if (auth.getCurrentUser() != null) {
+            // Người xem (không phải chủ bài) → hiện nút Nhắn tin + Gọi điện
+            btnChat.setText("Nhắn tin");
+            btnChat.setOnClickListener(v -> {
+                String postId = extras.getString("postId", "");
+                Intent chatIntent = new Intent(this, ChatActivity.class);
+                chatIntent.putExtra("otherUserId", postUserId);
+                chatIntent.putExtra("postId", postId);
+                chatIntent.putExtra("postTitle", title);
+                startActivity(chatIntent);
+            });
+
+            // Nút Liên hệ → gọi điện cho chủ bài
+            btnContact.setText("Gọi điện");
+            btnContact.setOnClickListener(v -> {
+                // Lấy SĐT từ Firestore rồi mở dialer
+                db.collection("users").document(postUserId).get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists()) {
+                                String phone = doc.getString("phone");
+                                if (phone != null && !phone.isEmpty()) {
+                                    Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+                                    dialIntent.setData(android.net.Uri.parse("tel:" + phone));
+                                    startActivity(dialIntent);
+                                } else {
+                                    Toast.makeText(this, "Người đăng chưa cung cấp số điện thoại", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Không thể tải thông tin liên hệ", Toast.LENGTH_SHORT).show();
+                        });
+            });
         }
     }
 

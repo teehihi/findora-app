@@ -106,13 +106,15 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
                 return true;
+            } else if (id == R.id.nav_chat) {
+                startActivity(new Intent(this, ChatListActivity.class));
+                return true;
             } else if (id == R.id.nav_profile) {
                 Intent intent = new Intent(this, ProfileActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
                 return true;
             }
-            // Other tabs (Search, Chat) handled here eventually
             return false;
         });
 
@@ -138,10 +140,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
-
-        fabCreatePost.setOnClickListener(v -> {
-            startActivity(new Intent(this, CreatePostActivity.class));
         });
 
         fabCreatePost.setOnClickListener(v -> {
