@@ -33,6 +33,15 @@ import androidx.cardview.widget.CardView;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
+import android.os.Build;
+
+import hcmute.edu.vn.findora.ml.ImageClassifier;
+
 /**
  * Màn hình tạo bài đăng mới - Stitch Design 2024.
  */
@@ -53,6 +62,7 @@ public class CreatePostActivity extends AppCompatActivity {
     private TextView tvSelectedAddress;
     private com.mapbox.maps.MapView mapViewPreview;
     private androidx.cardview.widget.CardView cvMapPreview;
+    private TextView tvAiAssisted;
 
     // State
     private String selectedType = "lost";
@@ -64,6 +74,12 @@ public class CreatePostActivity extends AppCompatActivity {
     private Double selectedLat = null;
     private Double selectedLng = null;
     private String selectedAddress = null;
+    
+    // AI state
+    private String predictedLabel = null;
+    private Double predictedConfidence = null;
+    private ImageClassifier imageClassifier;
+    private ExecutorService executorService;
     
     private static final int MAP_REQUEST_CODE = 1002;
 
@@ -108,6 +124,21 @@ public class CreatePostActivity extends AppCompatActivity {
         tvSelectedAddress = findViewById(R.id.tvSelectedAddress);
         mapViewPreview = findViewById(R.id.mapViewPreview);
         cvMapPreview = findViewById(R.id.cvMapPreview);
+        tvAiAssisted = findViewById(R.id.tvAiAssisted);
+        
+        executorService = Executors.newSingleThreadExecutor();
+        com.google.android.gms.tflite.java.TfLite.initialize(this)
+            .addOnSuccessListener(aVoid -> {
+                try {
+                    imageClassifier = new ImageClassifier(CreatePostActivity.this);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(CreatePostActivity.this, "Failed to load ML model", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(CreatePostActivity.this, "Failed to connect to ML Service", Toast.LENGTH_SHORT).show();
+            });
         
         // Initialize map preview
         initializeMapPreview();
@@ -168,9 +199,50 @@ public class CreatePostActivity extends AppCompatActivity {
                     ivImagePreview.setImageURI(selectedImageUri);
                     ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     ivImagePreview.setImageTintList(null); // Remove tint to show original image colors
+                    
+                    // Run AI classification
+                    classifyImage(uri);
                 }
             }
     );
+    
+    private void classifyImage(Uri uri) {
+        if (imageClassifier == null) return;
+        
+        tvAiAssisted.setText("Analyzing image...");
+        executorService.execute(() -> {
+            try {
+                Bitmap bitmap;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(getContentResolver(), uri));
+                } else {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                }
+                
+                // Convert to ARGB_8888 if needed (TensorImage requires it)
+                Bitmap softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                
+                ImageClassifier.Result result = imageClassifier.classify(softwareBitmap);
+                
+                runOnUiThread(() -> {
+                    if (result != null && result.confidence >= 0.5f) { // 50% threshold
+                        predictedLabel = result.label;
+                        predictedConfidence = (double) result.confidence;
+                        int percentage = (int) (result.confidence * 100);
+                        tvAiAssisted.setText("Detected: " + predictedLabel + " (" + percentage + "%)");
+                    } else {
+                        predictedLabel = null;
+                        predictedConfidence = null;
+                        tvAiAssisted.setText(R.string.post_ai_assisted);
+                    }
+                });
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> tvAiAssisted.setText(R.string.post_ai_assisted));
+            }
+        });
+    }
 
     /**
      * Cập nhật UI toggle button (Lost / Found).
@@ -238,6 +310,12 @@ public class CreatePostActivity extends AppCompatActivity {
             if (selectedAddress != null && !selectedAddress.isEmpty()) {
                 postData.put("address", selectedAddress);
             }
+        }
+        
+        // Add AI fields if confident
+        if (predictedLabel != null && predictedConfidence != null) {
+            postData.put("imageLabel", predictedLabel);
+            postData.put("confidence", predictedConfidence);
         }
 
         btnSubmit.setEnabled(false);
@@ -351,4 +429,15 @@ public class CreatePostActivity extends AppCompatActivity {
     }
     
     // Mapbox v10 doesn't need onResume/onPause lifecycle methods
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (imageClassifier != null) {
+            imageClassifier.close();
+        }
+        if (executorService != null) {
+            executorService.shutdown();
+        }
+    }
 }

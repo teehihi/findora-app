@@ -20,7 +20,20 @@ import java.util.Locale;
 
 import android.content.Intent;
 import android.widget.Toast;
+import android.widget.ProgressBar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import hcmute.edu.vn.findora.adapter.PostAdapter;
+import hcmute.edu.vn.findora.model.Post;
+import hcmute.edu.vn.findora.utils.MatchUtils;
 
 /**
  * Màn hình chi tiết bài đăng - Stitch Design Style.
@@ -34,6 +47,13 @@ public class PostDetailActivity extends AppCompatActivity {
     private com.google.firebase.firestore.FirebaseFirestore db;
     private com.mapbox.maps.MapView mapViewDetail;
     private androidx.cardview.widget.CardView cvMapPreview;
+    
+    // Smart Matches components
+    private RecyclerView rvSmartMatches;
+    private ProgressBar pbSmartMatches;
+    private TextView tvNoSmartMatches;
+    private PostAdapter smartMatchesAdapter;
+    private List<Post> smartMatchesList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +99,15 @@ public class PostDetailActivity extends AppCompatActivity {
         ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
         cvMapPreview        = findViewById(R.id.cvMapPreview);
         ivUserAvatar        = findViewById(R.id.ivUserAvatar);
+        
+        rvSmartMatches      = findViewById(R.id.rvSmartMatches);
+        pbSmartMatches      = findViewById(R.id.pbSmartMatches);
+        tvNoSmartMatches    = findViewById(R.id.tvNoSmartMatches);
+        
+        smartMatchesList = new ArrayList<>();
+        smartMatchesAdapter = new PostAdapter(this, smartMatchesList);
+        rvSmartMatches.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rvSmartMatches.setAdapter(smartMatchesAdapter);
     }
     
     private void initializeMap() {
@@ -125,6 +154,20 @@ public class PostDetailActivity extends AppCompatActivity {
         String type = extras.getString("type", "lost");
         String userId = extras.getString("userId", "");
         long timestamp = extras.getLong("timestamp", 0);
+        String imageUrl = extras.getString("imageUrl");
+        
+        // Build current Post for matching
+        Post currentPost = new Post();
+        currentPost.setId(extras.getString("postId", ""));
+        currentPost.setTitle(title);
+        currentPost.setDescription(description);
+        currentPost.setType(type);
+        currentPost.setImageUrl(imageUrl);
+        
+        // Additional Info for model matching if passed (Need to check if it was passed by MainActivity)
+        // Since PostAdapter doesn't currently pass imageLabel and confidence, we should try to fetch the 
+        // full post data from database to be perfectly accurate for matching, or just run with minimal data.
+        // Actually, let's fetch the full fresh document from Firestore first to ensure we have imageLabel.
 
         tvDetailTitle.setText(title);
         tvDetailDescription.setText(description);
@@ -134,6 +177,9 @@ public class PostDetailActivity extends AppCompatActivity {
             double lat = extras.getDouble("lat");
             double lng = extras.getDouble("lng");
             String address = extras.getString("address", "");
+            
+            currentPost.setLat(lat);
+            currentPost.setLng(lng);
             
             if (lat != 0 && lng != 0) {
                 displayMapLocation(lat, lng, address);
@@ -187,7 +233,6 @@ public class PostDetailActivity extends AppCompatActivity {
         tvUserStatus.setText("Vừa truy cập • Đã xác thực");
 
         // Load image using Glide if available
-        String imageUrl = getIntent().getStringExtra("imageUrl");
         if (imageUrl != null && !imageUrl.isEmpty()) {
             com.bumptech.glide.Glide.with(this)
                 .load(imageUrl)
@@ -200,6 +245,91 @@ public class PostDetailActivity extends AppCompatActivity {
         }
         
         setupOwnerActions(getIntent().getExtras(), title, description, type, imageUrl, userId);
+        
+        // Fetch full post to get AI details and then trigger Smart Matches
+        fetchFullCurrentPostAndMatch(currentPost);
+    }
+    
+    private void fetchFullCurrentPostAndMatch(Post memoryPost) {
+        if (memoryPost.getId() == null || memoryPost.getId().isEmpty()) {
+            pbSmartMatches.setVisibility(View.GONE);
+            tvNoSmartMatches.setVisibility(View.VISIBLE);
+            return;
+        }
+        
+        db.collection("posts").document(memoryPost.getId()).get()
+            .addOnSuccessListener(doc -> {
+                if (doc.exists()) {
+                    Post fullPost = doc.toObject(Post.class);
+                    if (fullPost != null) {
+                        fullPost.setId(doc.getId());
+                        findSmartMatches(fullPost);
+                    }
+                } else {
+                    pbSmartMatches.setVisibility(View.GONE);
+                    tvNoSmartMatches.setVisibility(View.VISIBLE);
+                }
+            })
+            .addOnFailureListener(e -> {
+                pbSmartMatches.setVisibility(View.GONE);
+                tvNoSmartMatches.setVisibility(View.VISIBLE);
+            });
+    }
+    
+    private void findSmartMatches(Post currentPost) {
+        String oppositeType = "lost".equals(currentPost.getType()) ? "found" : "lost";
+        
+        db.collection("posts")
+            .whereEqualTo("type", oppositeType)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                pbSmartMatches.setVisibility(View.GONE);
+                
+                // Helper class to store score
+                class ScoredPost implements Comparable<ScoredPost> {
+                    Post post;
+                    double score;
+                    ScoredPost(Post post, double score) { this.post = post; this.score = score; }
+                    
+                    @Override
+                    public int compareTo(ScoredPost o) {
+                        return Double.compare(o.score, this.score); // DESCENDING
+                    }
+                }
+                
+                List<ScoredPost> results = new ArrayList<>();
+                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                    Post otherPost = doc.toObject(Post.class);
+                    otherPost.setId(doc.getId());
+                    
+                    double sc = MatchUtils.calculateMatchScore(currentPost, otherPost);
+                    if (sc >= 0.5) { // Threshold
+                        results.add(new ScoredPost(otherPost, sc));
+                    }
+                }
+                
+                if (results.isEmpty()) {
+                    tvNoSmartMatches.setVisibility(View.VISIBLE);
+                    rvSmartMatches.setVisibility(View.GONE);
+                } else {
+                    tvNoSmartMatches.setVisibility(View.GONE);
+                    rvSmartMatches.setVisibility(View.VISIBLE);
+                    
+                    Collections.sort(results);
+                    
+                    smartMatchesList.clear();
+                    // Grab top 5 matched posts
+                    int limit = Math.min(results.size(), 5);
+                    for (int i = 0; i < limit; i++) {
+                        smartMatchesList.add(results.get(i).post);
+                    }
+                    smartMatchesAdapter.notifyDataSetChanged();
+                }
+            })
+            .addOnFailureListener(e -> {
+                pbSmartMatches.setVisibility(View.GONE);
+                tvNoSmartMatches.setVisibility(View.VISIBLE);
+            });
     }
 
     private void setupOwnerActions(Bundle extras, String title, String description, String type, String imageUrl, String postUserId) {

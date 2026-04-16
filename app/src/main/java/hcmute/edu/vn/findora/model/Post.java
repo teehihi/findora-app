@@ -20,6 +20,10 @@ public class Post {
     private Double lat;          // Latitude (vĩ độ)
     private Double lng;          // Longitude (kinh độ)
     private String address;      // Địa chỉ đọc được (từ Geocoder)
+    
+    // AI fields
+    private String imageLabel;   // Nhãn nhận diện từ hình ảnh
+    private Double confidence;   // Độ tin cậy của mô hình (0.0 - 1.0)
 
     // Constructor rỗng - bắt buộc phải có để Firestore tự động ánh xạ dữ liệu
     public Post() {}
@@ -65,4 +69,11 @@ public class Post {
     
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    
+    // AI getters and setters
+    public String getImageLabel() { return imageLabel; }
+    public void setImageLabel(String imageLabel) { this.imageLabel = imageLabel; }
+    
+    public Double getConfidence() { return confidence; }
+    public void setConfidence(Double confidence) { this.confidence = confidence; }
 }

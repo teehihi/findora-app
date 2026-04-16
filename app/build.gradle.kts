@@ -26,9 +26,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // Add API keys to BuildConfig
+        // Add API keys to BuildConfig and Resources
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: ""}\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
+        resValue("string", "mapbox_access_token", localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: "")
     }
 
     buildTypes {
@@ -43,6 +44,11 @@ android {
     
     buildFeatures {
         buildConfig = true
+        resValues = true
+    }
+    
+    aaptOptions {
+        noCompress.add("tflite")
     }
     
     compileOptions {
@@ -72,4 +78,8 @@ dependencies {
     // Mapbox Maps SDK v10 (better Java support)
     implementation("com.mapbox.maps:android:10.16.5")
     implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // TensorFlow Lite (must use play-services or MediaPipe because org.tensorflow causes namespace collision in AGP 8)
+    implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
+    implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
 }
