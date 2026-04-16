@@ -25,3 +25,4 @@ gradle.properties
 *.properties
 !gradle-wrapper.properties
 !local.properties.example
+.kiro/
