@@ -52,6 +52,14 @@
                 android:text="Chọn từng bước để xác định vị trí chính xác"
                 android:textSize="14sp"
                 android:textColor="@color/outline"
+                android:layout_marginBottom="8dp" />
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💡 Nhấn vào bản đồ để điều chỉnh vị trí nếu cần"
+                android:textSize="12sp"
+                android:textColor="@color/primary"
                 android:layout_marginBottom="24dp" />
 
             <!-- Province/City -->
@@ -72,19 +80,34 @@
                 app:cardBackgroundColor="@color/surface_variant"
                 android:layout_marginBottom="20dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvProvince"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:paddingHorizontal="16dp"
-                    android:hint="Gõ để tìm hoặc chọn"
-                    android:textSize="16sp"
-                    android:textColor="@color/on_surface"
-                    android:textColorHint="@color/outline"
-                    android:background="@android:color/transparent"
-                    android:inputType="text"
-                    android:completionThreshold="1"
-                    android:dropDownHeight="300dp" />
+                    android:layout_height="52dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/actvProvince"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="48dp"
+                        android:hint="Gõ để tìm hoặc chọn"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface"
+                        android:textColorHint="@color/outline"
+                        android:background="@android:color/transparent"
+                        android:inputType="text"
+                        android:completionThreshold="1"
+                        android:dropDownHeight="300dp" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_arrow_drop_down"
+                        android:contentDescription="Dropdown" />
+                </RelativeLayout>
             </androidx.cardview.widget.CardView>
 
             <!-- District -->
@@ -105,20 +128,35 @@
                 app:cardBackgroundColor="@color/surface_variant"
                 android:layout_marginBottom="20dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvDistrict"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:paddingHorizontal="16dp"
-                    android:hint="Gõ để tìm hoặc chọn"
-                    android:textSize="16sp"
-                    android:textColor="@color/on_surface"
-                    android:textColorHint="@color/outline"
-                    android:background="@android:color/transparent"
-                    android:inputType="text"
-                    android:enabled="false"
-                    android:completionThreshold="1"
-                    android:dropDownHeight="300dp" />
+                    android:layout_height="52dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/actvDistrict"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="48dp"
+                        android:hint="Gõ để tìm hoặc chọn"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface"
+                        android:textColorHint="@color/outline"
+                        android:background="@android:color/transparent"
+                        android:inputType="text"
+                        android:enabled="false"
+                        android:completionThreshold="1"
+                        android:dropDownHeight="300dp" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_arrow_drop_down"
+                        android:contentDescription="Dropdown" />
+                </RelativeLayout>
             </androidx.cardview.widget.CardView>
 
             <!-- Ward -->
@@ -139,20 +177,35 @@
                 app:cardBackgroundColor="@color/surface_variant"
                 android:layout_marginBottom="20dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvWard"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:paddingHorizontal="16dp"
-                    android:hint="Gõ để tìm hoặc chọn"
-                    android:textSize="16sp"
-                    android:textColor="@color/on_surface"
-                    android:textColorHint="@color/outline"
-                    android:background="@android:color/transparent"
-                    android:inputType="text"
-                    android:enabled="false"
-                    android:completionThreshold="1"
-                    android:dropDownHeight="300dp" />
+                    android:layout_height="52dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/actvWard"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="48dp"
+                        android:hint="Gõ để tìm hoặc chọn"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface"
+                        android:textColorHint="@color/outline"
+                        android:background="@android:color/transparent"
+                        android:inputType="text"
+                        android:enabled="false"
+                        android:completionThreshold="1"
+                        android:dropDownHeight="300dp" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_arrow_drop_down"
+                        android:contentDescription="Dropdown" />
+                </RelativeLayout>
             </androidx.cardview.widget.CardView>
 
             <!-- Street Address -->

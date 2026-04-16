@@ -52,16 +52,37 @@
                 android:textColor="@color/outline" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvChatListLastMsg"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Tin nhắn mới nhất..."
-            android:textSize="13sp"
-            android:textColor="@color/on_surface_variant"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/tvChatListLastMsg"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tin nhắn mới nhất..."
+                android:textSize="13sp"
+                android:textColor="@color/on_surface_variant"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvUnreadBadge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="8dp"
+                android:text="3"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_badge_lost"
+                android:gravity="center"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvChatListPostTitle"

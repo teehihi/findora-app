@@ -102,4 +102,8 @@
     <!-- Post Detail -->
     <string name="detail_contact_owner">Liên hệ</string>
     <string name="detail_chat">Nhắn tin</string>
+    
+    <!-- Mapbox Access Token - Loaded from BuildConfig -->
+    <!-- DO NOT put real token here! Token is in local.properties -->
+    <string name="mapbox_access_token" translatable="false">PLACEHOLDER</string>
 </resources>

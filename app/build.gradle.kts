@@ -1,13 +1,21 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
 }
 
+// Load API keys from local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+}
+
 android {
     namespace = "hcmute.edu.vn.findora"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "hcmute.edu.vn.findora"
@@ -17,6 +25,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Add API keys to BuildConfig
+        buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: ""}\"")
+        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
     }
 
     buildTypes {
@@ -28,6 +40,11 @@ android {
             )
         }
     }
+    
+    buildFeatures {
+        buildConfig = true
+    }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -52,7 +69,7 @@ dependencies {
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     
-    // OSMDroid - OpenStreetMap (HOÀN TOÀN MIỄN PHÍ, KHÔNG CẦN API KEY)
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    // Mapbox Maps SDK v10 (better Java support)
+    implementation("com.mapbox.maps:android:10.16.5")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 }

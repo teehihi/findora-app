@@ -32,7 +32,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView tvInfoTime, tvInfoCategory;
     private ImageButton btnBack;
     private com.google.firebase.firestore.FirebaseFirestore db;
-    private org.osmdroid.views.MapView mapViewDetail;
+    private com.mapbox.maps.MapView mapViewDetail;
     private androidx.cardview.widget.CardView cvMapPreview;
 
     @Override
@@ -61,6 +61,8 @@ public class PostDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    private ImageView ivUserAvatar;
+    
     private void initViews() {
         ivDetailImage       = findViewById(R.id.ivDetailImage);
         tvDetailType        = findViewById(R.id.tvDetailType);
@@ -76,19 +78,11 @@ public class PostDetailActivity extends AppCompatActivity {
         mapViewDetail       = findViewById(R.id.mapViewDetail);
         ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
         cvMapPreview        = findViewById(R.id.cvMapPreview);
+        ivUserAvatar        = findViewById(R.id.ivUserAvatar);
     }
     
     private void initializeMap() {
-        // Initialize osmdroid configuration
-        Context ctx = getApplicationContext();
-        org.osmdroid.config.Configuration.getInstance().load(ctx, 
-            android.preference.PreferenceManager.getDefaultSharedPreferences(ctx));
-        
-        // Setup map
-        mapViewDetail.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
-        mapViewDetail.setMultiTouchControls(true);
-        mapViewDetail.setBuiltInZoomControls(false);
-        mapViewDetail.getController().setZoom(15.0);
+        // Mapbox will be initialized when displaying location
     }
     
     private void displayMapLocation(double lat, double lng, String address) {
@@ -96,25 +90,25 @@ public class PostDetailActivity extends AppCompatActivity {
         ivMapPlaceholder.setVisibility(View.GONE);
         mapViewDetail.setVisibility(View.VISIBLE);
         
-        // Move camera to location
-        org.osmdroid.util.GeoPoint point = new org.osmdroid.util.GeoPoint(lat, lng);
-        mapViewDetail.getController().setCenter(point);
-        mapViewDetail.getController().setZoom(15.0);
-        
-        // Add marker
-        org.osmdroid.views.overlay.Marker marker = new org.osmdroid.views.overlay.Marker(mapViewDetail);
-        marker.setPosition(point);
-        marker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, 
-                        org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
-        marker.setTitle(address != null ? address : "Vị trí");
-        mapViewDetail.getOverlays().add(marker);
-        mapViewDetail.invalidate();
+        // Load Mapbox style and setup map
+        mapViewDetail.getMapboxMap().loadStyleUri(com.mapbox.maps.Style.MAPBOX_STREETS, style -> {
+            // Move camera to location
+            com.mapbox.geojson.Point point = com.mapbox.geojson.Point.fromLngLat(lng, lat);
+            com.mapbox.maps.CameraOptions cameraOptions = new com.mapbox.maps.CameraOptions.Builder()
+                    .center(point)
+                    .zoom(15.0)
+                    .build();
+            mapViewDetail.getMapboxMap().setCamera(cameraOptions);
+            
+            // Add marker using helper
+            MapboxHelper.addMarker(mapViewDetail, lat, lng);
+        });
         
         // Update location text
         if (address != null && !address.isEmpty()) {
             tvDetailLocation.setText(address);
         } else {
-            tvDetailLocation.setText(String.format(Locale.getDefault(), "%.6f, %.6f", lat, lng));
+            tvDetailLocation.setText(String.format(java.util.Locale.getDefault(), "%.6f, %.6f", lat, lng));
         }
     }
     
@@ -305,6 +299,23 @@ public class PostDetailActivity extends AppCompatActivity {
                     } else {
                         tvUserName.setText("Unknown User");
                     }
+                    
+                    // Load avatar if available
+                    String photoUrl = documentSnapshot.getString("photoUrl");
+                    if (photoUrl != null && !photoUrl.isEmpty() && ivUserAvatar != null) {
+                        // Clear tint before loading image
+                        ivUserAvatar.setImageTintList(null);
+                        com.bumptech.glide.Glide.with(PostDetailActivity.this)
+                            .load(photoUrl)
+                            .circleCrop()
+                            .placeholder(R.drawable.ic_person)
+                            .error(R.drawable.ic_person)
+                            .into(ivUserAvatar);
+                    } else {
+                        // Set tint back for placeholder icon
+                        ivUserAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(
+                            getResources().getColor(R.color.primary, null)));
+                    }
                 } else {
                     tvUserName.setText("User Not Found");
                 }
@@ -318,7 +329,7 @@ public class PostDetailActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (mapViewDetail != null) {
-            mapViewDetail.onResume();
+            mapViewDetail.onStart();
         }
     }
     
@@ -326,7 +337,7 @@ public class PostDetailActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (mapViewDetail != null) {
-            mapViewDetail.onPause();
+            mapViewDetail.onStop();
         }
     }
     
@@ -334,7 +345,7 @@ public class PostDetailActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (mapViewDetail != null) {
-            mapViewDetail.onDetach();
+            mapViewDetail.onDestroy();
         }
     }
 }

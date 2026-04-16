@@ -19,6 +19,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Findora">
+        
+        <!-- Mapbox Access Token -->
+        <meta-data
+            android:name="MAPBOX_ACCESS_TOKEN"
+            android:value="@string/mapbox_access_token" />
+        
         <activity
             android:name=".SplashActivity"
             android:exported="true">

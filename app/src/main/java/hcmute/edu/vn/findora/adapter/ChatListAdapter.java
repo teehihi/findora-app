@@ -91,9 +91,41 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                                 Glide.with(context)
                                         .load(photoUrl)
                                         .transform(new CircleCrop())
+                                        .placeholder(R.drawable.ic_person)
+                                        .error(R.drawable.ic_person)
                                         .into(holder.ivChatListAvatar);
+                            } else {
+                                holder.ivChatListAvatar.setImageResource(R.drawable.ic_person);
                             }
                         }
+                    })
+                    .addOnFailureListener(e -> {
+                        holder.ivChatListAvatar.setImageResource(R.drawable.ic_person);
+                    });
+
+            // Count unread messages
+            FirebaseFirestore.getInstance()
+                    .collection("chats").document(chatId)
+                    .collection("messages")
+                    .whereEqualTo("read", false)
+                    .whereNotEqualTo("senderId", currentUserId)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        int unreadCount = querySnapshot.size();
+                        if (unreadCount > 0) {
+                            holder.tvUnreadBadge.setVisibility(android.view.View.VISIBLE);
+                            holder.tvUnreadBadge.setText(String.valueOf(unreadCount));
+                            // Make last message bold if unread
+                            holder.tvChatListLastMsg.setTypeface(null, android.graphics.Typeface.BOLD);
+                            holder.tvChatListLastMsg.setTextColor(context.getResources().getColor(R.color.on_surface, null));
+                        } else {
+                            holder.tvUnreadBadge.setVisibility(android.view.View.GONE);
+                            holder.tvChatListLastMsg.setTypeface(null, android.graphics.Typeface.NORMAL);
+                            holder.tvChatListLastMsg.setTextColor(context.getResources().getColor(R.color.on_surface_variant, null));
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        holder.tvUnreadBadge.setVisibility(android.view.View.GONE);
                     });
 
             // Click to open chat
@@ -115,7 +147,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivChatListAvatar;
-        TextView tvChatListName, tvChatListTime, tvChatListLastMsg, tvChatListPostTitle;
+        TextView tvChatListName, tvChatListTime, tvChatListLastMsg, tvChatListPostTitle, tvUnreadBadge;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -124,6 +156,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             tvChatListTime = itemView.findViewById(R.id.tvChatListTime);
             tvChatListLastMsg = itemView.findViewById(R.id.tvChatListLastMsg);
             tvChatListPostTitle = itemView.findViewById(R.id.tvChatListPostTitle);
+            tvUnreadBadge = itemView.findViewById(R.id.tvUnreadBadge);
         }
     }
 }

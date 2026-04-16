@@ -81,6 +81,38 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         } else {
             holder.tvCreatedAt.setText("RECENT");
         }
+        
+        // Load poster avatar
+        if (post.getUserId() != null && !post.getUserId().isEmpty() && holder.ivPosterAvatar != null) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(post.getUserId())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String photoUrl = doc.getString("photoUrl");
+                        if (photoUrl != null && !photoUrl.isEmpty()) {
+                            // Clear tint before loading image
+                            holder.ivPosterAvatar.setImageTintList(null);
+                            Glide.with(context)
+                                .load(photoUrl)
+                                .circleCrop()
+                                .placeholder(R.drawable.ic_person)
+                                .error(R.drawable.ic_person)
+                                .into(holder.ivPosterAvatar);
+                        } else {
+                            holder.ivPosterAvatar.setImageResource(R.drawable.ic_person);
+                            holder.ivPosterAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(
+                                context.getResources().getColor(R.color.outline, null)));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    holder.ivPosterAvatar.setImageResource(R.drawable.ic_person);
+                    holder.ivPosterAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(
+                        context.getResources().getColor(R.color.outline, null)));
+                });
+        }
 
         // Handle item click to open detailed view
         holder.itemView.setOnClickListener(v -> {
@@ -115,7 +147,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvType, tvTitle, tvDescription, tvCreatedAt;
-        ImageView ivPostImage;
+        ImageView ivPostImage, ivPosterAvatar;
         android.widget.FrameLayout flImageContainer;
 
         public PostViewHolder(@NonNull View itemView) {
@@ -126,6 +158,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvCreatedAt   = itemView.findViewById(R.id.tvCreatedAt);
             ivPostImage   = itemView.findViewById(R.id.ivPostImage);
             flImageContainer = itemView.findViewById(R.id.flImageContainer);
+            ivPosterAvatar = itemView.findViewById(R.id.ivPosterAvatar);
         }
     }
 }

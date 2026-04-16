@@ -121,12 +121,13 @@
                     android:textColor="@color/outline" />
 
                 <ImageView
+                    android:id="@+id/ivPosterAvatar"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_person"
                     android:background="@drawable/bg_search_field"
                     android:padding="4dp"
-                    app:tint="@color/outline" />
+                    android:scaleType="centerCrop" />
 
             </LinearLayout>
 

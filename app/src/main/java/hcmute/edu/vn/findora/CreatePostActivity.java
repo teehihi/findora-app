@@ -51,7 +51,7 @@ public class CreatePostActivity extends AppCompatActivity {
     private android.widget.Button btnSubmit;
     private android.widget.Button btnSelectLocation;
     private TextView tvSelectedAddress;
-    private org.osmdroid.views.MapView mapViewPreview;
+    private com.mapbox.maps.MapView mapViewPreview;
     private androidx.cardview.widget.CardView cvMapPreview;
 
     // State
@@ -304,38 +304,26 @@ public class CreatePostActivity extends AppCompatActivity {
     }
     
     private void initializeMapPreview() {
-        // Initialize osmdroid configuration
-        android.content.Context ctx = getApplicationContext();
-        org.osmdroid.config.Configuration.getInstance().load(ctx, 
-            android.preference.PreferenceManager.getDefaultSharedPreferences(ctx));
-        
-        // Setup map preview
-        mapViewPreview.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
-        mapViewPreview.setMultiTouchControls(true);
-        mapViewPreview.setBuiltInZoomControls(false);
-        mapViewPreview.getController().setZoom(15.0);
-        
-        // Disable interaction (read-only preview)
-        mapViewPreview.setClickable(false);
+        // Mapbox will be initialized when displaying location
     }
     
     private void updateMapPreview(double lat, double lng) {
         // Show map preview
         cvMapPreview.setVisibility(View.VISIBLE);
         
-        // Move camera to location
-        org.osmdroid.util.GeoPoint point = new org.osmdroid.util.GeoPoint(lat, lng);
-        mapViewPreview.getController().setCenter(point);
-        mapViewPreview.getController().setZoom(15.0);
-        
-        // Add marker
-        mapViewPreview.getOverlays().clear();
-        org.osmdroid.views.overlay.Marker marker = new org.osmdroid.views.overlay.Marker(mapViewPreview);
-        marker.setPosition(point);
-        marker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, 
-                        org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
-        mapViewPreview.getOverlays().add(marker);
-        mapViewPreview.invalidate();
+        // Load Mapbox style and setup map
+        mapViewPreview.getMapboxMap().loadStyleUri(com.mapbox.maps.Style.MAPBOX_STREETS, style -> {
+            // Move camera to location
+            com.mapbox.geojson.Point point = com.mapbox.geojson.Point.fromLngLat(lng, lat);
+            com.mapbox.maps.CameraOptions cameraOptions = new com.mapbox.maps.CameraOptions.Builder()
+                    .center(point)
+                    .zoom(15.0)
+                    .build();
+            mapViewPreview.getMapboxMap().setCamera(cameraOptions);
+            
+            // Add marker using helper
+            MapboxHelper.addMarker(mapViewPreview, lat, lng);
+        });
         
         // Make map preview clickable to edit location
         cvMapPreview.setOnClickListener(v -> openMapActivity());
@@ -362,19 +350,5 @@ public class CreatePostActivity extends AppCompatActivity {
         }
     }
     
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (mapViewPreview != null) {
-            mapViewPreview.onResume();
-        }
-    }
-    
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mapViewPreview != null) {
-            mapViewPreview.onPause();
-        }
-    }
+    // Mapbox v10 doesn't need onResume/onPause lifecycle methods
 }

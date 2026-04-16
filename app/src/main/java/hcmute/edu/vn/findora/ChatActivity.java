@@ -93,6 +93,16 @@ public class ChatActivity extends AppCompatActivity {
         tvChatPostTitle = findViewById(R.id.tvChatPostTitle);
         ivChatAvatar = findViewById(R.id.ivChatAvatar);
 
+        // Apply window insets for safe area
+        android.view.View chatHeader = findViewById(R.id.chatHeader);
+        if (chatHeader != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(chatHeader, (v, insets) -> {
+                androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                v.setPadding(v.getPaddingLeft(), systemBars.top + dpToPx(12), v.getPaddingRight(), v.getPaddingBottom());
+                return insets;
+            });
+        }
+
         // Setup
         messageList = new ArrayList<>();
         adapter = new ChatAdapter(this, messageList, currentUserId);
@@ -117,6 +127,10 @@ public class ChatActivity extends AppCompatActivity {
             listenForMessages();
         }
     }
+    
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
+    }
 
     private void loadOtherUserInfo() {
         if (otherUserId == null || otherUserId.isEmpty()) return;
@@ -133,9 +147,15 @@ public class ChatActivity extends AppCompatActivity {
                                     .load(photoUrl)
                                     .transform(new CircleCrop())
                                     .placeholder(R.drawable.ic_person)
+                                    .error(R.drawable.ic_person)
                                     .into(ivChatAvatar);
+                        } else {
+                            ivChatAvatar.setImageResource(R.drawable.ic_person);
                         }
                     }
+                })
+                .addOnFailureListener(e -> {
+                    ivChatAvatar.setImageResource(R.drawable.ic_person);
                 });
     }
 
@@ -204,12 +224,28 @@ public class ChatActivity extends AppCompatActivity {
                             ChatMessage msg = dc.getDocument().toObject(ChatMessage.class);
                             msg.setId(dc.getDocument().getId());
                             messageList.add(msg);
+                            
+                            // Mark as read if not sent by current user
+                            if (!msg.getSenderId().equals(currentUserId) && !msg.isRead()) {
+                                markMessageAsRead(msg.getId());
+                            }
                         }
                     }
                     adapter.notifyDataSetChanged();
                     if (!messageList.isEmpty()) {
                         rvMessages.scrollToPosition(messageList.size() - 1);
                     }
+                });
+    }
+    
+    private void markMessageAsRead(String messageId) {
+        if (chatId == null || messageId == null) return;
+        
+        db.collection("chats").document(chatId)
+                .collection("messages").document(messageId)
+                .update("read", true)
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ChatActivity", "Failed to mark message as read", e);
                 });
     }
 
@@ -226,6 +262,7 @@ public class ChatActivity extends AppCompatActivity {
         msgData.put("senderId", currentUserId);
         msgData.put("text", text);
         msgData.put("timestamp", now);
+        msgData.put("read", false);
 
         db.collection("chats").document(chatId)
                 .collection("messages")

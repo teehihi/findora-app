@@ -98,6 +98,7 @@ public class EditProfileActivity extends AppCompatActivity {
                                     .load(photoUrl)
                                     .transform(new CircleCrop())
                                     .placeholder(R.drawable.ic_person)
+                                    .error(R.drawable.ic_person)
                                     .into(ivEditAvatar);
                         } else {
                             Glide.with(this)
@@ -106,6 +107,9 @@ public class EditProfileActivity extends AppCompatActivity {
                                     .into(ivEditAvatar);
                         }
                     }
+                })
+                .addOnFailureListener(e -> {
+                    ivEditAvatar.setImageResource(R.drawable.ic_person);
                 });
     }
 

@@ -306,13 +306,24 @@ public class AddressPickerActivity extends AppCompatActivity {
     // ===== Fetch from API =====
     
     private String fetchFromAPI(String urlString) throws IOException {
+        android.util.Log.d("AddressPicker", "Fetching: " + urlString);
+        
         URL url = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setRequestProperty("User-Agent", "FindoraApp/1.0 (hcmute.edu.vn.findora)");
+        conn.setRequestProperty("User-Agent", "FindoraApp/1.0 (hcmute.edu.vn.findora; Android)");
         conn.setRequestProperty("Accept", "application/json");
-        conn.setConnectTimeout(10000);
-        conn.setReadTimeout(10000);
+        conn.setRequestProperty("Accept-Language", "vi,en");
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(15000);
+        
+        int responseCode = conn.getResponseCode();
+        android.util.Log.d("AddressPicker", "Response code: " + responseCode);
+        
+        if (responseCode != 200) {
+            android.util.Log.e("AddressPicker", "HTTP error: " + responseCode);
+            throw new IOException("HTTP error code: " + responseCode);
+        }
         
         BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         StringBuilder response = new StringBuilder();
@@ -434,63 +445,266 @@ public class AddressPickerActivity extends AppCompatActivity {
     private void viewOnMap() {
         String streetAddress = etStreetAddress.getText().toString().trim();
         
-        if (selectedProvince == null) {
-            Toast.makeText(this, "Vui lòng chọn Tỉnh/Thành phố", Toast.LENGTH_SHORT).show();
+        // Allow viewing map even without full address
+        if (selectedProvince == null && selectedDistrict == null && selectedWard == null && streetAddress.isEmpty()) {
+            // No address at all, open map at default location
+            Intent intent = new Intent(AddressPickerActivity.this, MapActivity.class);
+            intent.putExtra("latitude", 10.762622); // Default HCMC
+            intent.putExtra("longitude", 106.660172);
+            intent.putExtra("address", "");
+            startActivityForResult(intent, 100);
             return;
         }
         
-        if (selectedDistrict == null) {
-            Toast.makeText(this, "Vui lòng chọn Quận/Huyện", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        if (selectedWard == null) {
-            Toast.makeText(this, "Vui lòng chọn Phường/Xã", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        // Build full address
+        // Build full address from available components
         StringBuilder fullAddress = new StringBuilder();
+        
+        // Add street address first (most specific)
         if (!streetAddress.isEmpty()) {
-            fullAddress.append(streetAddress).append(", ");
+            fullAddress.append(streetAddress);
         }
-        fullAddress.append(selectedWard.name).append(", ");
-        fullAddress.append(selectedDistrict.name).append(", ");
-        fullAddress.append(selectedProvince.name);
+        
+        // Add ward
+        if (selectedWard != null) {
+            if (fullAddress.length() > 0) fullAddress.append(", ");
+            fullAddress.append(selectedWard.name);
+        }
+        
+        // Add district
+        if (selectedDistrict != null) {
+            if (fullAddress.length() > 0) fullAddress.append(", ");
+            fullAddress.append(selectedDistrict.name);
+        }
+        
+        // Add province
+        if (selectedProvince != null) {
+            if (fullAddress.length() > 0) fullAddress.append(", ");
+            fullAddress.append(selectedProvince.name);
+        }
+        
+        // Always add Vietnam for better geocoding
+        if (fullAddress.length() > 0) {
+            fullAddress.append(", Vietnam");
+        }
+        
+        android.util.Log.d("AddressPicker", "=== VIEW ON MAP CLICKED ===");
+        android.util.Log.d("AddressPicker", "Street: " + streetAddress);
+        android.util.Log.d("AddressPicker", "Ward: " + (selectedWard != null ? selectedWard.name : "null"));
+        android.util.Log.d("AddressPicker", "District: " + (selectedDistrict != null ? selectedDistrict.name : "null"));
+        android.util.Log.d("AddressPicker", "Province: " + (selectedProvince != null ? selectedProvince.name : "null"));
+        android.util.Log.d("AddressPicker", "Full address: " + fullAddress.toString());
         
         // Geocode address to get lat/lng
-        geocodeAndShowMap(fullAddress.toString());
+        if (fullAddress.length() > 0) {
+            geocodeAndShowMap(fullAddress.toString());
+        } else {
+            // Open map at default location
+            Intent intent = new Intent(AddressPickerActivity.this, MapActivity.class);
+            intent.putExtra("latitude", 10.762622);
+            intent.putExtra("longitude", 106.660172);
+            intent.putExtra("address", "");
+            startActivityForResult(intent, 100);
+        }
     }
 
     private void geocodeAndShowMap(String address) {
+        android.util.Log.d("AddressPicker", "=== GEOCODING START ===");
+        android.util.Log.d("AddressPicker", "Full address: " + address);
+        
         new Thread(() -> {
             try {
-                // Use Nominatim API
-                String encodedAddress = java.net.URLEncoder.encode(address, "UTF-8");
-                String url = "https://nominatim.openstreetmap.org/search?q=" + encodedAddress 
-                           + "&format=json&addressdetails=1&limit=1&countrycodes=vn&accept-language=vi";
+                // Try multiple geocoding services for better results
+                double lat = 0;
+                double lon = 0;
+                boolean found = false;
                 
-                String response = fetchFromAPI(url);
+                // Method 1: Try Nominatim with full address
+                android.util.Log.d("AddressPicker", "Method 1: Trying Nominatim with full address");
+                try {
+                    String encodedAddress = java.net.URLEncoder.encode(address, "UTF-8");
+                    String url = "https://nominatim.openstreetmap.org/search?q=" + encodedAddress 
+                               + "&format=json&addressdetails=1&limit=5&countrycodes=vn&accept-language=vi";
+                    
+                    android.util.Log.d("AddressPicker", "Nominatim URL: " + url);
+                    
+                    String response = fetchFromAPI(url);
+                    android.util.Log.d("AddressPicker", "Nominatim response: " + response);
+                    
+                    JSONArray jsonArray = new JSONArray(response);
+                    
+                    if (jsonArray.length() > 0) {
+                        // Get the best match (first result)
+                        JSONObject place = jsonArray.getJSONObject(0);
+                        lat = place.getDouble("lat");
+                        lon = place.getDouble("lon");
+                        found = true;
+                        android.util.Log.d("AddressPicker", "✓ Found via Nominatim: " + lat + ", " + lon);
+                    } else {
+                        android.util.Log.d("AddressPicker", "✗ No results from Nominatim");
+                    }
+                } catch (Exception e) {
+                    android.util.Log.e("AddressPicker", "✗ Nominatim error: " + e.getMessage());
+                    e.printStackTrace();
+                }
                 
-                JSONArray jsonArray = new JSONArray(response);
-                if (jsonArray.length() > 0) {
-                    JSONObject place = jsonArray.getJSONObject(0);
-                    double lat = place.getDouble("lat");
-                    double lon = place.getDouble("lon");
+                // Method 2: Try Mapbox Geocoding API (better for Vietnam)
+                if (!found) {
+                    android.util.Log.d("AddressPicker", "Method 2: Trying Mapbox Geocoding API");
+                    try {
+                        // Get token from BuildConfig (loaded from local.properties)
+                        String mapboxToken = BuildConfig.MAPBOX_ACCESS_TOKEN;
+                        
+                        // Remove "Vietnam" suffix for Mapbox as we use country filter
+                        String addressForMapbox = address.replace(", Vietnam", "");
+                        String encodedAddress = java.net.URLEncoder.encode(addressForMapbox, "UTF-8");
+                        
+                        String url = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + encodedAddress 
+                                   + ".json?access_token=" + mapboxToken 
+                                   + "&country=vn"
+                                   + "&language=vi"
+                                   + "&limit=5"
+                                   + "&types=address,poi,place,locality";
+                        
+                        android.util.Log.d("AddressPicker", "Mapbox URL: " + url);
+                        android.util.Log.d("AddressPicker", "Mapbox Token (first 20 chars): " + mapboxToken.substring(0, Math.min(20, mapboxToken.length())));
+                        
+                        String response = fetchFromAPI(url);
+                        android.util.Log.d("AddressPicker", "Mapbox response length: " + response.length());
+                        android.util.Log.d("AddressPicker", "Mapbox response: " + response.substring(0, Math.min(500, response.length())));
+                        
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONArray features = jsonObject.getJSONArray("features");
+                        
+                        android.util.Log.d("AddressPicker", "Mapbox found " + features.length() + " results");
+                        
+                        if (features.length() > 0) {
+                            JSONObject feature = features.getJSONObject(0);
+                            JSONArray coordinates = feature.getJSONArray("center");
+                            String placeName = feature.optString("place_name", "");
+                            
+                            lon = coordinates.getDouble(0);
+                            lat = coordinates.getDouble(1);
+                            found = true;
+                            
+                            android.util.Log.d("AddressPicker", "✓ Found via Mapbox: " + lat + ", " + lon);
+                            android.util.Log.d("AddressPicker", "  Place name: " + placeName);
+                        } else {
+                            android.util.Log.d("AddressPicker", "✗ No results from Mapbox");
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("AddressPicker", "✗ Mapbox error: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                
+                // Method 3: If not found, try with just district + province
+                if (!found && selectedDistrict != null && selectedProvince != null) {
+                    android.util.Log.d("AddressPicker", "Method 3: Trying with district + province only");
+                    try {
+                        String simpleAddress = selectedDistrict.name + ", " + selectedProvince.name + ", Vietnam";
+                        String encodedAddress = java.net.URLEncoder.encode(simpleAddress, "UTF-8");
+                        String url = "https://nominatim.openstreetmap.org/search?q=" + encodedAddress 
+                                   + "&format=json&limit=1&countrycodes=vn";
+                        
+                        android.util.Log.d("AddressPicker", "Fallback URL: " + url);
+                        
+                        String response = fetchFromAPI(url);
+                        JSONArray jsonArray = new JSONArray(response);
+                        
+                        if (jsonArray.length() > 0) {
+                            JSONObject place = jsonArray.getJSONObject(0);
+                            lat = place.getDouble("lat");
+                            lon = place.getDouble("lon");
+                            found = true;
+                            android.util.Log.d("AddressPicker", "✓ Found via fallback: " + lat + ", " + lon);
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("AddressPicker", "✗ Fallback error: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                
+                // Method 4: Fallback to province center
+                if (!found && selectedProvince != null) {
+                    android.util.Log.d("AddressPicker", "Method 4: Using province center");
+                    // Default coordinates for major cities
+                    if (selectedProvince.name.contains("Hồ Chí Minh")) {
+                        lat = 10.762622;
+                        lon = 106.660172;
+                        found = true;
+                        android.util.Log.d("AddressPicker", "✓ Using HCMC center");
+                    } else if (selectedProvince.name.contains("Hà Nội")) {
+                        lat = 21.028511;
+                        lon = 105.804817;
+                        found = true;
+                        android.util.Log.d("AddressPicker", "✓ Using Hanoi center");
+                    } else if (selectedProvince.name.contains("Đà Nẵng")) {
+                        lat = 16.047079;
+                        lon = 108.206230;
+                        found = true;
+                        android.util.Log.d("AddressPicker", "✓ Using Da Nang center");
+                    } else if (selectedProvince.name.contains("Cần Thơ")) {
+                        lat = 10.045162;
+                        lon = 105.746857;
+                        found = true;
+                        android.util.Log.d("AddressPicker", "✓ Using Can Tho center");
+                    }
+                }
+                
+                android.util.Log.d("AddressPicker", "=== GEOCODING END ===");
+                android.util.Log.d("AddressPicker", "Final result: " + (found ? "FOUND" : "NOT FOUND"));
+                android.util.Log.d("AddressPicker", "Coordinates: " + lat + ", " + lon);
+                
+                if (found) {
+                    double finalLat = lat;
+                    double finalLon = lon;
+                    String finalAddress = address;
                     
                     runOnUiThread(() -> {
+                        // Show toast to guide user
+                        if (address.matches("^\\d+.*")) {
+                            // Address starts with number (has house number)
+                            Toast.makeText(this, 
+                                "Đã tìm thấy khu vực gần đúng.\nVui lòng click trên bản đồ để chọn vị trí chính xác.", 
+                                Toast.LENGTH_LONG).show();
+                        }
+                        
                         Intent intent = new Intent(AddressPickerActivity.this, MapActivity.class);
-                        intent.putExtra("latitude", lat);
-                        intent.putExtra("longitude", lon);
-                        intent.putExtra("address", address);
+                        intent.putExtra("latitude", finalLat);
+                        intent.putExtra("longitude", finalLon);
+                        intent.putExtra("address", finalAddress);
                         startActivityForResult(intent, 100);
                     });
                 } else {
                     runOnUiThread(() -> {
-                        Toast.makeText(this, "Không tìm thấy địa chỉ này trên bản đồ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Không tìm thấy địa chỉ này trên bản đồ.\nVui lòng chọn trực tiếp trên bản đồ.", Toast.LENGTH_LONG).show();
+                        
+                        // Still open map at province/district center
+                        double defaultLat = 10.762622;
+                        double defaultLon = 106.660172;
+                        
+                        if (selectedProvince != null) {
+                            if (selectedProvince.name.contains("Hồ Chí Minh")) {
+                                defaultLat = 10.762622;
+                                defaultLon = 106.660172;
+                            } else if (selectedProvince.name.contains("Hà Nội")) {
+                                defaultLat = 21.028511;
+                                defaultLon = 105.804817;
+                            } else if (selectedProvince.name.contains("Đà Nẵng")) {
+                                defaultLat = 16.047079;
+                                defaultLon = 108.206230;
+                            }
+                        }
+                        
+                        Intent intent = new Intent(AddressPickerActivity.this, MapActivity.class);
+                        intent.putExtra("latitude", defaultLat);
+                        intent.putExtra("longitude", defaultLon);
+                        intent.putExtra("address", address);
+                        startActivityForResult(intent, 100);
                     });
                 }
             } catch (Exception e) {
+                android.util.Log.e("AddressPicker", "✗ Fatal error: " + e.getMessage());
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Lỗi tìm kiếm địa chỉ", Toast.LENGTH_SHORT).show();

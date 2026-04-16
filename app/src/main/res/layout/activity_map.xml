@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- OSMDroid MapView -->
-    <org.osmdroid.views.MapView
+    <!-- Mapbox MapView -->
+    <com.mapbox.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -46,9 +46,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="💡 Nhấn vào bản đồ để điều chỉnh vị trí nếu cần"
+                android:text="💡 Click vào bản đồ để chọn vị trí chính xác"
                 android:textSize="12sp"
-                android:textColor="@color/outline"
+                android:textColor="@color/primary"
                 android:layout_marginTop="8dp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -65,7 +65,7 @@
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="@color/white"
-        android:background="@drawable/bg_btn_submit"
+        android:background="@drawable/bg_btn_submit_selector"
         app:backgroundTint="@null"
         android:enabled="false" />
 

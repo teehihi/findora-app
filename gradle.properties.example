@@ -21,6 +21,6 @@ android.useAndroidX=true
 android.nonTransitiveRClass=true
 
 # Mapbox Downloads Token
-# DO NOT put real token here! This file is committed to git.
-# Token should be in local.properties (not committed)
-MAPBOX_DOWNLOADS_TOKEN=PLACEHOLDER
+# Get your token from: https://account.mapbox.com/access-tokens/
+# For public repositories, you can use the same token as MAPBOX_ACCESS_TOKEN
+MAPBOX_DOWNLOADS_TOKEN=YOUR_MAPBOX_TOKEN_HERE

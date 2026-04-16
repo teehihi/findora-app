@@ -93,19 +93,45 @@ public class ChatListActivity extends AppCompatActivity {
     }
 
     private void loadChats() {
+        // Try without orderBy first to avoid index requirement
         db.collection("chats")
                 .whereArrayContains("participants", currentUserId)
-                .orderBy("lastTimestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null || snapshots == null) {
+                    if (error != null) {
+                        android.util.Log.e("ChatListActivity", "Error loading chats: " + error.getMessage(), error);
+                        // Show error toast for debugging
+                        android.widget.Toast.makeText(this, "Lỗi tải tin nhắn: " + error.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                        showEmpty();
+                        return;
+                    }
+                    
+                    if (snapshots == null) {
+                        android.util.Log.d("ChatListActivity", "Snapshots is null");
                         showEmpty();
                         return;
                     }
 
+                    android.util.Log.d("ChatListActivity", "Loaded " + snapshots.size() + " chats");
+                    
                     chatDocs.clear();
+                    
+                    // Add all documents to list
+                    List<DocumentSnapshot> tempList = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots) {
-                        chatDocs.add(doc);
+                        tempList.add(doc);
                     }
+                    
+                    // Sort by lastTimestamp manually
+                    tempList.sort((a, b) -> {
+                        com.google.firebase.Timestamp tsA = a.getTimestamp("lastTimestamp");
+                        com.google.firebase.Timestamp tsB = b.getTimestamp("lastTimestamp");
+                        if (tsA == null && tsB == null) return 0;
+                        if (tsA == null) return 1;
+                        if (tsB == null) return -1;
+                        return tsB.compareTo(tsA); // Descending order
+                    });
+                    
+                    chatDocs.addAll(tempList);
                     adapter.notifyDataSetChanged();
 
                     if (chatDocs.isEmpty()) {

@@ -16,3 +16,12 @@ local.properties
 
 # Firebase - chứa API key nhạy cảm, không commit
 google-services.json
+app/google-services.json
+
+# Gradle properties - chứa sensitive data
+gradle.properties
+
+# Local configuration files
+*.properties
+!gradle-wrapper.properties
+!local.properties.example

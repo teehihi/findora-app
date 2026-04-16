@@ -105,6 +105,8 @@ public class ProfileActivity extends AppCompatActivity {
                             com.bumptech.glide.Glide.with(this)
                                     .load(photoUrl)
                                     .transform(new com.bumptech.glide.load.resource.bitmap.CircleCrop())
+                                    .placeholder(R.drawable.ic_person)
+                                    .error(R.drawable.ic_person)
                                     .into(ivAvatar);
                         } else if (ivAvatar != null) {
                             // Clear
@@ -114,6 +116,9 @@ public class ProfileActivity extends AppCompatActivity {
                         // Fallback to Auth if Firestore doc doesn't exist
                         tvUserName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
                         tvUserEmail.setText(user.getEmail() != null ? user.getEmail() : "");
+                        if (ivAvatar != null) {
+                            ivAvatar.setImageResource(R.drawable.ic_person);
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -121,6 +126,9 @@ public class ProfileActivity extends AppCompatActivity {
                     // Fallback to Auth
                     tvUserName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
                     tvUserEmail.setText(user.getEmail() != null ? user.getEmail() : "");
+                    if (ivAvatar != null) {
+                        ivAvatar.setImageResource(R.drawable.ic_person);
+                    }
                 });
         }
     }
