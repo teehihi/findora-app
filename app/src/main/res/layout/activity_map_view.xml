@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  activity_map_view.xml - Màn hình bản đồ toàn màn hình
+  Giống app "Tìm" trên iPhone
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mapViewRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- ===== Mapbox Map (Full Screen) ===== -->
+    <com.mapbox.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ===== Loading Indicator ===== -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/primary"
+        android:visibility="gone" />
+
+    <!-- ===== Bottom Navigation Bar ===== -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="88dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_bottom_nav"
+        android:paddingTop="4dp"
+        style="@style/BottomNavStyle"
+        app:elevation="4dp"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@null"
+        app:itemTextColor="@color/bottom_nav_color"
+        app:labelVisibilityMode="labeled" />
+
+    <!-- ===== FAB: Center Post Button (The '+' icon with background) ===== -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabCreatePost"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="20dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/primary"
+        app:tint="@android:color/white"
+        app:elevation="8dp"
+        app:fabSize="normal"
+        app:maxImageSize="24dp"
+        app:borderWidth="0dp"
+        android:contentDescription="Đăng bài mới" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

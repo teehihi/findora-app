@@ -82,4 +82,10 @@ dependencies {
     // TensorFlow Lite (must use play-services or MediaPipe because org.tensorflow causes namespace collision in AGP 8)
     implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
     implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
+    
+    // WorkManager for periodic AI matching
+    implementation("androidx.work:work-runtime:2.9.0")
+    
+    // Firebase Cloud Messaging
+    implementation("com.google.firebase:firebase-messaging")
 }

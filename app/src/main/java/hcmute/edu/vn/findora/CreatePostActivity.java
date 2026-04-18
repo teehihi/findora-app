@@ -41,9 +41,15 @@ import android.graphics.ImageDecoder;
 import android.os.Build;
 
 import hcmute.edu.vn.findora.ml.ImageClassifier;
+import hcmute.edu.vn.findora.model.Post;
+import hcmute.edu.vn.findora.utils.NotificationHelper;
+
+import java.util.ArrayList;
+import java.util.List;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 /**
- * Màn hình tạo bài đăng mới - Stitch Design 2024.
+ * Màn hình tạo bài đăng mới
  */
 public class CreatePostActivity extends AppCompatActivity {
 
@@ -365,7 +371,12 @@ public class CreatePostActivity extends AppCompatActivity {
             db.collection("posts")
                     .add(postData)
                     .addOnSuccessListener(ref -> {
+                        String newPostId = ref.getId();
                         Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
+                        
+                        // Tự động tìm matches và gửi thông báo AI
+                        findMatchesForNewPost(newPostId, postData);
+                        
                         finish();
                     })
                     .addOnFailureListener(e -> {
@@ -374,6 +385,77 @@ public class CreatePostActivity extends AppCompatActivity {
                         btnSubmit.setText("Đăng bài");
                     });
         }
+    }
+    
+    /**
+     * Tự động tìm matches cho bài đăng mới và gửi thông báo
+     * 
+     * CHỨC NĂNG:
+     * - Load tất cả bài đăng từ Firestore
+     * - Sử dụng AIMatchingHelper để tìm matches
+     * - Gửi thông báo cho users có bài match >= 70%
+     * 
+     * @param newPostId ID của bài đăng mới
+     * @param postData Dữ liệu bài đăng mới
+     */
+    private void findMatchesForNewPost(String newPostId, Map<String, Object> postData) {
+        // Tạo Post object từ postData
+        Post newPost = new Post();
+        newPost.setId(newPostId);
+        newPost.setTitle((String) postData.get("title"));
+        newPost.setDescription((String) postData.get("description"));
+        newPost.setType((String) postData.get("type"));
+        newPost.setUserId((String) postData.get("userId"));
+        newPost.setCreatedAt((Timestamp) postData.get("createdAt"));
+        
+        if (postData.containsKey("lat") && postData.containsKey("lng")) {
+            newPost.setLat((Double) postData.get("lat"));
+            newPost.setLng((Double) postData.get("lng"));
+        }
+        if (postData.containsKey("address")) {
+            newPost.setAddress((String) postData.get("address"));
+        }
+        if (postData.containsKey("imageLabel")) {
+            newPost.setImageLabel((String) postData.get("imageLabel"));
+        }
+        
+        // Load tất cả bài đăng
+        db.collection("posts").get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                List<Post> allPosts = new ArrayList<>();
+                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                    Post p = doc.toObject(Post.class);
+                    p.setId(doc.getId());
+                    allPosts.add(p);
+                }
+                
+                // Tìm matches
+                List<AIMatchingHelper.MatchResult> matches = 
+                    AIMatchingHelper.findMatches(newPost, allPosts);
+                
+                // Gửi thông báo cho các user có bài match >= 70%
+                for (AIMatchingHelper.MatchResult match : matches) {
+                    if (match.getScorePercentage() >= 70) {
+                        // Gửi thông báo AI match
+                        NotificationHelper.sendAIMatchNotification(
+                            match.post.getUserId(),
+                            newPostId,
+                            newPost.getTitle(),
+                            match.getScorePercentage()
+                        );
+                        
+                        android.util.Log.d("CreatePost", String.format(
+                            "Sent AI match notification to user %s: %s (%d%%)",
+                            match.post.getUserId(),
+                            match.post.getTitle(),
+                            match.getScorePercentage()
+                        ));
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                android.util.Log.e("CreatePost", "Failed to find matches", e);
+            });
     }
     
     private void openMapActivity() {

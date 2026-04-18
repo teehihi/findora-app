@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Marker xanh cho "Found" items -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    
+    <!-- Circle background -->
+    <path
+        android:fillColor="#34C759"
+        android:pathData="M16,16m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0" />
+    
+    <!-- White border -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,16m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+    
+    <!-- Green inner circle -->
+    <path
+        android:fillColor="#34C759"
+        android:pathData="M16,16m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+    
+    <!-- Checkmark icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13,18.17l-3.59,-3.58L8,16l5,5l9,-9l-1.41,-1.42z" />
+</vector>

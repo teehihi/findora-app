@@ -56,7 +56,10 @@
                     android:layout_weight="1"
                     android:text="@string/location_hcmc"
                     android:textSize="13sp"
-                    android:textColor="@color/on_surface_variant" />
+                    android:textColor="@color/on_surface_variant"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp" />
 
                 <ImageButton
                     android:id="@+id/btnNotification"
@@ -66,6 +69,16 @@
                     android:src="@drawable/ic_notifications"
                     app:tint="@color/on_surface_variant"
                     android:contentDescription="Notifications" />
+                
+                <ImageButton
+                    android:id="@+id/btnRefreshMatches"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_ios_icon_btn"
+                    android:src="@drawable/ic_refresh"
+                    app:tint="@color/primary"
+                    android:contentDescription="Tìm matches ngay" />
 
             </LinearLayout>
 
@@ -183,6 +196,7 @@
 
             <!-- ── AI Match Assistant Card ── -->
             <LinearLayout
+                android:id="@+id/layoutAICard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -190,7 +204,9 @@
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="4dp"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
 
                 <!-- Header row: icon + label -->
                 <LinearLayout
@@ -220,6 +236,7 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvAITitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/ai_coming_soon"
@@ -229,6 +246,7 @@
                     android:layout_marginBottom="4dp" />
 
                 <TextView
+                    android:id="@+id/tvAIDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/ai_description"

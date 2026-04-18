@@ -35,12 +35,16 @@
                 android:layout_marginEnd="4dp" />
 
             <TextView
+                android:id="@+id/tvLocation"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/location_hcmc"
                 android:textSize="13sp"
-                android:textColor="@color/on_surface_variant" />
+                android:textColor="@color/on_surface_variant"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp" />
 
             <ImageButton
                 android:id="@+id/btnNotification"

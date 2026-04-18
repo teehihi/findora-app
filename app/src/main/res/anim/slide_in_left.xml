@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- iOS-style parallax - Enter from left (like Facebook iOS) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/decelerate_interpolator"
+    android:shareInterpolator="false">
+    
+    <!-- Slide in from left (full screen) -->
+    <translate
+        android:duration="350"
+        android:fromXDelta="-100%"
+        android:toXDelta="0%"
+        android:interpolator="@android:anim/decelerate_interpolator" />
+</set>

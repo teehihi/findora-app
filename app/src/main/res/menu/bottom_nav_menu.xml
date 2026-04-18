@@ -7,9 +7,9 @@
         android:title="@string/nav_home" />
 
     <item
-        android:id="@+id/nav_search"
-        android:icon="@drawable/ic_nav_search_selector"
-        android:title="@string/nav_search" />
+        android:id="@+id/nav_map"
+        android:icon="@drawable/ic_nav_map_selector"
+        android:title="@string/nav_map" />
 
     <!-- 
       Empty placeholder for the middle FAB button.
