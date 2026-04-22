@@ -29,6 +29,7 @@ android {
         // Add API keys to BuildConfig and Resources
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: ""}\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY") ?: ""}\"")
         resValue("string", "mapbox_access_token", localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: "")
     }
 
@@ -88,4 +89,14 @@ dependencies {
     
     // Firebase Cloud Messaging
     implementation("com.google.firebase:firebase-messaging")
+    
+    // Google Generative AI (Gemini) - Updated version
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    
+    // Guava for Futures (required by Gemini)
+    implementation("com.google.guava:guava:31.1-android")
+    
+    // Kotlin coroutines (required for Gemini)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }

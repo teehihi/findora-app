@@ -43,10 +43,16 @@ import android.os.Build;
 import hcmute.edu.vn.findora.ml.ImageClassifier;
 import hcmute.edu.vn.findora.model.Post;
 import hcmute.edu.vn.findora.utils.NotificationHelper;
+import hcmute.edu.vn.findora.utils.GeminiRestHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
 
 /**
  * Màn hình tạo bài đăng mới
@@ -86,6 +92,8 @@ public class CreatePostActivity extends AppCompatActivity {
     private Double predictedConfidence = null;
     private ImageClassifier imageClassifier;
     private ExecutorService executorService;
+    private GeminiRestHelper geminiHelper;
+    private Uri cameraImageUri = null;
     
     private static final int MAP_REQUEST_CODE = 1002;
 
@@ -133,6 +141,24 @@ public class CreatePostActivity extends AppCompatActivity {
         tvAiAssisted = findViewById(R.id.tvAiAssisted);
         
         executorService = Executors.newSingleThreadExecutor();
+        
+        // Initialize Gemini AI (using REST API)
+        try {
+            String geminiApiKey = BuildConfig.GEMINI_API_KEY;
+            android.util.Log.d("CreatePost", "Gemini API Key length: " + (geminiApiKey != null ? geminiApiKey.length() : 0));
+            
+            if (geminiApiKey != null && !geminiApiKey.isEmpty() && !geminiApiKey.equals("your_gemini_api_key_here")) {
+                geminiHelper = new GeminiRestHelper(geminiApiKey);
+                android.util.Log.d("CreatePost", "GeminiRestHelper initialized successfully");
+            } else {
+                android.util.Log.w("CreatePost", "Gemini API key not configured");
+                Toast.makeText(this, "⚠️ Chưa cấu hình Gemini API key. Tính năng AI bị tắt.", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            android.util.Log.e("CreatePost", "Failed to initialize GeminiRestHelper", e);
+            Toast.makeText(this, "⚠️ Lỗi khởi tạo AI: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        
         com.google.android.gms.tflite.java.TfLite.initialize(this)
             .addOnSuccessListener(aVoid -> {
                 try {
@@ -149,7 +175,7 @@ public class CreatePostActivity extends AppCompatActivity {
         // Initialize map preview
         initializeMapPreview();
         
-        cvImageUpload.setOnClickListener(v -> pickImage.launch("image/*"));
+        cvImageUpload.setOnClickListener(v -> showImagePickerDialog());
         btnSelectLocation.setOnClickListener(v -> openMapActivity());
 
         btnBack.setOnClickListener(v -> finish());
@@ -196,21 +222,187 @@ public class CreatePostActivity extends AppCompatActivity {
         btnSubmit.setOnClickListener(v -> submitPost());
     }
     
-    // ActivityResultLauncher for picking image
+    // ActivityResultLauncher for picking image from gallery
     private final ActivityResultLauncher<String> pickImage = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
                 if (uri != null) {
-                    selectedImageUri = uri;
-                    ivImagePreview.setImageURI(selectedImageUri);
-                    ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    ivImagePreview.setImageTintList(null); // Remove tint to show original image colors
-                    
-                    // Run AI classification
-                    classifyImage(uri);
+                    handleImageSelected(uri);
                 }
             }
     );
+    
+    // ActivityResultLauncher for taking photo with camera
+    private final ActivityResultLauncher<Uri> takePhoto = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(),
+            success -> {
+                if (success && cameraImageUri != null) {
+                    handleImageSelected(cameraImageUri);
+                }
+            }
+    );
+    
+    // ActivityResultLauncher for camera permission
+    private final ActivityResultLauncher<String> requestCameraPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            isGranted -> {
+                if (isGranted) {
+                    openCamera();
+                } else {
+                    Toast.makeText(this, "Cần quyền Camera để chụp ảnh", Toast.LENGTH_SHORT).show();
+                }
+            }
+    );
+    
+    /**
+     * Hiển thị dialog chọn Camera hoặc Gallery
+     */
+    private void showImagePickerDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = 
+            new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_image_picker, null);
+        bottomSheet.setContentView(view);
+        
+        view.findViewById(R.id.btnCamera).setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            checkCameraPermissionAndOpen();
+        });
+        
+        view.findViewById(R.id.btnGallery).setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            pickImage.launch("image/*");
+        });
+        
+        view.findViewById(R.id.btnCancel).setOnClickListener(v -> bottomSheet.dismiss());
+        
+        bottomSheet.show();
+    }
+    
+    /**
+     * Kiểm tra quyền Camera và mở camera
+     */
+    private void checkCameraPermissionAndOpen() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+                == PackageManager.PERMISSION_GRANTED) {
+            // Đã có quyền, mở camera
+            openCamera();
+        } else {
+            // Chưa có quyền, yêu cầu
+            requestCameraPermission.launch(Manifest.permission.CAMERA);
+        }
+    }
+    
+    /**
+     * Mở camera để chụp ảnh
+     */
+    private void openCamera() {
+        try {
+            // Tạo file tạm để lưu ảnh
+            File photoFile = new File(getExternalFilesDir(null), "photo_" + System.currentTimeMillis() + ".jpg");
+            cameraImageUri = FileProvider.getUriForFile(
+                this,
+                getApplicationContext().getPackageName() + ".fileprovider",
+                photoFile
+            );
+            
+            takePhoto.launch(cameraImageUri);
+        } catch (Exception e) {
+            android.util.Log.e("CreatePost", "Error opening camera", e);
+            Toast.makeText(this, "Lỗi mở camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Xử lý khi ảnh được chọn (từ camera hoặc gallery)
+     */
+    private void handleImageSelected(Uri uri) {
+        selectedImageUri = uri;
+        ivImagePreview.setImageURI(selectedImageUri);
+        ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        ivImagePreview.setImageTintList(null);
+        
+        // Run AI classification (TensorFlow Lite)
+        classifyImage(uri);
+        
+        // Run Gemini AI to generate title and description
+        if (geminiHelper != null) {
+            generateDescriptionWithGemini(uri);
+        }
+    }
+    
+    /**
+     * Sử dụng Gemini AI để tạo tiêu đề và mô tả từ ảnh
+     */
+    private void generateDescriptionWithGemini(Uri uri) {
+        tvAiAssisted.setText("🤖 AI đang phân tích ảnh...");
+        
+        executorService.execute(() -> {
+            try {
+                Bitmap bitmap;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(getContentResolver(), uri));
+                } else {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                }
+                
+                // Resize bitmap để giảm kích thước (Gemini có giới hạn)
+                Bitmap resizedBitmap = resizeBitmap(bitmap, 1024);
+                
+                runOnUiThread(() -> {
+                    geminiHelper.generateDescription(resizedBitmap, selectedType, new GeminiRestHelper.DescriptionCallback() {
+                        @Override
+                        public void onSuccess(GeminiRestHelper.DescriptionResult result) {
+                            runOnUiThread(() -> {
+                                // Auto-fill title and description
+                                etTitle.setText(result.title);
+                                etDescription.setText(result.description);
+                                tvAiAssisted.setText("✨ AI đã tạo tiêu đề và mô tả");
+                                
+                                Toast.makeText(CreatePostActivity.this, 
+                                    "AI đã tạo nội dung! Bạn có thể chỉnh sửa.", 
+                                    Toast.LENGTH_LONG).show();
+                            });
+                        }
+                        
+                        @Override
+                        public void onError(String error) {
+                            runOnUiThread(() -> {
+                                tvAiAssisted.setText("⚠️ AI không khả dụng");
+                                Toast.makeText(CreatePostActivity.this, 
+                                    "Không thể kết nối AI. Vui lòng nhập thủ công.", 
+                                    Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    });
+                });
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    tvAiAssisted.setText("⚠️ Lỗi xử lý ảnh");
+                });
+            }
+        });
+    }
+    
+    /**
+     * Resize bitmap để giảm kích thước
+     */
+    private Bitmap resizeBitmap(Bitmap bitmap, int maxSize) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        
+        float ratio = Math.min(
+            (float) maxSize / width,
+            (float) maxSize / height
+        );
+        
+        int newWidth = Math.round(width * ratio);
+        int newHeight = Math.round(height * ratio);
+        
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+    }
     
     private void classifyImage(Uri uri) {
         if (imageClassifier == null) return;

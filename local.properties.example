@@ -1,18 +1,15 @@
-## This file is an example of local.properties
-# Copy this file to local.properties and fill in your own values
-# local.properties is in .gitignore and will NOT be committed to git
+## Example local.properties file
+## Copy this file to local.properties and fill in your API keys
 
-# Android SDK location
-sdk.dir=/path/to/your/Android/sdk
+# Android SDK location (auto-generated)
+sdk.dir=/path/to/android/sdk
 
-# Google Maps API Key
-# Get from: https://console.cloud.google.com/google/maps-apis/credentials
-GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
+# API Keys - DO NOT commit the actual local.properties file!
+# Get your Gemini API key from: https://makersuite.google.com/app/apikey
+GEMINI_API_KEY=your_gemini_api_key_here
 
-# Mapbox Access Token (Public Token - starts with pk.)
-# Get from: https://account.mapbox.com/access-tokens/
-# IMPORTANT: Use PUBLIC token (pk.), NOT secret token (sk.)
-MAPBOX_ACCESS_TOKEN=pk.YOUR_MAPBOX_PUBLIC_TOKEN_HERE
+# Mapbox token (if needed)
+MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
 
-# Mapbox Downloads Token (same as access token for public SDK)
-MAPBOX_DOWNLOADS_TOKEN=pk.YOUR_MAPBOX_PUBLIC_TOKEN_HERE
+# Google Maps API key (if needed)
+GOOGLE_MAPS_API_KEY=your_google_maps_key_here
