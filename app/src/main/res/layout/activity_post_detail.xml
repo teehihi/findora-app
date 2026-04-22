@@ -391,6 +391,20 @@
                         app:tint="@color/outline" />
                 </LinearLayout>
 
+            </LinearLayout>
+
+            <!-- Like & Comment Section -->
+            <include layout="@layout/section_like_comment" />
+
+            <!-- Continue with Smart Matches in main card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="40dp">
+
                 <!-- Smart Matches Section -->
                 <LinearLayout
                     android:id="@+id/layoutSmartMatchesTitle"

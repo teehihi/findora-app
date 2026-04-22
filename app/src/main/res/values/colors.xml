@@ -46,4 +46,14 @@
     <color name="on_secondary_container">#111827</color>
     <color name="surface_container">#F3F4F6</color>
     <color name="surface_container_high">#E5E7EB</color>
+    
+    <!-- Notification colors -->
+    <color name="notification_unread_bg">#F0F7FF</color>
+    <color name="error">#EF4444</color>
+    <color name="success">#22C55E</color>
+    
+    <!-- Text colors -->
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_tertiary">#9CA3AF</color>
 </resources>

@@ -73,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout         layoutAICard;
     private TextView             tvAITitle;
     private TextView             tvAIDescription;
+    private ImageButton          btnNotification;
+    private TextView             tvNotificationBadge;
 
     // Filter chips
     private TextView chipAll, chipLost, chipFound;
@@ -131,11 +133,19 @@ public class MainActivity extends AppCompatActivity {
         layoutAICard  = findViewById(R.id.layoutAICard);
         tvAITitle     = findViewById(R.id.tvAITitle);
         tvAIDescription = findViewById(R.id.tvAIDescription);
+        btnNotification = findViewById(R.id.btnNotification);
+        tvNotificationBadge = findViewById(R.id.tvNotificationBadge);
         
         ImageButton btnRefreshMatches = findViewById(R.id.btnRefreshMatches);
         btnRefreshMatches.setOnClickListener(v -> {
             android.widget.Toast.makeText(this, "Đang tìm matches mới...", android.widget.Toast.LENGTH_SHORT).show();
             WorkManagerHelper.runAIMatchingNow(this);
+        });
+        
+        // Notification button click
+        btnNotification.setOnClickListener(v -> {
+            Intent intent = new Intent(this, NotificationActivity.class);
+            startActivity(intent);
         });
 
         // Heading: "What are we finding today?" -> "finding" is blue italic
@@ -661,12 +671,33 @@ public class MainActivity extends AppCompatActivity {
         
         if (currentUserId == null) return;
         
-        NotificationHelper.getUnreadCount(currentUserId, count -> {
-            // Hiển thị badge trên notification icon
-            if (count > 0) {
-                // TODO: Hiển thị badge số (có thể dùng BadgeDrawable)
+        // Realtime listener cho unread count
+        db.collection("notifications")
+            .whereEqualTo("userId", currentUserId)
+            .whereEqualTo("read", false)
+            .addSnapshotListener((snapshots, error) -> {
+                if (error != null || snapshots == null) {
+                    updateNotificationBadge(0);
+                    return;
+                }
+                
+                int count = snapshots.size();
+                updateNotificationBadge(count);
                 Log.d(TAG, "Unread notifications: " + count);
-            }
-        });
+            });
+    }
+    
+    /**
+     * Cập nhật badge hiển thị số thông báo chưa đọc
+     */
+    private void updateNotificationBadge(int count) {
+        if (tvNotificationBadge == null) return;
+        
+        if (count > 0) {
+            tvNotificationBadge.setVisibility(View.VISIBLE);
+            tvNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+        } else {
+            tvNotificationBadge.setVisibility(View.GONE);
+        }
     }
 }

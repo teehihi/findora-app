@@ -198,6 +198,17 @@ public class Post {
      * - Hiển thị độ tin cậy cho người dùng
      */
     private Double confidence;
+    
+    /**
+     * Danh sách user IDs đã like bài đăng
+     * 
+     * VÍ DỤ: ["user123", "user456", "user789"]
+     * 
+     * SỬ DỤNG:
+     * - Hiển thị số lượng likes
+     * - Kiểm tra user hiện tại đã like chưa
+     */
+    private java.util.List<String> likes;
 
     // ==================== CONSTRUCTORS ====================
     
@@ -343,4 +354,10 @@ public class Post {
     public Double getConfidence() { return confidence; }
     /** Set độ tin cậy AI. @param confidence Độ tin cậy (0.0 - 1.0) */
     public void setConfidence(Double confidence) { this.confidence = confidence; }
+    
+    // --- Likes ---
+    /** Lấy danh sách likes. @return List user IDs */
+    public java.util.List<String> getLikes() { return likes; }
+    /** Set danh sách likes. @param likes List user IDs */
+    public void setLikes(java.util.List<String> likes) { this.likes = likes; }
 }

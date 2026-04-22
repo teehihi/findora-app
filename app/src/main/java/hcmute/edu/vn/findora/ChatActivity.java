@@ -266,7 +266,11 @@ public class ChatActivity extends AppCompatActivity {
 
         db.collection("chats").document(chatId)
                 .collection("messages")
-                .add(msgData);
+                .add(msgData)
+                .addOnSuccessListener(documentReference -> {
+                    // Gửi notification cho người nhận
+                    sendMessageNotification(text);
+                });
 
         // Update chat document with last message
         Map<String, Object> chatUpdate = new HashMap<>();
@@ -275,5 +279,31 @@ public class ChatActivity extends AppCompatActivity {
 
         db.collection("chats").document(chatId)
                 .update(chatUpdate);
+    }
+    
+    /**
+     * Gửi notification tin nhắn mới cho người nhận
+     */
+    private void sendMessageNotification(String messageText) {
+        // Lấy thông tin người gửi (current user)
+        db.collection("users").document(currentUserId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String senderName = doc.getString("fullName");
+                        String senderAvatar = doc.getString("photoUrl");
+                        
+                        // Gửi notification
+                        hcmute.edu.vn.findora.utils.NotificationHelper.sendMessageNotification(
+                            otherUserId,
+                            currentUserId,
+                            senderName != null ? senderName : "Người dùng",
+                            messageText,
+                            chatId
+                        );
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ChatActivity", "Failed to get sender info", e);
+                });
     }
 }
