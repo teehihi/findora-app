@@ -179,7 +179,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:layout_marginStart="20dp"
-            android:textColor="#6B7280"
+            android:textColor="#171717"
             android:textSize="12sp"
             android:maxLines="2"
             android:ellipsize="end" />
@@ -238,8 +238,8 @@
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="8dp"
                 android:textSize="14sp"
-                android:textColor="#2C2F30"
-                android:textColorHint="#6B7280"
+                android:textColor="#171717"
+                android:textColorHint="#71717A"
                 android:background="@android:color/transparent"
                 android:minHeight="36dp" />
 

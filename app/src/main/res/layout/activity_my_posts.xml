@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F8F9FA">
+    android:background="#F8F9FA"
+    android:fitsSystemWindows="true">
 
     <!-- Top Bar -->
     <RelativeLayout
@@ -29,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="My Posts"
+            android:text="@string/my_posts_title"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/on_surface" />
@@ -71,7 +72,7 @@
                     android:layout_weight="1"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Lost"
+                    android:text="@string/my_posts_tab_lost"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/primary"
@@ -83,7 +84,7 @@
                     android:layout_weight="1"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Found"
+                    android:text="@string/my_posts_tab_found"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#5F6368"
@@ -95,8 +96,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:text="Manage your active\nreports"
+                android:text="@string/my_posts_heading"
                 android:textSize="28sp"
+                android:textStyle="bold"
                 android:fontFamily="sans-serif-black"
                 android:textColor="@color/on_surface"
                 android:lineSpacingExtra="4dp" />
@@ -105,7 +107,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Update status or edit details of your listed items."
+                android:text="@string/my_posts_subheading"
                 android:textSize="15sp"
                 android:textColor="@color/on_surface_variant" />
 
@@ -157,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:gravity="center"
-                    android:text="Posts are automatically archived after 30\ndays of inactivity to keep our database\nfresh."
+                    android:text="@string/my_posts_footer"
                     android:textSize="13sp"
                     android:lineSpacingExtra="4dp"
                     android:textColor="@color/outline" />

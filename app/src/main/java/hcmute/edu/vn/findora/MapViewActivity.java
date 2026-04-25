@@ -107,7 +107,7 @@ public class MapViewActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             } else if (id == R.id.nav_map) {
@@ -117,14 +117,14 @@ public class MapViewActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, ChatListActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             } else if (id == R.id.nav_profile) {
                 Intent intent = new Intent(this, ProfileActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             }

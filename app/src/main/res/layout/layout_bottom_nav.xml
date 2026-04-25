@@ -1,32 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  activity_map_view.xml - Màn hình bản đồ toàn màn hình
-  Giống app "Tìm" trên iPhone
--->
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/mapViewRoot"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+<!-- Reusable Bottom Navigation + FAB -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- ===== Mapbox Map (Full Screen) ===== -->
-    <com.mapbox.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <!-- ===== Loading Indicator ===== -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminateTint="@color/primary"
-        android:visibility="gone" />
-
-    <!-- ===== Bottom Navigation Bar ===== -->
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -41,7 +18,7 @@
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="labeled" />
 
-    <!-- ===== FAB: Center Post Button (The '+' icon with background) ===== -->
+    <!-- FAB: Center Post Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreatePost"
         android:layout_width="56dp"
@@ -57,4 +34,4 @@
         app:borderWidth="0dp"
         android:contentDescription="Đăng bài mới" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</merge>

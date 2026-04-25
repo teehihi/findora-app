@@ -142,6 +142,14 @@ public class MainActivity extends AppCompatActivity {
         tvAIDescription = findViewById(R.id.tvAIDescription);
         btnNotification = findViewById(R.id.btnNotification);
         tvNotificationBadge = findViewById(R.id.tvNotificationBadge);
+
+        // Pull to refresh
+        androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh = findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        swipeRefresh.setOnRefreshListener(() -> {
+            loadPosts();
+            swipeRefresh.setRefreshing(false);
+        });
         
         ImageButton btnRefreshMatches = findViewById(R.id.btnRefreshMatches);
         btnRefreshMatches.setOnClickListener(v -> {
@@ -188,21 +196,21 @@ public class MainActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide right (Map is to the right of Home)
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 return true;
             } else if (id == R.id.nav_chat) {
                 Intent intent = new Intent(this, ChatListActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide right (Chat is to the right of Home)
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 return true;
             } else if (id == R.id.nav_profile) {
                 Intent intent = new Intent(this, ProfileActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide right (Profile is to the right of Home)
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 return true;
             }
             return false;

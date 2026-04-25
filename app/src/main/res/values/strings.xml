@@ -69,6 +69,16 @@
     <string name="profile_settings_desc">Tùy chọn và bảo mật</string>
     <string name="profile_logout">Đăng xuất</string>
 
+    <!-- My Posts -->
+    <string name="my_posts_title">Bài đăng của tôi</string>
+    <string name="my_posts_tab_lost">Thất lạc</string>
+    <string name="my_posts_tab_found">Tìm thấy</string>
+    <string name="my_posts_heading">Quản lý bài đăng\ncủa bạn</string>
+    <string name="my_posts_subheading">Cập nhật trạng thái hoặc chỉnh sửa thông tin bài đăng.</string>
+    <string name="my_posts_footer">Bài đăng sẽ tự động lưu trữ sau 30 ngày\nkhông hoạt động để giữ cơ sở dữ liệu sạch.</string>
+    <string name="my_posts_btn_edit">Chỉnh sửa</string>
+    <string name="my_posts_btn_resolved">Đã giải quyết</string>
+
     <!-- Bottom Navigation -->
     <string name="nav_home">Trang chủ</string>
     <string name="nav_map">Bản đồ</string>

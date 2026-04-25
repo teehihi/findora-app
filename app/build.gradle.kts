@@ -87,6 +87,9 @@ dependencies {
     // WorkManager for periodic AI matching
     implementation("androidx.work:work-runtime:2.9.0")
     
+    // SwipeRefreshLayout
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    
     // Firebase Cloud Messaging
     implementation("com.google.firebase:firebase-messaging")
     

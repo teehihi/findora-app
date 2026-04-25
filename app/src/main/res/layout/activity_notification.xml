@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:fitsSystemWindows="true">
 
     <!-- Toolbar -->
     <LinearLayout
@@ -16,7 +17,7 @@
         android:paddingStart="8dp"
         android:paddingEnd="16dp"
         android:background="@color/white"
-        android:elevation="2dp">
+        android:elevation="0dp">
 
         <ImageButton
             android:id="@+id/btnBack"

@@ -18,9 +18,15 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:background="@color/background">
 
     <!-- ===== Scrollable Content ===== -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -383,7 +389,9 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- ── Bottom Navigation Bar ── -->
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- ── Bottom Navigation Bar (Flat Design) ── -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -392,13 +400,13 @@
         android:background="@drawable/bg_bottom_nav"
         android:paddingTop="4dp"
         style="@style/BottomNavStyle"
-        app:elevation="4dp"
+        app:elevation="0dp"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@null"
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="labeled" />
 
-    <!-- ── FAB: Center Post Button (The '+' icon with background) ── -->
+    <!-- ── FAB: Center Post Button (Flat Design) ── -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreatePost"
         android:layout_width="56dp"
@@ -408,7 +416,7 @@
         android:src="@drawable/ic_add"
         app:backgroundTint="@color/primary"
         app:tint="@android:color/white"
-        app:elevation="8dp"
+        app:elevation="0dp"
         app:fabSize="normal"
         app:maxImageSize="24dp"
         app:borderWidth="0dp"

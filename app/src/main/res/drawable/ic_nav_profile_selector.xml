@@ -1,5 +1,5 @@
 <!-- ic_nav_profile_selector.xml -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/ic_nav_profile_active" android:state_checked="true" />
-    <item android:drawable="@drawable/ic_nav_profile_inactive" />
+    <item android:drawable="@drawable/ic_user_feather" android:state_checked="true" />
+    <item android:drawable="@drawable/ic_user_feather" />
 </selector>

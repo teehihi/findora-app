@@ -1,27 +1,53 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Stitch Modern Design System Theme -->
+    <!-- Green SaaS Modern Minimalist Theme (Light Mode) -->
     <style name="Base.Theme.Findora" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Colors -->
+        <!-- Primary Green -->
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSurface">@color/white</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+
+        <!-- Surface & Background -->
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
         <item name="android:colorBackground">@color/background</item>
 
-        <!-- Navigation Bar (StatusBar & SystemNav) -->
-        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
-        <item name="android:statusBarColor">#FFFFFF</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
+        <!-- Borders & Outlines -->
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
 
-        <!-- Disable Material 3 BottomNav Active Indicator pill -->
+        <!-- Status Colors -->
+        <item name="colorError">@color/error</item>
+
+        <!-- System Bars (Light Mode) -->
+        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+
+        <!-- Edge-to-Edge -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <!-- Disable Material 3 BottomNav Active Indicator -->
         <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+
+        <!-- Typography -->
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
     </style>
 
     <style name="Theme.Findora" parent="Base.Theme.Findora" />
 
-    <!-- Style to remove M3 pill indicator from BottomNavigationView -->
+    <!-- BottomNavigationView (Flat Design) -->
     <style name="Widget.App.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
         <item name="itemActiveIndicatorStyle">@style/App.BottomNav.ActiveIndicator</item>
         <item name="materialThemeOverlay">@style/App.BottomNav.Theme</item>
+        <item name="elevation">0dp</item>
+        <item name="itemIconTint">@color/bottom_nav_color</item>
+        <item name="itemTextColor">@color/bottom_nav_color</item>
     </style>
 
     <style name="App.BottomNav.ActiveIndicator" parent="">
@@ -31,12 +57,28 @@
     </style>
     
     <style name="App.BottomNav.Theme" parent="">
-        <!-- Control active/inactive label text size (iOS style is 11-12sp) -->
         <item name="textAppearanceCaption">@style/App.BottomNav.Text</item>
     </style>
     
     <style name="App.BottomNav.Text" parent="TextAppearance.Material3.LabelSmall">
         <item name="android:textSize">11sp</item>
         <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Button Styles (Flat Design) -->
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="elevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/outline</item>
+    </style>
+
+    <!-- Card Styles (Flat Design) -->
+    <style name="Widget.App.CardView" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/outline</item>
     </style>
 </resources>

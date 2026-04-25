@@ -88,15 +88,26 @@ public class ChatListActivity extends AppCompatActivity {
         fabCreatePost = findViewById(R.id.fabCreatePost);
         tvLocation = findViewById(R.id.tvLocation);
 
+        // Pull to refresh
+        androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh = findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        swipeRefresh.setOnRefreshListener(() -> {
+            loadChats();
+            swipeRefresh.setRefreshing(false);
+        });
+
         // Apply window insets for safe area
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
             findViewById(android.R.id.content), (v, insets) -> {
                 androidx.core.graphics.Insets systemBars =
                     insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
                 v.setPadding(0, systemBars.top, 0, 0);
-                bottomNav.setPadding(0, 0, 0, systemBars.bottom);
                 return insets;
             });
+        // Prevent BottomNavigationView from consuming window insets
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomNav, (v, insets) -> {
+            return androidx.core.view.WindowInsetsCompat.CONSUMED;
+        });
 
         chatDocs = new ArrayList<>();
         adapter = new ChatListAdapter(this, chatDocs, currentUserId);
@@ -119,7 +130,7 @@ public class ChatListActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide left (Home is to the left of Chat)
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             } else if (id == R.id.nav_map) {
@@ -127,7 +138,7 @@ public class ChatListActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide left (Map is to the left of Chat)
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             } else if (id == R.id.nav_profile) {
@@ -135,7 +146,7 @@ public class ChatListActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 // Slide right (Profile is to the right of Chat)
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                overridePendingTransition(0, 0);
                 finish();
                 return true;
             } else if (id == R.id.nav_chat) {

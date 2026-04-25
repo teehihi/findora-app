@@ -15,7 +15,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        android:textColor="#9CA3AF"
+        android:textColor="#171717"
         android:textSize="11sp"
         android:visibility="gone" />
 
@@ -54,7 +54,7 @@
                 android:id="@+id/tvReplySenderSent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#9CA3AF"
+                android:textColor="#171717"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -219,7 +219,7 @@
                     android:id="@+id/tvReplySenderReceived"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#9CA3AF"
+                    android:textColor="#171717"
                     android:textSize="11sp" />
             </LinearLayout>
 

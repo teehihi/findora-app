@@ -52,7 +52,7 @@
                         android:text="LOST"
                         android:textSize="9sp"
                         android:textStyle="bold"
-                        android:textColor="#D32F2F"
+                        android:textColor="#FFFFFF"
                         android:paddingHorizontal="10dp"
                         android:paddingVertical="4dp"
                         android:background="@drawable/bg_badge_lost" />
@@ -75,6 +75,7 @@
                     android:layout_marginTop="8dp"
                     android:text="iPhone 14 Pro Max"
                     android:textSize="18sp"
+                    android:textStyle="bold"
                     android:fontFamily="sans-serif-black"
                     android:textColor="@color/on_surface"
                     android:maxLines="1"
@@ -123,15 +124,15 @@
                 android:layout_marginEnd="12dp"
                 android:background="@drawable/bg_btn_outline_ios"
                 android:gravity="center"
-                android:text="Edit"
-                android:textColor="@color/on_surface"
+                android:text="@string/my_posts_btn_edit"
+                android:textColor="#22C55E"
                 android:textStyle="bold"
                 android:textSize="14sp"
                 android:drawableStart="@drawable/ic_edit_ios"
                 android:paddingStart="24dp"
                 android:paddingEnd="16dp"
                 android:drawablePadding="-12dp"
-                app:drawableTint="@color/on_surface" />
+                app:drawableTint="#22C55E" />
 
             <TextView
                 android:id="@+id/btnResolved"
@@ -140,7 +141,7 @@
                 android:layout_height="44dp"
                 android:background="@drawable/bg_button_primary_ios"
                 android:gravity="center"
-                android:text="Resolved"
+                android:text="@string/my_posts_btn_resolved"
                 android:textColor="@color/white"
                 android:textStyle="bold"
                 android:textSize="14sp"

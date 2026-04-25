@@ -45,19 +45,19 @@
         <activity
             android:name=".AuthActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".CreatePostActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".EditProfileActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".ChatActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".ChatListActivity"
             android:exported="false" />
@@ -67,7 +67,7 @@
         <activity
             android:name=".PostDetailActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".MyPostsActivity"
             android:exported="false" />
@@ -80,7 +80,7 @@
         <activity
             android:name=".AddressPickerActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".NotificationActivity"
             android:exported="false" />

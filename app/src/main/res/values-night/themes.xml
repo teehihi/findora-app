@@ -1,7 +1,43 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Dark mode: giữ cùng primary blue, nền tối -->
-    <style name="Base.Theme.Findora" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#0A84FF</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+    <!-- Green SaaS Modern Minimalist Theme (Dark Mode) -->
+    <style name="Base.Theme.Findora" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary Green -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_light</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+
+        <!-- Surface & Background -->
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="android:colorBackground">@color/background</item>
+
+        <!-- Borders & Outlines -->
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+
+        <!-- Status Colors -->
+        <item name="colorError">@color/error</item>
+
+        <!-- System Bars (Dark Mode) -->
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+
+        <!-- Edge-to-Edge -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <!-- Disable Material 3 BottomNav Active Indicator -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+
+        <!-- Typography -->
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
     </style>
+
+    <style name="Theme.Findora" parent="Base.Theme.Findora" />
 </resources>

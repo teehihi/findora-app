@@ -3,19 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F6F7">
+    android:background="@color/background">
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
 <ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:paddingBottom="88dp"
     android:clipToPadding="false">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginBottom="88dp">
 
         <!-- Header -->
         <LinearLayout
@@ -52,7 +57,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/bg_ios_icon_btn"
-                android:src="@drawable/ic_notifications"
+                android:src="@drawable/ic_noti_feather"
                 app:tint="@color/on_surface_variant"
                 android:contentDescription="Notifications" />
 
@@ -86,7 +91,7 @@
                     android:layout_width="96dp"
                     android:layout_height="96dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_person"
+                    android:src="@drawable/ic_user_feather"
                     android:background="@drawable/bg_ios_icon_btn"
                     android:scaleType="centerCrop" />
 
@@ -167,7 +172,7 @@
                 android:background="@drawable/bg_stats_card"
                 android:padding="20dp"
                 android:layout_marginEnd="8dp"
-                android:elevation="2dp">
+                android:elevation="0dp">
 
                 <TextView
                     android:id="@+id/tvActivePosts"
@@ -199,7 +204,7 @@
                 android:background="@drawable/bg_stats_card"
                 android:padding="20dp"
                 android:layout_marginStart="8dp"
-                android:elevation="2dp">
+                android:elevation="0dp">
 
                 <TextView
                     android:id="@+id/tvItemsReturned"
@@ -237,22 +242,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_account_overview"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-medium"
                 android:textColor="@color/on_surface_variant"
-                android:letterSpacing="0.1"
-                android:paddingHorizontal="8dp"
-                android:layout_marginBottom="16dp" />
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="12dp" />
 
-            <!-- Menu List -->
+            <!-- Menu Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#EFF1F2"
-                android:clipChildren="false"
-                android:clipToPadding="false"
+                android:background="@drawable/bg_stats_card"
                 android:padding="0dp">
 
                 <!-- My Posts -->
@@ -262,54 +264,38 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="18dp"
                     android:background="?attr/selectableItemBackground">
 
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_stats_card"
-                        android:layout_marginEnd="16dp">
-                        
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_my_posts" />
-                    
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_book_feather"
+                        android:layout_marginEnd="16dp" />
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_my_posts"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/on_surface" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_my_posts_desc"
-                            android:textSize="12sp"
-                            android:fontFamily="sans-serif-light"
-                            android:textColor="@color/on_surface_variant" />
-
-                    </LinearLayout>
+                        android:text="@string/profile_my_posts"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface" />
 
                     <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:src="@drawable/ic_chevron_right"
                         app:tint="@color/outline" />
 
                 </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:background="@color/outline_variant" />
 
                 <!-- Saved Items -->
                 <LinearLayout
@@ -318,54 +304,38 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="18dp"
                     android:background="?attr/selectableItemBackground">
 
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_stats_card"
-                        android:layout_marginEnd="16dp">
-                        
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_saved" />
-                    
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_bookmark_feather"
+                        android:layout_marginEnd="16dp" />
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_saved_items"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/on_surface" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_saved_items_desc"
-                            android:textSize="12sp"
-                            android:fontFamily="sans-serif-light"
-                            android:textColor="@color/on_surface_variant" />
-
-                    </LinearLayout>
+                        android:text="@string/profile_saved_items"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface" />
 
                     <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:src="@drawable/ic_chevron_right"
                         app:tint="@color/outline" />
 
                 </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:background="@color/outline_variant" />
 
                 <!-- Settings -->
                 <LinearLayout
@@ -374,50 +344,27 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="18dp"
                     android:background="?attr/selectableItemBackground">
 
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_stats_card"
-                        android:layout_marginEnd="16dp">
-                        
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_settings" />
-                    
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_settings_feather"
+                        android:layout_marginEnd="16dp" />
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_settings"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/on_surface" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_settings_desc"
-                            android:textSize="12sp"
-                            android:fontFamily="sans-serif-light"
-                            android:textColor="@color/on_surface_variant" />
-
-                    </LinearLayout>
+                        android:text="@string/profile_settings"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface" />
 
                     <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:src="@drawable/ic_chevron_right"
                         app:tint="@color/outline" />
 
@@ -432,7 +379,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:padding="16dp"
+                android:padding="18dp"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_logout_button"
                 android:clickable="true"
@@ -441,7 +388,8 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:src="@drawable/ic_logout"
+                    android:src="@drawable/ic_logout_feather"
+                    app:tint="#B31B25"
                     android:layout_marginEnd="8dp" />
 
                 <TextView
@@ -460,7 +408,9 @@
 
 </ScrollView>
 
-    <!-- ── Bottom Navigation Bar ── -->
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -469,13 +419,13 @@
         android:background="@drawable/bg_bottom_nav"
         android:paddingTop="4dp"
         style="@style/BottomNavStyle"
-        app:elevation="4dp"
+        app:elevation="0dp"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@null"
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="labeled" />
 
-    <!-- ── FAB: Center Post Button ── -->
+    <!-- FAB: Center Post Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreatePost"
         android:layout_width="56dp"
@@ -485,7 +435,7 @@
         android:src="@drawable/ic_add"
         app:backgroundTint="@color/primary"
         app:tint="@android:color/white"
-        app:elevation="8dp"
+        app:elevation="0dp"
         app:fabSize="normal"
         app:maxImageSize="24dp"
         app:borderWidth="0dp"

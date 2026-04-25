@@ -131,6 +131,78 @@
 
             </LinearLayout>
 
+            <!-- Action Bar (Facebook style) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/outline_variant"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Like button -->
+                <LinearLayout
+                    android:id="@+id/btnLikeAction"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/ivLikeIcon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_like_feather" />
+
+                    <TextView
+                        android:id="@+id/tvLikeCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="Thích"
+                        android:textSize="13sp"
+                        android:textColor="@color/outline" />
+
+                </LinearLayout>
+
+                <!-- Comment button -->
+                <LinearLayout
+                    android:id="@+id/btnCommentAction"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_comment_feather" />
+
+                    <TextView
+                        android:id="@+id/tvCommentCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="Bình luận"
+                        android:textSize="13sp"
+                        android:textColor="@color/outline" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>
