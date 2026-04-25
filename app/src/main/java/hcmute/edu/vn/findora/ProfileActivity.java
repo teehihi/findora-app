@@ -62,6 +62,16 @@ public class ProfileActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNav);
         fabCreatePost = findViewById(R.id.fabCreatePost);
         tvLocation = findViewById(R.id.tvLocation);
+
+        // Apply window insets for safe area
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(android.R.id.content), (v, insets) -> {
+                androidx.core.graphics.Insets systemBars =
+                    insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                bottomNav.setPadding(0, 0, 0, systemBars.bottom);
+                return insets;
+            });
         
         // Get current location
         getCurrentLocation();

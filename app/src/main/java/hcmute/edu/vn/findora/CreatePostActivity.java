@@ -101,6 +101,9 @@ public class CreatePostActivity extends AppCompatActivity {
     private FirebaseAuth      auth;
     private FirebaseFirestore db;
     private FirebaseStorage   storage;
+    
+    // Loading dialog
+    private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
 
     // UI - Upload
     private CardView cvImageUpload;
@@ -121,6 +124,8 @@ public class CreatePostActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db   = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
+        
+        loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
 
         btnBack      = findViewById(R.id.btnBack);
         btnLost      = findViewById(R.id.btnLost);
@@ -322,12 +327,24 @@ public class CreatePostActivity extends AppCompatActivity {
         ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
         ivImagePreview.setImageTintList(null);
         
-        // Run AI classification (TensorFlow Lite)
+        // Show loading for AI processing
+        loadingDialog.show("Đang phân tích ảnh...");
+        
+        // Start pulse animation
+        android.view.animation.Animation pulseAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.pulse_animation);
+        tvAiAssisted.startAnimation(pulseAnim);
+        tvAiAssisted.setText("AI đang phân tích...");
+        
+        // Run AI classification (TensorFlow Lite) first
         classifyImage(uri);
         
-        // Run Gemini AI to generate title and description
+        // Then run Gemini AI to generate title and description
         if (geminiHelper != null) {
             generateDescriptionWithGemini(uri);
+        } else {
+            // No Gemini, dismiss loading after classification
+            loadingDialog.dismiss();
+            tvAiAssisted.clearAnimation();
         }
     }
     
@@ -335,7 +352,11 @@ public class CreatePostActivity extends AppCompatActivity {
      * Sử dụng Gemini AI để tạo tiêu đề và mô tả từ ảnh
      */
     private void generateDescriptionWithGemini(Uri uri) {
-        tvAiAssisted.setText("AI đang phân tích ảnh...");
+        // Update loading message
+        runOnUiThread(() -> {
+            loadingDialog.show("Đang tạo tiêu đề và mô tả...");
+            tvAiAssisted.setText("AI đang tạo nội dung...");
+        });
         
         executorService.execute(() -> {
             try {
@@ -354,6 +375,9 @@ public class CreatePostActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(GeminiRestHelper.DescriptionResult result) {
                             runOnUiThread(() -> {
+                                loadingDialog.dismiss();
+                                // Stop animation
+                                tvAiAssisted.clearAnimation();
                                 // Auto-fill title and description
                                 etTitle.setText(result.title);
                                 etDescription.setText(result.description);
@@ -368,6 +392,9 @@ public class CreatePostActivity extends AppCompatActivity {
                         @Override
                         public void onError(String error) {
                             runOnUiThread(() -> {
+                                loadingDialog.dismiss();
+                                // Stop animation
+                                tvAiAssisted.clearAnimation();
                                 tvAiAssisted.setText("AI không khả dụng");
                                 Toast.makeText(CreatePostActivity.this, 
                                     "Không thể kết nối AI. Vui lòng nhập thủ công.", 
@@ -380,6 +407,9 @@ public class CreatePostActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() -> {
+                    loadingDialog.dismiss();
+                    // Stop animation
+                    tvAiAssisted.clearAnimation();
                     tvAiAssisted.setText("Lỗi xử lý ảnh");
                 });
             }
@@ -407,7 +437,7 @@ public class CreatePostActivity extends AppCompatActivity {
     private void classifyImage(Uri uri) {
         if (imageClassifier == null) return;
         
-        tvAiAssisted.setText("Analyzing image...");
+        // Don't show loading here, already shown in handleImageSelected
         executorService.execute(() -> {
             try {
                 Bitmap bitmap;
@@ -423,21 +453,21 @@ public class CreatePostActivity extends AppCompatActivity {
                 ImageClassifier.Result result = imageClassifier.classify(softwareBitmap);
                 
                 runOnUiThread(() -> {
+                    // Don't dismiss loading here, Gemini is still running
+                    // Just update the badge text
                     if (result != null && result.confidence >= 0.5f) { // 50% threshold
                         predictedLabel = result.label;
                         predictedConfidence = (double) result.confidence;
                         int percentage = (int) (result.confidence * 100);
                         tvAiAssisted.setText("Detected: " + predictedLabel + " (" + percentage + "%)");
-                    } else {
-                        predictedLabel = null;
-                        predictedConfidence = null;
-                        tvAiAssisted.setText(R.string.post_ai_assisted);
                     }
                 });
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> tvAiAssisted.setText(R.string.post_ai_assisted));
+                runOnUiThread(() -> {
+                    // Don't dismiss or stop animation, Gemini might still be running
+                });
             }
         });
     }
@@ -518,6 +548,7 @@ public class CreatePostActivity extends AppCompatActivity {
 
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Đang xử lý...");
+        loadingDialog.show("Đang đăng bài...");
 
         if (selectedImageUri != null) {
             String filename = UUID.randomUUID().toString() + ".jpg";
@@ -530,6 +561,7 @@ public class CreatePostActivity extends AppCompatActivity {
                         savePostToFirestore(postData);
                     }))
                     .addOnFailureListener(e -> {
+                        loadingDialog.dismiss();
                         Toast.makeText(this, "Image Upload Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         btnSubmit.setEnabled(true);
                         btnSubmit.setText(editPostId != null ? "Cập nhật bài đăng" : "Đăng bài");
@@ -550,10 +582,12 @@ public class CreatePostActivity extends AppCompatActivity {
             db.collection("posts").document(editPostId)
                     .update(postData)
                     .addOnSuccessListener(ref -> {
+                        loadingDialog.dismiss();
                         Toast.makeText(this, "Đã cập nhật thành công!", Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(e -> {
+                        loadingDialog.dismiss();
                         Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         btnSubmit.setEnabled(true);
                         btnSubmit.setText("Cập nhật bài đăng");
@@ -563,6 +597,7 @@ public class CreatePostActivity extends AppCompatActivity {
             db.collection("posts")
                     .add(postData)
                     .addOnSuccessListener(ref -> {
+                        loadingDialog.dismiss();
                         String newPostId = ref.getId();
                         Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
                         
@@ -572,6 +607,7 @@ public class CreatePostActivity extends AppCompatActivity {
                         finish();
                     })
                     .addOnFailureListener(e -> {
+                        loadingDialog.dismiss();
                         Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         btnSubmit.setEnabled(true);
                         btnSubmit.setText("Đăng bài");

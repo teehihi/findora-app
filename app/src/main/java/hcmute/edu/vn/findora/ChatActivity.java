@@ -74,6 +74,9 @@ public class ChatActivity extends AppCompatActivity {
     
     // Presence listener
     private com.google.firebase.database.ValueEventListener presenceListener;
+    
+    // Loading dialog
+    private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +85,8 @@ public class ChatActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        
+        loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
 
         if (auth.getCurrentUser() == null) {
             finish();
@@ -347,6 +352,8 @@ public class ChatActivity extends AppCompatActivity {
         if (text.isEmpty() || chatId == null) return;
 
         etMessage.setText("");
+        
+        loadingDialog.show("Đang gửi...");
 
         Timestamp now = Timestamp.now();
 
@@ -371,7 +378,14 @@ public class ChatActivity extends AppCompatActivity {
         db.collection("chats").document(chatId)
                 .collection("messages")
                 .add(msgData)
-                .addOnSuccessListener(documentReference -> sendMessageNotification(text));
+                .addOnSuccessListener(documentReference -> {
+                    loadingDialog.dismiss();
+                    sendMessageNotification(text);
+                })
+                .addOnFailureListener(e -> {
+                    loadingDialog.dismiss();
+                    Toast.makeText(this, "Lỗi gửi tin nhắn", Toast.LENGTH_SHORT).show();
+                });
 
         Map<String, Object> chatUpdate = new HashMap<>();
         chatUpdate.put("lastMessage", text);
@@ -430,9 +444,12 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         
+        loadingDialog.show("Đang lấy số điện thoại...");
+        
         // Lấy số điện thoại của user
         db.collection("users").document(otherUserId).get()
                 .addOnSuccessListener(doc -> {
+                    loadingDialog.dismiss();
                     if (doc.exists()) {
                         String phone = doc.getString("phone");
                         if (phone != null && !phone.isEmpty()) {
@@ -446,6 +463,7 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    loadingDialog.dismiss();
                     android.util.Log.e("ChatActivity", "Failed to get phone number", e);
                     android.widget.Toast.makeText(this, "Không thể lấy số điện thoại", android.widget.Toast.LENGTH_SHORT).show();
                 });
@@ -481,11 +499,8 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         
-        // Show progress
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Đang gửi ảnh...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        // Show loading dialog
+        loadingDialog.show("Đang gửi ảnh...");
         
         // Upload to Firebase Storage
         String fileName = "chat_images/" + chatId + "/" + System.currentTimeMillis() + ".jpg";
@@ -500,15 +515,15 @@ public class ChatActivity extends AppCompatActivity {
                         // Send message with image URL
                         sendImageMessage(imageUrl);
                         
-                        progressDialog.dismiss();
+                        loadingDialog.dismiss();
                         android.widget.Toast.makeText(this, "Đã gửi ảnh", android.widget.Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
-                        progressDialog.dismiss();
+                        loadingDialog.dismiss();
                         android.widget.Toast.makeText(this, "Lỗi lấy URL ảnh", android.widget.Toast.LENGTH_SHORT).show();
                     });
                 })
                 .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
+                    loadingDialog.dismiss();
                     android.widget.Toast.makeText(this, "Lỗi upload ảnh", android.widget.Toast.LENGTH_SHORT).show();
                     android.util.Log.e("ChatActivity", "Upload failed", e);
                 });

@@ -19,7 +19,8 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="20dp"
             android:paddingTop="24dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="16dp"
+            android:visibility="gone">
 
             <ImageView
                 android:layout_width="16dp"

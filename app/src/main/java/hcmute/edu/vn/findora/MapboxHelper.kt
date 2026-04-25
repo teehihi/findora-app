@@ -40,7 +40,7 @@ object MapboxHelper {
             manager.deleteAll()
         }
         
-        // Create marker icon from drawable
+        // Use location pin for generic marker (no type)
         val context = mapView.context
         val drawable = ContextCompat.getDrawable(context, R.drawable.ic_location_pin)
         val bitmap = drawable?.let { drawableToBitmap(it) }
@@ -48,7 +48,44 @@ object MapboxHelper {
         val pointAnnotationOptions = PointAnnotationOptions()
             .withPoint(Point.fromLngLat(longitude, latitude))
         
-        // Add icon if available
+        if (bitmap != null) {
+            pointAnnotationOptions.withIconImage(bitmap)
+        }
+        
+        manager.create(pointAnnotationOptions)
+        Log.d("MapboxHelper", "Marker added. Total markers: ${manager.annotations.size}")
+    }
+
+    @JvmStatic
+    fun addMarker(mapView: MapView, latitude: Double, longitude: Double, type: String?) {
+        Log.d("MapboxHelper", "addMarker called: $latitude, $longitude, type=$type")
+        
+        // Get or create manager for this MapView
+        val manager = managerMap.getOrPut(mapView) {
+            Log.d("MapboxHelper", "Creating new PointAnnotationManager")
+            mapView.annotations.createPointAnnotationManager(AnnotationConfig())
+        }
+        
+        // Clear existing markers first
+        val existingCount = manager.annotations.size
+        if (existingCount > 0) {
+            Log.d("MapboxHelper", "Clearing $existingCount existing markers")
+            manager.deleteAll()
+        }
+        
+        // Choose icon based on type
+        val context = mapView.context
+        val iconRes = when (type) {
+            "lost" -> R.drawable.ic_marker_lost
+            "found" -> R.drawable.ic_marker_found
+            else -> R.drawable.ic_marker_lost  // default red
+        }
+        val drawable = ContextCompat.getDrawable(context, iconRes)
+        val bitmap = drawable?.let { drawableToBitmap(it) }
+        
+        val pointAnnotationOptions = PointAnnotationOptions()
+            .withPoint(Point.fromLngLat(longitude, latitude))
+        
         if (bitmap != null) {
             pointAnnotationOptions.withIconImage(bitmap)
         }

@@ -100,9 +100,16 @@ public class MainActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Map padding: Top should apply to root. Bottom should NOT apply to root (so BottomNav stays at bottom).
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
-
+            // Apply top inset to header only, not root (avoids content shifting)
+            View header = findViewById(R.id.layoutHeader);
+            if (header != null) {
+                header.setPadding(
+                    header.getPaddingLeft(),
+                    systemBars.top + dpToPx(8),
+                    header.getPaddingRight(),
+                    header.getPaddingBottom()
+                );
+            }
             // Give the BottomNav internal padding for the gesture bar handle
             bottomNav.setPadding(0, 0, 0, systemBars.bottom);
             // Ensure the main scrollable area doesn't get hidden behind the BottomNav
@@ -110,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.recyclerView).getPaddingLeft(),
                 findViewById(R.id.recyclerView).getPaddingTop(),
                 findViewById(R.id.recyclerView).getPaddingRight(),
-                (int) (90 * getResources().getDisplayMetrics().density) // Height of bottom nav area
+                (int) (90 * getResources().getDisplayMetrics().density)
             );
             return insets;
         });
@@ -709,5 +716,9 @@ public class MainActivity extends AppCompatActivity {
         } else {
             tvNotificationBadge.setVisibility(View.GONE);
         }
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 }

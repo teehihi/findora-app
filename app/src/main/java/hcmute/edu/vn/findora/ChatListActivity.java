@@ -83,6 +83,21 @@ public class ChatListActivity extends AppCompatActivity {
         fabCreatePost = findViewById(R.id.fabCreatePost);
         tvLocation = findViewById(R.id.tvLocation);
 
+        layoutEmpty = findViewById(R.id.layoutEmpty);
+        bottomNav = findViewById(R.id.bottomNav);
+        fabCreatePost = findViewById(R.id.fabCreatePost);
+        tvLocation = findViewById(R.id.tvLocation);
+
+        // Apply window insets for safe area
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(android.R.id.content), (v, insets) -> {
+                androidx.core.graphics.Insets systemBars =
+                    insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                bottomNav.setPadding(0, 0, 0, systemBars.bottom);
+                return insets;
+            });
+
         chatDocs = new ArrayList<>();
         adapter = new ChatListAdapter(this, chatDocs, currentUserId);
         rvChatList.setLayoutManager(new LinearLayoutManager(this));

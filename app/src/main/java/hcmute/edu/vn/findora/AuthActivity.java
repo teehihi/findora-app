@@ -22,6 +22,7 @@ public class AuthActivity extends AppCompatActivity {
     private boolean isLoginMode = true;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
 
     private TextView tvTitle, tvSubtitle, tvForgot, tvSwitchPrompt, tvSwitchAction;
     private MaterialButton btnSubmit, btnGoogle, btnFacebook;
@@ -38,6 +39,7 @@ public class AuthActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
 
         // Bind views
         tvTitle = findViewById(R.id.tvTitle);
@@ -252,8 +254,10 @@ public class AuthActivity extends AppCompatActivity {
 
     private void loginUser(String email, String password) {
         btnSubmit.setEnabled(false);
+        loadingDialog.show("Đang đăng nhập...");
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
+                    loadingDialog.dismiss();
                     btnSubmit.setEnabled(true);
                     if (task.isSuccessful()) {
                         navigateToHome();
@@ -267,12 +271,14 @@ public class AuthActivity extends AppCompatActivity {
 
     private void registerUser(String email, String password, String fullName, String phone) {
         btnSubmit.setEnabled(false);
+        loadingDialog.show("Đang tạo tài khoản...");
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         String uid = mAuth.getCurrentUser().getUid();
                         saveUserToFirestore(uid, email, fullName, phone);
                     } else {
+                        loadingDialog.dismiss();
                         btnSubmit.setEnabled(true);
                         Toast.makeText(this,
                                 getString(R.string.msg_register_failed) + ": " + task.getException().getMessage(),
@@ -292,10 +298,12 @@ public class AuthActivity extends AppCompatActivity {
         db.collection("users").document(uid)
                 .set(user)
                 .addOnSuccessListener(aVoid -> {
+                    loadingDialog.dismiss();
                     Toast.makeText(this, R.string.msg_register_success, Toast.LENGTH_SHORT).show();
                     navigateToHome();
                 })
                 .addOnFailureListener(e -> {
+                    loadingDialog.dismiss();
                     btnSubmit.setEnabled(true);
                     Toast.makeText(this,
                             getString(R.string.msg_save_failed) + ": " + e.getMessage(),

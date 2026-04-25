@@ -153,7 +153,7 @@ public class PostDetailActivity extends AppCompatActivity {
         // Mapbox will be initialized when displaying location
     }
     
-    private void displayMapLocation(double lat, double lng, String address) {
+    private void displayMapLocation(double lat, double lng, String address, String type) {
         // Hide placeholder, show map
         ivMapPlaceholder.setVisibility(View.GONE);
         mapViewDetail.setVisibility(View.VISIBLE);
@@ -168,7 +168,7 @@ public class PostDetailActivity extends AppCompatActivity {
                     .build();
             mapViewDetail.getMapboxMap().setCamera(cameraOptions);
             
-            // Add marker using helper
+            // Add marker using helper (generic blue pin)
             MapboxHelper.addMarker(mapViewDetail, lat, lng);
         });
         
@@ -221,7 +221,7 @@ public class PostDetailActivity extends AppCompatActivity {
             currentPost.setLng(lng);
             
             if (lat != 0 && lng != 0) {
-                displayMapLocation(lat, lng, address);
+                displayMapLocation(lat, lng, address, type);
             } else {
                 // No location, show placeholder
                 ivMapPlaceholder.setVisibility(View.VISIBLE);

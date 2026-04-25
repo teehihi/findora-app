@@ -43,20 +43,20 @@ public class AddressPickerActivity extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
-    private AutoCompleteTextView actvProvince, actvDistrict, actvWard;
+    private AutoCompleteTextView actvProvince, actvWard;
     private TextInputEditText etStreetAddress;
     private Button btnViewOnMap;
     private androidx.cardview.widget.CardView btnCurrentLocation;
     private android.widget.ImageButton btnBack;
+    private android.view.View loadingOverlay;
+    private android.widget.TextView tvLoadingMessage;
     
     private FusedLocationProviderClient fusedLocationClient;
     
     private List<Province> provinces = new ArrayList<>();
-    private List<District> districts = new ArrayList<>();
     private List<Ward> wards = new ArrayList<>();
     
     private Province selectedProvince = null;
-    private District selectedDistrict = null;
     private Ward selectedWard = null;
 
     @Override
@@ -65,17 +65,17 @@ public class AddressPickerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_address_picker);
 
         actvProvince = findViewById(R.id.actvProvince);
-        actvDistrict = findViewById(R.id.actvDistrict);
         actvWard = findViewById(R.id.actvWard);
         etStreetAddress = findViewById(R.id.etStreetAddress);
         btnViewOnMap = findViewById(R.id.btnViewOnMap);
         btnCurrentLocation = findViewById(R.id.btnCurrentLocation);
         btnBack = findViewById(R.id.btnBack);
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+        tvLoadingMessage = findViewById(R.id.tvLoadingMessage);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Disable district and ward initially
-        actvDistrict.setEnabled(false);
+        // Disable ward initially
         actvWard.setEnabled(false);
 
         loadProvinces();
@@ -88,25 +88,10 @@ public class AddressPickerActivity extends AppCompatActivity {
     // ===== API Models =====
     
     static class Province {
-        int code;
+        String code;
         String name;
         
-        Province(int code, String name) {
-            this.code = code;
-            this.name = name;
-        }
-        
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-    
-    static class District {
-        int code;
-        String name;
-        
-        District(int code, String name) {
+        Province(String code, String name) {
             this.code = code;
             this.name = name;
         }
@@ -118,10 +103,10 @@ public class AddressPickerActivity extends AppCompatActivity {
     }
     
     static class Ward {
-        int code;
+        String code;
         String name;
         
-        Ward(int code, String name) {
+        Ward(String code, String name) {
             this.code = code;
             this.name = name;
         }
@@ -132,19 +117,31 @@ public class AddressPickerActivity extends AppCompatActivity {
         }
     }
 
-    // ===== Load Provinces =====
+    private void showLoading(String message) {
+        runOnUiThread(() -> {
+            tvLoadingMessage.setText(message);
+            loadingOverlay.setVisibility(android.view.View.VISIBLE);
+        });
+    }
+
+    private void hideLoading() {
+        runOnUiThread(() -> loadingOverlay.setVisibility(android.view.View.GONE));
+    }
+
+    // ===== Load Provinces (addresskit.cas.so) =====
     
     private void loadProvinces() {
+        showLoading("Đang tải danh sách tỉnh/thành...");
         new Thread(() -> {
             try {
-                String jsonResponse = fetchFromAPI("https://provinces.open-api.vn/api/p/");
-                JSONArray jsonArray = new JSONArray(jsonResponse);
+                String jsonResponse = fetchFromAPI("https://addresskit.cas.so/api/latest/provinces");
+                JSONObject root = new JSONObject(jsonResponse);
+                JSONArray jsonArray = root.getJSONArray("provinces");
                 
                 List<Province> provinceList = new ArrayList<>();
-                
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject obj = jsonArray.getJSONObject(i);
-                    int code = obj.getInt("code");
+                    String code = obj.getString("code");
                     String name = obj.getString("name");
                     provinceList.add(new Province(code, name));
                 }
@@ -157,84 +154,15 @@ public class AddressPickerActivity extends AppCompatActivity {
                     actvProvince.setAdapter(adapter);
                     actvProvince.setThreshold(1);
                     
-                    // Show dropdown when clicked
                     actvProvince.setOnFocusChangeListener((v, hasFocus) -> {
-                        if (hasFocus) {
-                            actvProvince.showDropDown();
-                        }
+                        if (hasFocus) actvProvince.showDropDown();
                     });
-                    
-                    actvProvince.setOnClickListener(v -> {
-                        actvProvince.showDropDown();
-                    });
+                    actvProvince.setOnClickListener(v -> actvProvince.showDropDown());
                     
                     actvProvince.setOnItemClickListener((parent, view, position, id) -> {
                         Province selected = (Province) parent.getItemAtPosition(position);
                         selectedProvince = selected;
-                        loadDistricts(selected.code);
-                        
-                        // Clear district and ward
-                        actvDistrict.setText("");
-                        actvWard.setText("");
-                        selectedDistrict = null;
-                        selectedWard = null;
-                    });
-                });
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Lỗi tải danh sách tỉnh/thành phố", Toast.LENGTH_SHORT).show();
-                });
-            }
-        }).start();
-    }
-
-    // ===== Load Districts =====
-    
-    private void loadDistricts(int provinceCode) {
-        new Thread(() -> {
-            try {
-                String jsonResponse = fetchFromAPI("https://provinces.open-api.vn/api/p/" + provinceCode + "?depth=2");
-                JSONObject jsonObject = new JSONObject(jsonResponse);
-                JSONArray districtsArray = jsonObject.getJSONArray("districts");
-                
-                List<District> districtList = new ArrayList<>();
-                
-                for (int i = 0; i < districtsArray.length(); i++) {
-                    JSONObject obj = districtsArray.getJSONObject(i);
-                    int code = obj.getInt("code");
-                    String name = obj.getString("name");
-                    districtList.add(new District(code, name));
-                }
-                
-                districts = districtList;
-                
-                runOnUiThread(() -> {
-                    ArrayAdapter<District> adapter = new ArrayAdapter<>(this,
-                        android.R.layout.simple_dropdown_item_1line, districts);
-                    actvDistrict.setAdapter(adapter);
-                    actvDistrict.setThreshold(1);
-                    actvDistrict.setEnabled(true);
-                    actvWard.setEnabled(false);
-                    
-                    // Show dropdown when clicked
-                    actvDistrict.setOnFocusChangeListener((v, hasFocus) -> {
-                        if (hasFocus) {
-                            actvDistrict.showDropDown();
-                        }
-                    });
-                    
-                    actvDistrict.setOnClickListener(v -> {
-                        actvDistrict.showDropDown();
-                    });
-                    
-                    actvDistrict.setOnItemClickListener((parent, view, position, id) -> {
-                        District selected = (District) parent.getItemAtPosition(position);
-                        selectedDistrict = selected;
                         loadWards(selected.code);
-                        
-                        // Clear ward
                         actvWard.setText("");
                         selectedWard = null;
                     });
@@ -242,27 +170,28 @@ public class AddressPickerActivity extends AppCompatActivity {
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Lỗi tải danh sách quận/huyện", Toast.LENGTH_SHORT).show();
-                });
+                runOnUiThread(() ->
+                    Toast.makeText(this, "Lỗi tải danh sách tỉnh/thành phố", Toast.LENGTH_SHORT).show());
+            } finally {
+                hideLoading();
             }
         }).start();
     }
 
-    // ===== Load Wards =====
-    
-    private void loadWards(int districtCode) {
+    // ===== Load Wards (addresskit.cas.so) =====
+
+    private void loadWards(String provinceCode) {
+        showLoading("Đang tải danh sách phường/xã...");
         new Thread(() -> {
             try {
-                String jsonResponse = fetchFromAPI("https://provinces.open-api.vn/api/d/" + districtCode + "?depth=2");
-                JSONObject jsonObject = new JSONObject(jsonResponse);
-                JSONArray wardsArray = jsonObject.getJSONArray("wards");
+                String jsonResponse = fetchFromAPI("https://addresskit.cas.so/api/latest/provinces/" + provinceCode + "/communes");
+                JSONObject root = new JSONObject(jsonResponse);
+                JSONArray jsonArray = root.getJSONArray("communes");
                 
                 List<Ward> wardList = new ArrayList<>();
-                
-                for (int i = 0; i < wardsArray.length(); i++) {
-                    JSONObject obj = wardsArray.getJSONObject(i);
-                    int code = obj.getInt("code");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject obj = jsonArray.getJSONObject(i);
+                    String code = obj.getString("code");
                     String name = obj.getString("name");
                     wardList.add(new Ward(code, name));
                 }
@@ -276,16 +205,10 @@ public class AddressPickerActivity extends AppCompatActivity {
                     actvWard.setThreshold(1);
                     actvWard.setEnabled(true);
                     
-                    // Show dropdown when clicked
                     actvWard.setOnFocusChangeListener((v, hasFocus) -> {
-                        if (hasFocus) {
-                            actvWard.showDropDown();
-                        }
+                        if (hasFocus) actvWard.showDropDown();
                     });
-                    
-                    actvWard.setOnClickListener(v -> {
-                        actvWard.showDropDown();
-                    });
+                    actvWard.setOnClickListener(v -> actvWard.showDropDown());
                     
                     actvWard.setOnItemClickListener((parent, view, position, id) -> {
                         Ward selected = (Ward) parent.getItemAtPosition(position);
@@ -295,9 +218,10 @@ public class AddressPickerActivity extends AppCompatActivity {
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Lỗi tải danh sách phường/xã", Toast.LENGTH_SHORT).show();
-                });
+                runOnUiThread(() ->
+                    Toast.makeText(this, "Lỗi tải danh sách phường/xã", Toast.LENGTH_SHORT).show());
+            } finally {
+                hideLoading();
             }
         }).start();
     }
@@ -350,6 +274,7 @@ public class AddressPickerActivity extends AppCompatActivity {
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, location -> {
                     if (location != null && location.getLatitude() != 0.0 && location.getLongitude() != 0.0) {
+                        showLoading("Đang xác định địa chỉ...");
                         reverseGeocode(location.getLatitude(), location.getLongitude());
                     } else {
                         Toast.makeText(this, "Không thể lấy vị trí hiện tại", Toast.LENGTH_SHORT).show();
@@ -375,7 +300,6 @@ public class AddressPickerActivity extends AppCompatActivity {
                     JSONObject addressObj = json.getJSONObject("address");
                     
                     String province = "";
-                    String district = "";
                     String ward = "";
                     String street = "";
                     
@@ -383,12 +307,6 @@ public class AddressPickerActivity extends AppCompatActivity {
                         province = addressObj.getString("city");
                     } else if (addressObj.has("state")) {
                         province = addressObj.getString("state");
-                    }
-                    
-                    if (addressObj.has("city_district")) {
-                        district = addressObj.getString("city_district");
-                    } else if (addressObj.has("county")) {
-                        district = addressObj.getString("county");
                     }
                     
                     if (addressObj.has("suburb")) {
@@ -402,14 +320,34 @@ public class AddressPickerActivity extends AppCompatActivity {
                     }
                     
                     String finalProvince = province;
-                    String finalDistrict = district;
                     String finalWard = ward;
                     String finalStreet = street;
                     
                     runOnUiThread(() -> {
-                        if (!finalProvince.isEmpty()) actvProvince.setText(finalProvince);
-                        if (!finalDistrict.isEmpty()) actvDistrict.setText(finalDistrict);
-                        if (!finalWard.isEmpty()) actvWard.setText(finalWard);
+                        if (!finalProvince.isEmpty()) {
+                            actvProvince.setText(finalProvince);
+                            // Match province in list to trigger loadWards
+                            for (Province p : provinces) {
+                                if (p.name.contains(finalProvince) || finalProvince.contains(p.name)) {
+                                    selectedProvince = p;
+                                    loadWards(p.code);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!finalWard.isEmpty()) {
+                            // Set ward text after a short delay to let loadWards finish
+                            actvWard.postDelayed(() -> {
+                                actvWard.setText(finalWard);
+                                // Try to match ward in list
+                                for (Ward w : wards) {
+                                    if (w.name.contains(finalWard) || finalWard.contains(w.name)) {
+                                        selectedWard = w;
+                                        break;
+                                    }
+                                }
+                            }, 1500);
+                        }
                         if (!finalStreet.isEmpty()) etStreetAddress.setText(finalStreet);
                         
                         Toast.makeText(this, "Đã lấy vị trí hiện tại", Toast.LENGTH_SHORT).show();
@@ -421,6 +359,8 @@ public class AddressPickerActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Không thể xác định địa chỉ", Toast.LENGTH_SHORT).show();
                 });
+            } finally {
+                hideLoading();
             }
         }).start();
     }
@@ -445,7 +385,7 @@ public class AddressPickerActivity extends AppCompatActivity {
         String streetAddress = etStreetAddress.getText().toString().trim();
         
         // Allow viewing map even without full address
-        if (selectedProvince == null && selectedDistrict == null && selectedWard == null && streetAddress.isEmpty()) {
+        if (selectedProvince == null && selectedWard == null && streetAddress.isEmpty()) {
             // No address at all, open map at default location
             Intent intent = new Intent(AddressPickerActivity.this, MapActivity.class);
             intent.putExtra("latitude", 10.762622); // Default HCMC
@@ -469,12 +409,6 @@ public class AddressPickerActivity extends AppCompatActivity {
             fullAddress.append(selectedWard.name);
         }
         
-        // Add district
-        if (selectedDistrict != null) {
-            if (fullAddress.length() > 0) fullAddress.append(", ");
-            fullAddress.append(selectedDistrict.name);
-        }
-        
         // Add province
         if (selectedProvince != null) {
             if (fullAddress.length() > 0) fullAddress.append(", ");
@@ -489,12 +423,12 @@ public class AddressPickerActivity extends AppCompatActivity {
         android.util.Log.d("AddressPicker", "=== VIEW ON MAP CLICKED ===");
         android.util.Log.d("AddressPicker", "Street: " + streetAddress);
         android.util.Log.d("AddressPicker", "Ward: " + (selectedWard != null ? selectedWard.name : "null"));
-        android.util.Log.d("AddressPicker", "District: " + (selectedDistrict != null ? selectedDistrict.name : "null"));
         android.util.Log.d("AddressPicker", "Province: " + (selectedProvince != null ? selectedProvince.name : "null"));
         android.util.Log.d("AddressPicker", "Full address: " + fullAddress.toString());
         
         // Geocode address to get lat/lng
         if (fullAddress.length() > 0) {
+            showLoading("Đang tìm vị trí...");
             geocodeAndShowMap(fullAddress.toString());
         } else {
             // Open map at default location
@@ -596,16 +530,14 @@ public class AddressPickerActivity extends AppCompatActivity {
                     }
                 }
                 
-                // Method 3: If not found, try with just district + province
-                if (!found && selectedDistrict != null && selectedProvince != null) {
-                    android.util.Log.d("AddressPicker", "Method 3: Trying with district + province only");
+                // Method 3: If not found, try with just ward + province
+                if (!found && selectedWard != null && selectedProvince != null) {
+                    android.util.Log.d("AddressPicker", "Method 3: Trying with ward + province only");
                     try {
-                        String simpleAddress = selectedDistrict.name + ", " + selectedProvince.name + ", Vietnam";
+                        String simpleAddress = selectedWard.name + ", " + selectedProvince.name + ", Vietnam";
                         String encodedAddress = java.net.URLEncoder.encode(simpleAddress, "UTF-8");
                         String url = "https://nominatim.openstreetmap.org/search?q=" + encodedAddress 
                                    + "&format=json&limit=1&countrycodes=vn";
-                        
-                        android.util.Log.d("AddressPicker", "Fallback URL: " + url);
                         
                         String response = fetchFromAPI(url);
                         JSONArray jsonArray = new JSONArray(response);
@@ -660,9 +592,8 @@ public class AddressPickerActivity extends AppCompatActivity {
                     String finalAddress = address;
                     
                     runOnUiThread(() -> {
-                        // Show toast to guide user
+                        hideLoading();
                         if (address.matches("^\\d+.*")) {
-                            // Address starts with number (has house number)
                             Toast.makeText(this, 
                                 "Đã tìm thấy khu vực gần đúng.\nVui lòng click trên bản đồ để chọn vị trí chính xác.", 
                                 Toast.LENGTH_LONG).show();
@@ -676,6 +607,7 @@ public class AddressPickerActivity extends AppCompatActivity {
                     });
                 } else {
                     runOnUiThread(() -> {
+                        hideLoading();
                         Toast.makeText(this, "Không tìm thấy địa chỉ này trên bản đồ.\nVui lòng chọn trực tiếp trên bản đồ.", Toast.LENGTH_LONG).show();
                         
                         // Still open map at province/district center
