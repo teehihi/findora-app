@@ -70,7 +70,7 @@ public class CreatePostActivity extends AppCompatActivity {
     // UI - Inputs
     private EditText etTitle, etDescription;
     private android.widget.Button btnSubmit;
-    private android.widget.Button btnSelectLocation;
+    private android.widget.LinearLayout btnSelectLocation;
     private TextView tvSelectedAddress;
     private com.mapbox.maps.MapView mapViewPreview;
     private androidx.cardview.widget.CardView cvMapPreview;
@@ -152,11 +152,11 @@ public class CreatePostActivity extends AppCompatActivity {
                 android.util.Log.d("CreatePost", "GeminiRestHelper initialized successfully");
             } else {
                 android.util.Log.w("CreatePost", "Gemini API key not configured");
-                Toast.makeText(this, "⚠️ Chưa cấu hình Gemini API key. Tính năng AI bị tắt.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Chưa cấu hình Gemini API key. Tính năng AI bị tắt.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             android.util.Log.e("CreatePost", "Failed to initialize GeminiRestHelper", e);
-            Toast.makeText(this, "⚠️ Lỗi khởi tạo AI: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Lỗi khởi tạo AI: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
         
         com.google.android.gms.tflite.java.TfLite.initialize(this)
@@ -335,7 +335,7 @@ public class CreatePostActivity extends AppCompatActivity {
      * Sử dụng Gemini AI để tạo tiêu đề và mô tả từ ảnh
      */
     private void generateDescriptionWithGemini(Uri uri) {
-        tvAiAssisted.setText("🤖 AI đang phân tích ảnh...");
+        tvAiAssisted.setText("AI đang phân tích ảnh...");
         
         executorService.execute(() -> {
             try {
@@ -357,7 +357,7 @@ public class CreatePostActivity extends AppCompatActivity {
                                 // Auto-fill title and description
                                 etTitle.setText(result.title);
                                 etDescription.setText(result.description);
-                                tvAiAssisted.setText("✨ AI đã tạo tiêu đề và mô tả");
+                                tvAiAssisted.setText("AI đã tạo tiêu đề và mô tả");
                                 
                                 Toast.makeText(CreatePostActivity.this, 
                                     "AI đã tạo nội dung! Bạn có thể chỉnh sửa.", 
@@ -368,7 +368,7 @@ public class CreatePostActivity extends AppCompatActivity {
                         @Override
                         public void onError(String error) {
                             runOnUiThread(() -> {
-                                tvAiAssisted.setText("⚠️ AI không khả dụng");
+                                tvAiAssisted.setText("AI không khả dụng");
                                 Toast.makeText(CreatePostActivity.this, 
                                     "Không thể kết nối AI. Vui lòng nhập thủ công.", 
                                     Toast.LENGTH_SHORT).show();
@@ -380,7 +380,7 @@ public class CreatePostActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() -> {
-                    tvAiAssisted.setText("⚠️ Lỗi xử lý ảnh");
+                    tvAiAssisted.setText("Lỗi xử lý ảnh");
                 });
             }
         });

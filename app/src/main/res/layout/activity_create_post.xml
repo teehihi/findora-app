@@ -54,12 +54,13 @@
             android:paddingHorizontal="12dp"
             android:gravity="center">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="✨"
-                android:textSize="12sp"
-                android:layout_marginEnd="4dp" />
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_ai_star"
+                app:tint="@color/primary"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="AI icon" />
 
             <TextView
                 android:id="@+id/tvAiAssisted"
@@ -207,18 +208,33 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
             
-            <Button
+            <LinearLayout
                 android:id="@+id/btnSelectLocation"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:text="📍 Chọn vị trí"
-                android:textAllCaps="false"
-                android:textSize="15sp"
-                android:textColor="@color/primary"
                 android:background="@drawable/bg_search_field"
-                app:backgroundTint="@null"
+                android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginBottom="8dp" />
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_location_pin"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Location icon" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chọn vị trí"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:textColor="@color/primary" />
+            </LinearLayout>
             
             <TextView
                 android:id="@+id/tvSelectedAddress"

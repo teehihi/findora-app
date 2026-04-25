@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Top Bar -->
+    <!-- Top Bar with Safe Area -->
     <RelativeLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:background="@color/surface"
         android:elevation="2dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
         android:paddingHorizontal="16dp">
 
         <ImageButton
@@ -33,10 +36,13 @@
             android:textColor="@color/on_surface" />
     </RelativeLayout>
 
+    <!-- Scrollable Content -->
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topBar"
+        android:layout_above="@id/bottomBar"
         android:fillViewport="true">
 
         <LinearLayout
@@ -45,22 +51,70 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Subtitle -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Current Location Button -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/btnCurrentLocation"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Chọn từng bước để xác định vị trí chính xác"
-                android:textSize="14sp"
-                android:textColor="@color/outline"
-                android:layout_marginBottom="8dp" />
-            
-            <TextView
-                android:layout_width="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/primary"
+                android:layout_marginBottom="24dp"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_location_pin"
+                        app:tint="@color/white"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Location icon" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lấy vị trí hiện tại"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Divider with text -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="💡 Nhấn vào bản đồ để điều chỉnh vị trí nếu cần"
-                android:textSize="12sp"
-                android:textColor="@color/primary"
-                android:layout_marginBottom="24dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/outline_variant" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="hoặc chọn thủ công"
+                    android:textSize="13sp"
+                    android:textColor="@color/outline"
+                    android:paddingHorizontal="12dp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/outline_variant" />
+            </LinearLayout>
 
             <!-- Province/City -->
             <TextView
@@ -247,7 +301,7 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="@color/ai_card_bg"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -256,12 +310,13 @@
                     android:padding="16dp"
                     android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="💡"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="12dp" />
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_info"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Info icon" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -277,10 +332,12 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Button -->
+    <!-- Sticky Bottom Button -->
     <LinearLayout
+        android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:orientation="vertical"
         android:padding="16dp"
         android:background="@color/surface"
@@ -299,17 +356,4 @@
             app:backgroundTint="@null" />
     </LinearLayout>
 
-    <!-- Current Location FAB -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabCurrentLocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="88dp"
-        android:src="@android:drawable/ic_menu_mylocation"
-        app:tint="@color/white"
-        app:backgroundTint="@color/primary"
-        android:contentDescription="Lấy vị trí hiện tại" />
-
-</LinearLayout>
+</RelativeLayout>

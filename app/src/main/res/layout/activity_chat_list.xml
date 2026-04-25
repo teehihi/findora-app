@@ -68,11 +68,12 @@
             android:visibility="gone">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="💬"
-                android:textSize="48sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_chat"
+                app:tint="@color/outline"
+                android:layout_marginBottom="16dp"
+                android:contentDescription="Chat icon" />
 
             <TextView
                 android:layout_width="wrap_content"

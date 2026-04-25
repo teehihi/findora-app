@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.json.JSONArray;
@@ -47,7 +46,7 @@ public class AddressPickerActivity extends AppCompatActivity {
     private AutoCompleteTextView actvProvince, actvDistrict, actvWard;
     private TextInputEditText etStreetAddress;
     private Button btnViewOnMap;
-    private FloatingActionButton fabCurrentLocation;
+    private androidx.cardview.widget.CardView btnCurrentLocation;
     private android.widget.ImageButton btnBack;
     
     private FusedLocationProviderClient fusedLocationClient;
@@ -70,7 +69,7 @@ public class AddressPickerActivity extends AppCompatActivity {
         actvWard = findViewById(R.id.actvWard);
         etStreetAddress = findViewById(R.id.etStreetAddress);
         btnViewOnMap = findViewById(R.id.btnViewOnMap);
-        fabCurrentLocation = findViewById(R.id.fabCurrentLocation);
+        btnCurrentLocation = findViewById(R.id.btnCurrentLocation);
         btnBack = findViewById(R.id.btnBack);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -82,7 +81,7 @@ public class AddressPickerActivity extends AppCompatActivity {
         loadProvinces();
         
         btnViewOnMap.setOnClickListener(v -> viewOnMap());
-        fabCurrentLocation.setOnClickListener(v -> getCurrentLocation());
+        btnCurrentLocation.setOnClickListener(v -> getCurrentLocation());
         btnBack.setOnClickListener(v -> finish());
     }
 
@@ -538,12 +537,12 @@ public class AddressPickerActivity extends AppCompatActivity {
                         lat = place.getDouble("lat");
                         lon = place.getDouble("lon");
                         found = true;
-                        android.util.Log.d("AddressPicker", "✓ Found via Nominatim: " + lat + ", " + lon);
+                        android.util.Log.d("AddressPicker", "[OK] Found via Nominatim: " + lat + ", " + lon);
                     } else {
-                        android.util.Log.d("AddressPicker", "✗ No results from Nominatim");
+                        android.util.Log.d("AddressPicker", "[FAIL] No results from Nominatim");
                     }
                 } catch (Exception e) {
-                    android.util.Log.e("AddressPicker", "✗ Nominatim error: " + e.getMessage());
+                    android.util.Log.e("AddressPicker", "[ERROR] Nominatim error: " + e.getMessage());
                     e.printStackTrace();
                 }
                 
@@ -586,13 +585,13 @@ public class AddressPickerActivity extends AppCompatActivity {
                             lat = coordinates.getDouble(1);
                             found = true;
                             
-                            android.util.Log.d("AddressPicker", "✓ Found via Mapbox: " + lat + ", " + lon);
+                            android.util.Log.d("AddressPicker", "[OK] Found via Mapbox: " + lat + ", " + lon);
                             android.util.Log.d("AddressPicker", "  Place name: " + placeName);
                         } else {
-                            android.util.Log.d("AddressPicker", "✗ No results from Mapbox");
+                            android.util.Log.d("AddressPicker", "[FAIL] No results from Mapbox");
                         }
                     } catch (Exception e) {
-                        android.util.Log.e("AddressPicker", "✗ Mapbox error: " + e.getMessage());
+                        android.util.Log.e("AddressPicker", "[ERROR] Mapbox error: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
@@ -616,10 +615,10 @@ public class AddressPickerActivity extends AppCompatActivity {
                             lat = place.getDouble("lat");
                             lon = place.getDouble("lon");
                             found = true;
-                            android.util.Log.d("AddressPicker", "✓ Found via fallback: " + lat + ", " + lon);
+                            android.util.Log.d("AddressPicker", "[OK] Found via fallback: " + lat + ", " + lon);
                         }
                     } catch (Exception e) {
-                        android.util.Log.e("AddressPicker", "✗ Fallback error: " + e.getMessage());
+                        android.util.Log.e("AddressPicker", "[ERROR] Fallback error: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
@@ -632,22 +631,22 @@ public class AddressPickerActivity extends AppCompatActivity {
                         lat = 10.762622;
                         lon = 106.660172;
                         found = true;
-                        android.util.Log.d("AddressPicker", "✓ Using HCMC center");
+                        android.util.Log.d("AddressPicker", "[OK] Using HCMC center");
                     } else if (selectedProvince.name.contains("Hà Nội")) {
                         lat = 21.028511;
                         lon = 105.804817;
                         found = true;
-                        android.util.Log.d("AddressPicker", "✓ Using Hanoi center");
+                        android.util.Log.d("AddressPicker", "[OK] Using Hanoi center");
                     } else if (selectedProvince.name.contains("Đà Nẵng")) {
                         lat = 16.047079;
                         lon = 108.206230;
                         found = true;
-                        android.util.Log.d("AddressPicker", "✓ Using Da Nang center");
+                        android.util.Log.d("AddressPicker", "[OK] Using Da Nang center");
                     } else if (selectedProvince.name.contains("Cần Thơ")) {
                         lat = 10.045162;
                         lon = 105.746857;
                         found = true;
-                        android.util.Log.d("AddressPicker", "✓ Using Can Tho center");
+                        android.util.Log.d("AddressPicker", "[OK] Using Can Tho center");
                     }
                 }
                 
@@ -704,7 +703,7 @@ public class AddressPickerActivity extends AppCompatActivity {
                     });
                 }
             } catch (Exception e) {
-                android.util.Log.e("AddressPicker", "✗ Fatal error: " + e.getMessage());
+                android.util.Log.e("AddressPicker", "[FATAL] Fatal error: " + e.getMessage());
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Lỗi tìm kiếm địa chỉ", Toast.LENGTH_SHORT).show();

@@ -57,7 +57,7 @@ public class MapActivity extends AppCompatActivity {
                 // Show hint if address has house number
                 if (addressString.matches("^\\d+.*")) {
                     Toast.makeText(this, 
-                        "💡 Vị trí có thể chưa chính xác. Hãy click trên bản đồ để điều chỉnh!", 
+                        "Vị trí có thể chưa chính xác. Hãy click trên bản đồ để điều chỉnh!", 
                         Toast.LENGTH_LONG).show();
                 }
             }

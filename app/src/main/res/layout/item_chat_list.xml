@@ -1,28 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
     android:padding="16dp"
     android:paddingHorizontal="20dp"
     android:background="?attr/selectableItemBackground">
 
-    <!-- Avatar -->
-    <ImageView
-        android:id="@+id/ivChatListAvatar"
+    <!-- Avatar Container with Unread Dot -->
+    <RelativeLayout
+        android:id="@+id/avatarContainer"
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:src="@drawable/ic_person"
-        android:background="@drawable/bg_ios_icon_btn"
-        android:scaleType="centerCrop" />
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true">
+
+        <!-- Avatar -->
+        <ImageView
+            android:id="@+id/ivChatListAvatar"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_person"
+            android:background="@drawable/bg_ios_icon_btn"
+            android:scaleType="centerCrop" />
+
+        <!-- Unread Dot Indicator (like Messenger) -->
+        <View
+            android:id="@+id/viewUnreadDot"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bg_unread_badge"
+            android:visibility="gone" />
+    </RelativeLayout>
 
     <!-- Content -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_toEndOf="@id/avatarContainer"
         android:layout_marginStart="16dp"
+        android:layout_centerVertical="true"
         android:orientation="vertical">
 
         <LinearLayout
@@ -70,16 +88,21 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
+            <!-- Unread Count Badge (like Messenger) -->
             <TextView
                 android:id="@+id/tvUnreadBadge"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="20dp"
+                android:minHeight="20dp"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
                 android:layout_marginStart="8dp"
                 android:text="3"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:background="@drawable/bg_badge_lost"
+                android:background="@drawable/bg_unread_badge"
                 android:gravity="center"
                 android:visibility="gone" />
         </LinearLayout>
@@ -95,4 +118,4 @@
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
-</LinearLayout>
+</RelativeLayout>

@@ -240,11 +240,12 @@
                     android:layout_marginBottom="8dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⚡"
-                        android:textSize="14sp"
-                        android:layout_marginEnd="4dp" />
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/ic_ai_star"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="4dp"
+                        android:contentDescription="AI icon" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -351,10 +352,11 @@
                 android:visibility="gone">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🔍"
-                    android:textSize="56sp" />
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/outline"
+                    android:contentDescription="Search icon" />
 
                 <TextView
                     android:layout_width="wrap_content"

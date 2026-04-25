@@ -343,14 +343,14 @@ public class MapViewActivity extends AppCompatActivity {
         path.close();
         canvas.drawPath(path, pinPaint);
         
-        // 5. Vẽ icon nhỏ (? hoặc ✓) ở góc
+        // 5. Draw corner icon (? for lost, checkmark for found)
         drawCornerIcon(canvas, type, size, borderColor);
         
         return output;
     }
     
     /**
-     * Vẽ icon nhỏ ở góc marker (? cho lost, ✓ cho found)
+     * Draw small icon at marker corner (? for lost, checkmark for found)
      */
     private void drawCornerIcon(Canvas canvas, String type, int size, int color) {
         int iconSize = 32;

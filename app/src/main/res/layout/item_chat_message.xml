@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="3dp">
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- ═══ Timestamp Separator ═══ -->
+    <TextView
+        android:id="@+id/tvTimestampSeparator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="#9CA3AF"
+        android:textSize="11sp"
+        android:visibility="gone" />
 
     <!-- ═══ Sent (right) ═══ -->
     <LinearLayout
@@ -12,30 +26,140 @@
         android:layout_height="wrap_content"
         android:gravity="end"
         android:orientation="vertical"
-        android:paddingStart="64dp"
-        android:visibility="gone">
+        android:paddingStart="68dp"
+        android:visibility="gone"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <TextView
-            android:id="@+id/tvSentMessage"
+        <!-- "↩ Bạn đã trả lời [Tên]" label above bubble -->
+        <LinearLayout
+            android:id="@+id/layoutReplyLabelSent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_chat_sent"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp"
-            android:textColor="@android:color/white"
-            android:textSize="15sp"
-            android:lineSpacingExtra="3dp"
-            android:elevation="1dp" />
-
-        <TextView
-            android:id="@+id/tvSentTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="6dp"
             android:layout_gravity="end"
-            android:textColor="#9E9E9E"
-            android:textSize="11sp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="11dp"
+                android:layout_height="11dp"
+                android:src="@drawable/ic_reply"
+                app:tint="#9CA3AF"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="reply" />
+
+            <TextView
+                android:id="@+id/tvReplySenderSent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Quote box + Bubble stacked, bubble overlaps quote -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Quote: only message content, no name, no bar -->
+            <LinearLayout
+                android:id="@+id/layoutReplyQuoteSent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:orientation="vertical"
+                android:background="@drawable/bg_reply_quote_sent"
+                android:paddingHorizontal="14dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="18dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvReplyTextSent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#CCE5FF"
+                    android:textSize="13sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
+            </LinearLayout>
+
+            <!-- Bubble overlaps quote (negative marginTop) -->
+            <LinearLayout
+                android:id="@+id/bubbleSent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:orientation="vertical"
+                android:background="@drawable/bg_message_sent_single"
+                android:paddingHorizontal="14dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:elevation="2dp">
+
+                <ImageView
+                    android:id="@+id/ivSentImage"
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    android:layout_marginBottom="8dp"
+                    android:contentDescription="Sent image" />
+
+                <TextView
+                    android:id="@+id/tvSentMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Time + Read indicator + Seen avatar -->
+        <LinearLayout
+            android:id="@+id/layoutSentMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvSentTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#595C5D"
+                android:textSize="10sp"
+                android:layout_marginEnd="4dp" />
+
+            <ImageView
+                android:id="@+id/ivReadIndicator"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_check"
+                app:tint="#595C5D"
+                android:contentDescription="Read" />
+
+            <ImageView
+                android:id="@+id/ivSeenAvatar"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_person"
+                android:background="@drawable/bg_avatar_chat"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="Seen" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- ═══ Received (left) ═══ -->
@@ -44,29 +168,133 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start"
-        android:orientation="vertical"
-        android:paddingEnd="64dp"
-        android:visibility="gone">
+        android:orientation="horizontal"
+        android:paddingEnd="68dp"
+        android:visibility="gone"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <TextView
-            android:id="@+id/tvReceivedMessage"
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginEnd="12dp">
+
+            <ImageView
+                android:id="@+id/ivReceivedAvatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="bottom"
+                android:src="@drawable/ic_person"
+                android:background="@drawable/bg_avatar_chat"
+                android:scaleType="centerCrop" />
+        </FrameLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_chat_received"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp"
-            android:textColor="#1A1A1A"
-            android:textSize="15sp"
-            android:lineSpacingExtra="3dp"
-            android:elevation="1dp" />
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-        <TextView
-            android:id="@+id/tvReceivedTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:layout_marginStart="6dp"
-            android:textColor="#9E9E9E"
-            android:textSize="11sp" />
+            <!-- "↩ [Tên] đã trả lời bạn" label above bubble -->
+            <LinearLayout
+                android:id="@+id/layoutReplyLabelReceived"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:src="@drawable/ic_reply"
+                    app:tint="#9CA3AF"
+                    android:layout_marginEnd="4dp"
+                    android:contentDescription="reply" />
+
+                <TextView
+                    android:id="@+id/tvReplySenderReceived"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#9CA3AF"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Quote box + Bubble stacked -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <!-- Quote: only content -->
+                <LinearLayout
+                    android:id="@+id/layoutReplyQuoteReceived"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_reply_quote_received"
+                    android:paddingHorizontal="14dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="24dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvReplyTextReceived"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#4A4D4E"
+                        android:textSize="13sp"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <!-- Bubble overlaps quote -->
+                <LinearLayout
+                    android:id="@+id/bubbleReceived"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_message_received_single"
+                    android:paddingHorizontal="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:elevation="2dp">
+
+                    <ImageView
+                        android:id="@+id/ivReceivedImage"
+                        android:layout_width="200dp"
+                        android:layout_height="200dp"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone"
+                        android:layout_marginBottom="8dp"
+                        android:contentDescription="Received image" />
+
+                    <TextView
+                        android:id="@+id/tvReceivedMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#2C2F30"
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Time below bubble, only shown on click -->
+            <TextView
+                android:id="@+id/tvReceivedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginStart="4dp"
+                android:textColor="#595C5D"
+                android:textSize="10sp"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

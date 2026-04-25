@@ -103,29 +103,52 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                         holder.ivChatListAvatar.setImageResource(R.drawable.ic_person);
                     });
 
-            // Count unread messages
+            // Count unread messages (filter client-side to avoid composite index requirement)
             FirebaseFirestore.getInstance()
                     .collection("chats").document(chatId)
                     .collection("messages")
                     .whereEqualTo("read", false)
-                    .whereNotEqualTo("senderId", currentUserId)
                     .get()
                     .addOnSuccessListener(querySnapshot -> {
-                        int unreadCount = querySnapshot.size();
+                        int unreadCount = 0;
+                        for (DocumentSnapshot msgDoc : querySnapshot.getDocuments()) {
+                            String senderId = msgDoc.getString("senderId");
+                            // Only count messages sent by the OTHER user that current user hasn't read
+                            if (senderId != null && !senderId.equals(currentUserId)) {
+                                unreadCount++;
+                            }
+                        }
                         if (unreadCount > 0) {
+                            // Show unread badge with count
                             holder.tvUnreadBadge.setVisibility(android.view.View.VISIBLE);
                             holder.tvUnreadBadge.setText(String.valueOf(unreadCount));
+                            
+                            // Show blue dot indicator on avatar
+                            holder.viewUnreadDot.setVisibility(android.view.View.VISIBLE);
+                            
                             // Make last message bold if unread
                             holder.tvChatListLastMsg.setTypeface(null, android.graphics.Typeface.BOLD);
                             holder.tvChatListLastMsg.setTextColor(context.getResources().getColor(R.color.on_surface, null));
+                            
+                            // Make name bold too (like Messenger)
+                            holder.tvChatListName.setTypeface(null, android.graphics.Typeface.BOLD);
                         } else {
+                            // Hide unread indicators
                             holder.tvUnreadBadge.setVisibility(android.view.View.GONE);
+                            holder.viewUnreadDot.setVisibility(android.view.View.GONE);
+                            
+                            // Normal text style
                             holder.tvChatListLastMsg.setTypeface(null, android.graphics.Typeface.NORMAL);
                             holder.tvChatListLastMsg.setTextColor(context.getResources().getColor(R.color.on_surface_variant, null));
+                            
+                            // Name stays bold (always bold in chat list)
+                            holder.tvChatListName.setTypeface(null, android.graphics.Typeface.BOLD);
                         }
                     })
                     .addOnFailureListener(e -> {
+                        android.util.Log.e("ChatListAdapter", "Failed to count unread: " + e.getMessage());
                         holder.tvUnreadBadge.setVisibility(android.view.View.GONE);
+                        holder.viewUnreadDot.setVisibility(android.view.View.GONE);
                     });
 
             // Click to open chat
@@ -148,6 +171,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivChatListAvatar;
         TextView tvChatListName, tvChatListTime, tvChatListLastMsg, tvChatListPostTitle, tvUnreadBadge;
+        View viewUnreadDot;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -157,6 +181,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             tvChatListLastMsg = itemView.findViewById(R.id.tvChatListLastMsg);
             tvChatListPostTitle = itemView.findViewById(R.id.tvChatListPostTitle);
             tvUnreadBadge = itemView.findViewById(R.id.tvUnreadBadge);
+            viewUnreadDot = itemView.findViewById(R.id.viewUnreadDot);
         }
     }
 }

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F2F5">
+    android:background="#FFFFFF">
 
     <!-- ═══ Header ═══ -->
     <LinearLayout
@@ -12,72 +12,101 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="12dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
         android:gravity="center_vertical"
-        android:elevation="4dp"
-        android:background="@color/surface">
+        android:elevation="2dp"
+        android:background="@color/white">
 
         <ImageButton
             android:id="@+id/btnBack"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_chevron_left"
+            android:src="@drawable/ic_arrow_back"
             app:tint="@color/on_surface"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:contentDescription="Back" />
 
         <!-- Avatar with online dot -->
-        <FrameLayout
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="4dp">
+        <RelativeLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp">
 
             <ImageView
                 android:id="@+id/ivChatAvatar"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/ic_person"
                 android:background="@drawable/bg_avatar_chat"
-                android:scaleType="centerCrop"
-                android:padding="2dp" />
+                android:scaleType="centerCrop" />
 
-            <!-- Online indicator -->
+            <!-- Online indicator (green dot) -->
             <View
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:layout_gravity="bottom|end"
-                android:background="@drawable/bg_online_dot" />
-        </FrameLayout>
+                android:id="@+id/viewOnlineIndicator"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/bg_online_indicator" />
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="16dp"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/tvChatUserName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="User"
-                android:textSize="17sp"
+                android:text="Sarah J."
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/on_surface"
+                android:textColor="#2C2F30"
                 android:fontFamily="sans-serif-medium" />
 
             <TextView
-                android:id="@+id/tvChatPostTitle"
+                android:id="@+id/tvOnlineStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Về: Bài đăng"
+                android:text="Online now"
                 android:textSize="12sp"
-                android:textColor="@color/primary"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginTop="1dp"
-                android:drawablePadding="4dp" />
+                android:textColor="#16A34A"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="-1dp" />
+        </LinearLayout>
+
+        <!-- Action buttons -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageButton
+                android:id="@+id/btnCall"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_call"
+                app:tint="@color/on_surface"
+                android:padding="8dp"
+                android:contentDescription="Call" />
+
+            <ImageButton
+                android:id="@+id/btnMore"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@color/on_surface"
+                android:padding="8dp"
+                android:contentDescription="More" />
         </LinearLayout>
     </LinearLayout>
 
@@ -87,63 +116,150 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingHorizontal="12dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp"
         android:clipToPadding="false"
-        android:background="#F0F2F5" />
+        android:clipChildren="false"
+        android:background="#F8FAFC" />
+
+    <!-- ═══ Reply Preview Bar ═══ -->
+    <LinearLayout
+        android:id="@+id/layoutReplyPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <!-- "Đang trả lời [Tên]" header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_reply"
+                app:tint="#0057BD"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Reply" />
+
+            <TextView
+                android:id="@+id/tvReplyPreviewSender"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#0057BD"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnCancelReply"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="#9CA3AF"
+                android:padding="2dp"
+                android:contentDescription="Cancel reply" />
+        </LinearLayout>
+
+        <!-- Quoted message content -->
+        <TextView
+            android:id="@+id/tvReplyPreviewText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="20dp"
+            android:textColor="#6B7280"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="#F3F4F6" />
+    </LinearLayout>
 
     <!-- ═══ Input Bar ═══ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="10dp"
-        android:gravity="bottom"
-        android:background="@color/surface"
-        android:elevation="8dp">
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="24dp"
+        android:gravity="center_vertical"
+        android:background="@color/white">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="0dp"
+        <!-- Input Container with Send button inside -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:boxBackgroundColor="#F0F2F5"
-            app:boxCornerRadiusBottomEnd="24dp"
-            app:boxCornerRadiusBottomStart="24dp"
-            app:boxCornerRadiusTopEnd="24dp"
-            app:boxCornerRadiusTopStart="24dp"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="0dp"
-            app:hintEnabled="false">
+            android:orientation="horizontal"
+            android:background="@drawable/bg_chat_input"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="8dp"
+            android:gravity="center_vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
+            <!-- Add button -->
+            <ImageButton
+                android:id="@+id/btnAttach"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_add"
+                app:tint="#0057BD"
+                android:padding="6dp"
+                android:contentDescription="Attach" />
+
+            <!-- Text input -->
+            <EditText
                 android:id="@+id/etMessage"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Nhập tin nhắn..."
+                android:layout_weight="1"
+                android:hint="Nhập tin nhắn......"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="4"
-                android:paddingVertical="12dp"
-                android:paddingHorizontal="20dp"
-                android:textSize="15sp"
-                android:textColor="@color/on_surface"
-                android:textColorHint="#9E9E9E"
-                android:background="@android:color/transparent" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:textSize="14sp"
+                android:textColor="#2C2F30"
+                android:textColorHint="#6B7280"
+                android:background="@android:color/transparent"
+                android:minHeight="36dp" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btnSend"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="2dp"
-            android:src="@drawable/ic_send"
-            app:backgroundTint="@color/primary"
-            app:tint="@android:color/white"
-            app:elevation="2dp"
-            app:fabSize="mini"
-            app:maxImageSize="20dp"
-            app:borderWidth="0dp" />
+            <!-- Image button -->
+            <ImageButton
+                android:id="@+id/btnImage"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_image"
+                app:tint="#595C5D"
+                android:padding="6dp"
+                android:contentDescription="Image" />
+
+            <!-- Send button (inside container) -->
+            <ImageButton
+                android:id="@+id/btnSend"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_send"
+                app:tint="#0057BD"
+                android:padding="6dp"
+                android:contentDescription="Send" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

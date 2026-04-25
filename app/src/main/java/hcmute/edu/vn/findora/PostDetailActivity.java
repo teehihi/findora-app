@@ -825,7 +825,7 @@ public class PostDetailActivity extends AppCompatActivity {
      * - Type: "like"
      * - Title: "User A đã thích bài đăng"
      * - Body: "Mất mèo vàng"
-     * - Icon: ❤️ (red heart)
+     * - Icon: Heart icon (red heart)
      * - Action: Mở PostDetailActivity
      * 
      * ĐƯỢC GỌI TỪ:
@@ -886,7 +886,7 @@ public class PostDetailActivity extends AppCompatActivity {
      * - Type: "comment"
      * - Title: "User A đã bình luận"
      * - Body: "Bạn tìm thấy ở đâu?"
-     * - Icon: 💬 (comment bubble)
+     * - Icon: Comment icon (comment bubble)
      * - Action: Mở PostDetailActivity
      * 
      * ĐƯỢC GỌI TỪ:

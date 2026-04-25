@@ -38,7 +38,7 @@ public class NotificationHelper {
         notification.put("type", "ai_match");
         notification.put("userId", userId);
         notification.put("postId", matchPostId);
-        notification.put("title", "🔥 Tìm thấy gợi ý phù hợp!");
+        notification.put("title", "Tìm thấy gợi ý phù hợp!");
         notification.put("body", String.format("%s - Độ phù hợp %d%%", matchTitle, matchScore));
         notification.put("timestamp", com.google.firebase.Timestamp.now());
         notification.put("read", false);
@@ -269,7 +269,7 @@ public class NotificationHelper {
         notification.put("postId", postId);
         notification.put("senderId", finderId);
         notification.put("senderName", finderName);
-        notification.put("title", "🎉 Đồ vật của bạn đã được tìm thấy!");
+        notification.put("title", "Đồ vật của bạn đã được tìm thấy!");
         notification.put("body", finderName + " có thể đã tìm thấy " + postTitle);
         notification.put("timestamp", com.google.firebase.Timestamp.now());
         notification.put("read", false);

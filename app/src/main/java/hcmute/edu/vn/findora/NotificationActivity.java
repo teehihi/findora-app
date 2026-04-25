@@ -66,6 +66,13 @@ public class NotificationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
         
+        // Apply window insets for safe area (status bar)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+        
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
         currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -83,6 +90,15 @@ public class NotificationActivity extends AppCompatActivity {
         loadNotifications();
     }
     
+    /**
+     * Khởi tạo các view components
+     * 
+     * CHỨC NĂNG:
+     * - Bind tất cả views từ layout
+     * - Setup click listeners cho buttons
+     * - Setup back button để đóng activity
+     * - Setup "Mark all as read" button
+     */
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerViewNotifications);
         progressBar = findViewById(R.id.progressBar);
@@ -98,6 +114,15 @@ public class NotificationActivity extends AppCompatActivity {
         btnMarkAllRead.setOnClickListener(v -> markAllAsRead());
     }
     
+    /**
+     * Setup RecyclerView với adapter
+     * 
+     * CHỨC NĂNG:
+     * - Khởi tạo notifications list
+     * - Tạo NotificationAdapter
+     * - Set LinearLayoutManager
+     * - Bind adapter vào RecyclerView
+     */
     private void setupRecyclerView() {
         notifications = new ArrayList<>();
         adapter = new NotificationAdapter(this, notifications);
@@ -107,12 +132,19 @@ public class NotificationActivity extends AppCompatActivity {
     
     /**
      * Load tất cả thông báo của user
+     * 
+     * LƯU Ý:
+     * - Cần tạo Firestore index cho query này
+     * - Collection: notifications
+     * - Fields: userId (Ascending), timestamp (Descending)
+     * - Nếu index chưa có, sẽ fallback sang query đơn giản hơn
      */
     private void loadNotifications() {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         layoutEmpty.setVisibility(View.GONE);
         
+        // Try query with orderBy first (requires index)
         db.collection("notifications")
             .whereEqualTo("userId", currentUserId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -121,7 +153,10 @@ public class NotificationActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 
                 if (error != null) {
-                    showEmpty("Không thể tải thông báo");
+                    android.util.Log.e(TAG, "Query with orderBy failed, trying fallback", error);
+                    
+                    // Fallback: Query without orderBy (không cần index)
+                    loadNotificationsFallback();
                     return;
                 }
                 
@@ -147,7 +182,66 @@ public class NotificationActivity extends AppCompatActivity {
     }
     
     /**
-     * Hiển thị empty state
+     * Fallback query khi index chưa có
+     * Query đơn giản hơn, không cần index
+     */
+    private void loadNotificationsFallback() {
+        android.util.Log.d(TAG, "Using fallback query (no orderBy)");
+        
+        db.collection("notifications")
+            .whereEqualTo("userId", currentUserId)
+            .limit(100)
+            .addSnapshotListener((snapshots, error) -> {
+                progressBar.setVisibility(View.GONE);
+                
+                if (error != null) {
+                    android.util.Log.e(TAG, "Fallback query also failed", error);
+                    showEmpty("Không thể tải thông báo\nVui lòng thử lại sau");
+                    return;
+                }
+                
+                if (snapshots == null || snapshots.isEmpty()) {
+                    showEmpty("Bạn chưa có thông báo nào");
+                    return;
+                }
+                
+                notifications.clear();
+                for (QueryDocumentSnapshot doc : snapshots) {
+                    Notification notification = doc.toObject(Notification.class);
+                    notification.setId(doc.getId());
+                    notifications.add(notification);
+                }
+                
+                // Sort manually by timestamp (descending)
+                notifications.sort((n1, n2) -> {
+                    if (n1.getTimestamp() == null) return 1;
+                    if (n2.getTimestamp() == null) return -1;
+                    return n2.getTimestamp().compareTo(n1.getTimestamp());
+                });
+                
+                adapter.notifyDataSetChanged();
+                recyclerView.setVisibility(View.VISIBLE);
+                layoutEmpty.setVisibility(View.GONE);
+                
+                // Update "Mark all as read" button visibility
+                updateMarkAllReadButton();
+                
+                // Show toast to inform user
+                android.widget.Toast.makeText(this, 
+                    "Đang sử dụng chế độ fallback. Hãy tạo Firestore index để tối ưu.", 
+                    android.widget.Toast.LENGTH_LONG).show();
+            });
+    }
+    
+    /**
+     * Hiển thị empty state với message tùy chỉnh
+     * 
+     * @param message Message hiển thị cho user
+     * 
+     * ĐƯỢC GỌI KHI:
+     * - Query thất bại
+     * - Không có thông báo nào
+     * - Lỗi kết nối
      */
     private void showEmpty(String message) {
         recyclerView.setVisibility(View.GONE);
@@ -157,6 +251,17 @@ public class NotificationActivity extends AppCompatActivity {
     
     /**
      * Đánh dấu tất cả thông báo đã đọc
+     * 
+     * CHỨC NĂNG:
+     * - Loop qua tất cả notifications
+     * - Gọi NotificationHelper.markAsRead() cho từng notification chưa đọc
+     * - Update UI (set read = true)
+     * - Notify adapter
+     * - Ẩn nút "Mark all as read"
+     * - Hiển thị toast confirmation
+     * 
+     * ĐƯỢC GỌI TỪ:
+     * - btnMarkAllRead.setOnClickListener()
      */
     private void markAllAsRead() {
         for (Notification notification : notifications) {
@@ -179,6 +284,16 @@ public class NotificationActivity extends AppCompatActivity {
     
     /**
      * Cập nhật hiển thị nút "Mark all as read"
+     * 
+     * LOGIC:
+     * - Check nếu có notification nào chưa đọc
+     * - Nếu có: Hiển thị nút
+     * - Nếu không: Ẩn nút
+     * 
+     * ĐƯỢC GỌI TỪ:
+     * - loadNotifications() - Sau khi load xong
+     * - loadNotificationsFallback() - Sau khi load xong
+     * - markAllAsRead() - Sau khi đánh dấu tất cả
      */
     private void updateMarkAllReadButton() {
         boolean hasUnread = false;

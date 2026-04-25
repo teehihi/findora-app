@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="💡 Click vào bản đồ để chọn vị trí chính xác"
+                android:text="Click vào bản đồ để chọn vị trí chính xác"
                 android:textSize="12sp"
                 android:textColor="@color/primary"
                 android:layout_marginTop="8dp" />

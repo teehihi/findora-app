@@ -134,6 +134,7 @@ public class ChatListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        hcmute.edu.vn.findora.utils.PresenceManager.goOnline();
         bottomNav.setSelectedItemId(R.id.nav_chat);
         loadChats();
     }
@@ -335,6 +336,7 @@ public class ChatListActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        hcmute.edu.vn.findora.utils.PresenceManager.goOffline();
         if (executorService != null) {
             executorService.shutdown();
         }

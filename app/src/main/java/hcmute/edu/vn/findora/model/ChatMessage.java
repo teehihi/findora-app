@@ -10,8 +10,12 @@ public class ChatMessage {
     private String id;
     private String senderId;
     private String text;
+    private String imageUrl;
     private Timestamp timestamp;
     private boolean read;
+    private String replyToId;
+    private String replyToText;
+    private String replyToSender;
 
     public ChatMessage() {}
 
@@ -30,10 +34,22 @@ public class ChatMessage {
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public Timestamp getTimestamp() { return timestamp; }
     public void setTimestamp(Timestamp timestamp) { this.timestamp = timestamp; }
     
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
+
+    public String getReplyToId() { return replyToId; }
+    public void setReplyToId(String replyToId) { this.replyToId = replyToId; }
+
+    public String getReplyToText() { return replyToText; }
+    public void setReplyToText(String replyToText) { this.replyToText = replyToText; }
+
+    public String getReplyToSender() { return replyToSender; }
+    public void setReplyToSender(String replyToSender) { this.replyToSender = replyToSender; }
 }

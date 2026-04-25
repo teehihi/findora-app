@@ -1,8 +1,11 @@
 package hcmute.edu.vn.findora;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +30,7 @@ import java.util.Map;
 
 import hcmute.edu.vn.findora.adapter.ChatAdapter;
 import hcmute.edu.vn.findora.model.ChatMessage;
+import hcmute.edu.vn.findora.utils.PresenceManager;
 
 /**
  * Màn hình chat 1-1 giữa hai người dùng về một bài đăng cụ thể.
@@ -46,11 +50,12 @@ import hcmute.edu.vn.findora.model.ChatMessage;
 public class ChatActivity extends AppCompatActivity {
 
     private RecyclerView rvMessages;
-    private TextInputEditText etMessage;
-    private com.google.android.material.floatingactionbutton.FloatingActionButton btnSend;
-    private android.widget.ImageButton btnBack;
-    private TextView tvChatUserName, tvChatPostTitle;
+    private EditText etMessage;
+    private android.widget.ImageButton btnSend, btnBack, btnAttach, btnImage, btnCall, btnMore, btnCancelReply;
+    private TextView tvChatUserName, tvOnlineStatus, tvReplyPreviewSender, tvReplyPreviewText;
     private ImageView ivChatAvatar;
+    private View viewOnlineIndicator;
+    private LinearLayout layoutReplyPreview;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -63,6 +68,12 @@ public class ChatActivity extends AppCompatActivity {
     private String postId;
     private String postTitle;
     private String currentUserId;
+    
+    // Reply state
+    private ChatMessage replyingTo = null;
+    
+    // Presence listener
+    private com.google.firebase.database.ValueEventListener presenceListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,9 +100,18 @@ public class ChatActivity extends AppCompatActivity {
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
         btnBack = findViewById(R.id.btnBack);
+        btnAttach = findViewById(R.id.btnAttach);
+        btnImage = findViewById(R.id.btnImage);
+        btnCall = findViewById(R.id.btnCall);
+        btnMore = findViewById(R.id.btnMore);
+        btnCancelReply = findViewById(R.id.btnCancelReply);
         tvChatUserName = findViewById(R.id.tvChatUserName);
-        tvChatPostTitle = findViewById(R.id.tvChatPostTitle);
+        tvOnlineStatus = findViewById(R.id.tvOnlineStatus);
         ivChatAvatar = findViewById(R.id.ivChatAvatar);
+        viewOnlineIndicator = findViewById(R.id.viewOnlineIndicator);
+        layoutReplyPreview = findViewById(R.id.layoutReplyPreview);
+        tvReplyPreviewSender = findViewById(R.id.tvReplyPreviewSender);
+        tvReplyPreviewText = findViewById(R.id.tvReplyPreviewText);
 
         // Apply window insets for safe area
         android.view.View chatHeader = findViewById(R.id.chatHeader);
@@ -105,20 +125,30 @@ public class ChatActivity extends AppCompatActivity {
 
         // Setup
         messageList = new ArrayList<>();
-        adapter = new ChatAdapter(this, messageList, currentUserId);
+        adapter = new ChatAdapter(this, messageList, currentUserId, otherUserId);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
         rvMessages.setAdapter(adapter);
 
-        tvChatPostTitle.setText(postTitle != null && !postTitle.isEmpty() ? "Về: " + postTitle : "");
-
         btnBack.setOnClickListener(v -> finish());
         btnSend.setOnClickListener(v -> sendMessage());
+        btnCall.setOnClickListener(v -> makePhoneCall());
+        btnImage.setOnClickListener(v -> selectImage());
+        btnAttach.setOnClickListener(v -> selectImage());
+        btnCancelReply.setOnClickListener(v -> cancelReply());
+
+        // Setup swipe-to-reply
+        adapter.setOnReplyListener(message -> {
+            replyingTo = message;
+            showReplyPreview(message);
+        });
+        adapter.attachSwipeToReply(rvMessages);
 
         // Load other user info
         loadOtherUserInfo();
+        listenToOtherUserPresence();
 
         // If no chatId yet, create or find existing chat
         if (chatId == null || chatId.isEmpty()) {
@@ -130,6 +160,52 @@ public class ChatActivity extends AppCompatActivity {
     
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void listenToOtherUserPresence() {
+        if (otherUserId == null || otherUserId.isEmpty()) return;
+
+        presenceListener = PresenceManager.listenToPresence(otherUserId, (isOnline, lastSeenMillis) -> {
+            runOnUiThread(() -> {
+                if (isOnline) {
+                    viewOnlineIndicator.setVisibility(View.VISIBLE);
+                    tvOnlineStatus.setText("Online now");
+                    tvOnlineStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
+                } else {
+                    viewOnlineIndicator.setVisibility(View.INVISIBLE);
+                    if (lastSeenMillis > 0) {
+                        tvOnlineStatus.setText("Hoạt động " + formatLastSeen(lastSeenMillis));
+                    } else {
+                        tvOnlineStatus.setText("Offline");
+                    }
+                    tvOnlineStatus.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
+                }
+            });
+        });
+    }
+
+    private String formatLastSeen(long millis) {
+        long diff = System.currentTimeMillis() - millis;
+        long minutes = diff / 60000;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        if (minutes < 1) return "vừa xong";
+        if (minutes < 60) return minutes + " phút trước";
+        if (hours < 24) return hours + " giờ trước";
+        return days + " ngày trước";
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        PresenceManager.goOnline();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        PresenceManager.goOffline();
     }
 
     private void loadOtherUserInfo() {
@@ -244,6 +320,23 @@ public class ChatActivity extends AppCompatActivity {
         db.collection("chats").document(chatId)
                 .collection("messages").document(messageId)
                 .update("read", true)
+                .addOnSuccessListener(aVoid -> {
+                    // Update unread count on the chat document so ChatListActivity snapshot triggers
+                    db.collection("chats").document(chatId)
+                            .collection("messages")
+                            .whereEqualTo("read", false)
+                            .get()
+                            .addOnSuccessListener(snap -> {
+                                int remaining = 0;
+                                for (com.google.firebase.firestore.DocumentSnapshot doc : snap.getDocuments()) {
+                                    String sid = doc.getString("senderId");
+                                    if (sid != null && !sid.equals(currentUserId)) remaining++;
+                                }
+                                // Write unreadCount to chat doc to trigger snapshot in ChatListActivity
+                                db.collection("chats").document(chatId)
+                                        .update("unreadCount_" + currentUserId, remaining);
+                            });
+                })
                 .addOnFailureListener(e -> {
                     android.util.Log.e("ChatActivity", "Failed to mark message as read", e);
                 });
@@ -257,28 +350,49 @@ public class ChatActivity extends AppCompatActivity {
 
         Timestamp now = Timestamp.now();
 
-        // Add message to subcollection
         Map<String, Object> msgData = new HashMap<>();
         msgData.put("senderId", currentUserId);
         msgData.put("text", text);
         msgData.put("timestamp", now);
         msgData.put("read", false);
 
+        // Attach reply data if replying
+        if (replyingTo != null) {
+            msgData.put("replyToId", replyingTo.getId());
+            String replyText = replyingTo.getImageUrl() != null && !replyingTo.getImageUrl().isEmpty()
+                    ? "[Ảnh]" : replyingTo.getText();
+            msgData.put("replyToText", replyText);
+            // Sender label: "Bạn" if replying to own message, else other user's name
+            boolean replyToSelf = currentUserId.equals(replyingTo.getSenderId());
+            msgData.put("replyToSender", replyToSelf ? "Bạn" : tvChatUserName.getText().toString());
+            cancelReply();
+        }
+
         db.collection("chats").document(chatId)
                 .collection("messages")
                 .add(msgData)
-                .addOnSuccessListener(documentReference -> {
-                    // Gửi notification cho người nhận
-                    sendMessageNotification(text);
-                });
+                .addOnSuccessListener(documentReference -> sendMessageNotification(text));
 
-        // Update chat document with last message
         Map<String, Object> chatUpdate = new HashMap<>();
         chatUpdate.put("lastMessage", text);
         chatUpdate.put("lastTimestamp", now);
+        db.collection("chats").document(chatId).update(chatUpdate);
+    }
 
-        db.collection("chats").document(chatId)
-                .update(chatUpdate);
+    private void showReplyPreview(ChatMessage message) {
+        layoutReplyPreview.setVisibility(android.view.View.VISIBLE);
+        boolean replyToSelf = currentUserId.equals(message.getSenderId());
+        String senderName = replyToSelf ? "chính mình" : tvChatUserName.getText().toString();
+        tvReplyPreviewSender.setText("Đang trả lời " + senderName);
+        String previewText = message.getImageUrl() != null && !message.getImageUrl().isEmpty()
+                ? "[Ảnh]" : message.getText();
+        tvReplyPreviewText.setText(previewText);
+        etMessage.requestFocus();
+    }
+
+    private void cancelReply() {
+        replyingTo = null;
+        layoutReplyPreview.setVisibility(android.view.View.GONE);
     }
     
     /**
@@ -306,4 +420,139 @@ public class ChatActivity extends AppCompatActivity {
                     android.util.Log.e("ChatActivity", "Failed to get sender info", e);
                 });
     }
+    
+    /**
+     * Mở dialer để gọi điện thoại cho user
+     */
+    private void makePhoneCall() {
+        if (otherUserId == null || otherUserId.isEmpty()) {
+            android.widget.Toast.makeText(this, "Không thể gọi điện", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Lấy số điện thoại của user
+        db.collection("users").document(otherUserId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String phone = doc.getString("phone");
+                        if (phone != null && !phone.isEmpty()) {
+                            // Mở dialer với số điện thoại
+                            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_DIAL);
+                            intent.setData(android.net.Uri.parse("tel:" + phone));
+                            startActivity(intent);
+                        } else {
+                            android.widget.Toast.makeText(this, "Người dùng chưa cập nhật số điện thoại", android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ChatActivity", "Failed to get phone number", e);
+                    android.widget.Toast.makeText(this, "Không thể lấy số điện thoại", android.widget.Toast.LENGTH_SHORT).show();
+                });
+    }
+    
+    private static final int PICK_IMAGE_REQUEST = 1001;
+    
+    /**
+     * Chọn ảnh từ thư viện
+     */
+    private void selectImage() {
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            android.net.Uri imageUri = data.getData();
+            uploadImageAndSendMessage(imageUri);
+        }
+    }
+    
+    /**
+     * Upload ảnh lên Firebase Storage và gửi tin nhắn với URL ảnh
+     */
+    private void uploadImageAndSendMessage(android.net.Uri imageUri) {
+        if (chatId == null) {
+            android.widget.Toast.makeText(this, "Đang khởi tạo chat...", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Show progress
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Đang gửi ảnh...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        // Upload to Firebase Storage
+        String fileName = "chat_images/" + chatId + "/" + System.currentTimeMillis() + ".jpg";
+        com.google.firebase.storage.StorageReference storageRef = com.google.firebase.storage.FirebaseStorage.getInstance().getReference(fileName);
+        
+        storageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    // Get download URL
+                    storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                        String imageUrl = uri.toString();
+                        
+                        // Send message with image URL
+                        sendImageMessage(imageUrl);
+                        
+                        progressDialog.dismiss();
+                        android.widget.Toast.makeText(this, "Đã gửi ảnh", android.widget.Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
+                        progressDialog.dismiss();
+                        android.widget.Toast.makeText(this, "Lỗi lấy URL ảnh", android.widget.Toast.LENGTH_SHORT).show();
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    progressDialog.dismiss();
+                    android.widget.Toast.makeText(this, "Lỗi upload ảnh", android.widget.Toast.LENGTH_SHORT).show();
+                    android.util.Log.e("ChatActivity", "Upload failed", e);
+                });
+    }
+    
+    /**
+     * Gửi tin nhắn chứa ảnh
+     */
+    private void sendImageMessage(String imageUrl) {
+        if (chatId == null) return;
+        
+        com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+        
+        // Add message to subcollection
+        Map<String, Object> message = new HashMap<>();
+        message.put("senderId", currentUserId);
+        message.put("text", "[Ảnh]"); // Placeholder text
+        message.put("imageUrl", imageUrl);
+        message.put("timestamp", now);
+        message.put("read", false);
+        
+        db.collection("chats").document(chatId)
+                .collection("messages")
+                .add(message)
+                .addOnSuccessListener(docRef -> {
+                    // Send notification
+                    sendMessageNotification("[Ảnh]");
+                });
+        
+        // Update chat document with last message
+        Map<String, Object> chatUpdate = new HashMap<>();
+        chatUpdate.put("lastMessage", "[Ảnh]");
+        chatUpdate.put("lastTimestamp", now);
+        
+        db.collection("chats").document(chatId)
+                .update(chatUpdate);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (presenceListener != null && otherUserId != null) {
+            PresenceManager.removePresenceListener(otherUserId, presenceListener);
+        }
+    }
 }
+

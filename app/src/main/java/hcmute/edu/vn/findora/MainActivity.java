@@ -245,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        hcmute.edu.vn.findora.utils.PresenceManager.goOnline();
         // Set bottom nav to home when returning to this activity
         bottomNav.setSelectedItemId(R.id.nav_home);
         // Reload notification count
@@ -503,8 +504,17 @@ public class MainActivity extends AppCompatActivity {
     }
     
     @Override
+    protected void onStop() {
+        super.onStop();
+        hcmute.edu.vn.findora.utils.PresenceManager.goOffline();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (executorService != null) {
+            executorService.shutdown();
+        }
         if (executorService != null) {
             executorService.shutdown();
         }
@@ -620,7 +630,7 @@ public class MainActivity extends AppCompatActivity {
             tvAIDescription.setText("AI đang phân tích... Hãy thử thêm thông tin chi tiết hơn vào bài đăng");
         } else {
             // Có matches
-            tvAITitle.setText(String.format("🔥 Tìm thấy %d gợi ý phù hợp", totalMatches));
+            tvAITitle.setText(String.format("Tìm thấy %d gợi ý phù hợp", totalMatches));
             
             if (bestMatch != null && bestUserPost != null) {
                 // Hiển thị: "Bài của bạn (lost/found) match với bài X"
@@ -649,7 +659,7 @@ public class MainActivity extends AppCompatActivity {
             Post topPost = allPosts.get(0);
             String postType = topPost.getType().equals("lost") ? "Mất" : "Tìm thấy";
             
-            tvAITitle.setText(String.format("📍 Có %d bài đăng gần bạn", Math.min(allPosts.size(), 10)));
+            tvAITitle.setText(String.format("Có %d bài đăng gần bạn", Math.min(allPosts.size(), 10)));
             tvAIDescription.setText(String.format(
                 "%s: %s",
                 postType,

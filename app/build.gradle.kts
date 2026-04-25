@@ -90,6 +90,9 @@ dependencies {
     // Firebase Cloud Messaging
     implementation("com.google.firebase:firebase-messaging")
     
+    // Firebase Realtime Database (for online presence)
+    implementation("com.google.firebase:firebase-database")
+    
     // Google Generative AI (Gemini) - Updated version
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     

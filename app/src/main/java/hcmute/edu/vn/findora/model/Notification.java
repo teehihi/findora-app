@@ -24,7 +24,7 @@ import com.google.firebase.Timestamp;
  *   └─ {notificationId} (document)
  *       ├─ type: "ai_match" | "new_message" | "comment" | "like" | "system"
  *       ├─ userId: "abc123xyz" (người nhận)
- *       ├─ title: "🔥 Tìm thấy gợi ý phù hợp!"
+ *       ├─ title: "Tìm thấy gợi ý phù hợp!"
  *       ├─ body: "Mèo vàng - Độ phù hợp 95%"
  *       ├─ timestamp: Timestamp
  *       ├─ read: false
