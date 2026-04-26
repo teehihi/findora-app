@@ -1,33 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  item_post.xml — Stitch Modern Card Style
-  Layout: 
-  - Image card (rounded)
-  - Badge floating on image
-  - Title
-  - Location + info
-  - Footer: time + user avatar (placeholder)
--->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="20dp"
-    app:cardCornerRadius="20dp"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="0dp"
     app:cardElevation="0dp"
     app:cardBackgroundColor="@color/surface">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp">
 
-        <!-- Top: Image Area with Badge overlay -->
+        <!-- Header: Avatar + Name + Time + Menu -->
+        <LinearLayout
+            android:id="@+id/layoutHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="0dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <!-- Avatar -->
+            <ImageView
+                android:id="@+id/ivPosterAvatar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_person"
+                android:background="@drawable/bg_avatar_circle"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="10dp" />
+
+            <!-- Name + Time -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvPosterName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Người dùng"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface" />
+
+                    <!-- Verified tick -->
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_tick_verify"
+                        android:layout_marginStart="4dp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvCreatedAt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vừa xong"
+                    android:textSize="12sp"
+                    android:textColor="@color/outline"
+                    android:layout_marginTop="1dp" />
+
+            </LinearLayout>
+
+            <!-- More options -->
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@color/outline"
+                android:padding="2dp" />
+
+        </LinearLayout>
+
+        <!-- Title + Description -->
+        <LinearLayout
+            android:id="@+id/layoutTitleDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="10dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tiêu đề bài đăng"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/on_surface"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mô tả bài đăng"
+                android:textSize="14sp"
+                android:textColor="@color/on_surface_variant"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- Image + Location overlay -->
         <FrameLayout
             android:id="@+id/flImageContainer"
             android:layout_width="match_parent"
-            android:layout_height="200dp">
+            android:layout_height="220dp">
 
             <ImageView
                 android:id="@+id/ivPostImage"
@@ -36,174 +139,128 @@
                 android:background="@drawable/bg_img_placeholder"
                 android:scaleType="centerCrop" />
 
-            <!-- Type Badge (top-left) -->
+            <!-- Type Badge (top-left overlay) -->
             <TextView
                 android:id="@+id/tvType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="12dp"
-                android:paddingHorizontal="14dp"
+                android:layout_gravity="top|start"
+                android:layout_margin="10dp"
+                android:paddingHorizontal="12dp"
                 android:paddingVertical="4dp"
-                android:text="LOST"
+                android:text="TÌM THẤY"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
                 android:background="@drawable/bg_chip_active" />
 
-        </FrameLayout>
-
-        <!-- Bottom: Text Content -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Classic leather wallet"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/on_surface"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
+            <!-- Location overlay at bottom of image -->
             <LinearLayout
+                android:id="@+id/layoutLocationOverlay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="4dp">
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:background="#99000000">
 
                 <ImageView
                     android:layout_width="12dp"
                     android:layout_height="12dp"
                     android:src="@drawable/ic_location_pin"
-                    app:tint="@color/outline"
+                    app:tint="#FFFFFF"
                     android:layout_marginEnd="4dp" />
 
                 <TextView
-                    android:id="@+id/tvDescription"
+                    android:id="@+id/tvLocation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Ben Thanh Market Area"
-                    android:textSize="13sp"
-                    android:textColor="@color/on_surface_variant"
+                    android:text="Đang cập nhật khu vực"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:maxLines="1"
                     android:ellipsize="end" />
+
             </LinearLayout>
 
-            <!-- Hairline separator -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/outline_variant"
-                android:layout_marginVertical="12dp" />
+        </FrameLayout>
 
-            <!-- Footer: Time + User -->
+        <!-- Action bar: like count + comment count -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <!-- Like button + count -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:id="@+id/btnLikeAction"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/tvCreatedAt"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="2 HOURS AGO"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.05"
-                    android:textAllCaps="true"
-                    android:textColor="@color/outline" />
+                android:gravity="center_vertical"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    android:id="@+id/ivPosterAvatar"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_person"
-                    android:background="@drawable/bg_search_field"
-                    android:padding="4dp"
-                    android:scaleType="centerCrop" />
+                    android:id="@+id/ivLikeIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_like_feather" />
+
+                <TextView
+                    android:id="@+id/tvLikeCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="0"
+                    android:textSize="14sp"
+                    android:textColor="@color/outline"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
-            <!-- Action Bar (Facebook style) -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/outline_variant"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="4dp" />
-
+            <!-- Comment button + count -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:id="@+id/btnCommentAction"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
 
-                <!-- Like button -->
-                <LinearLayout
-                    android:id="@+id/btnLikeAction"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_comment_feather" />
 
-                    <ImageView
-                        android:id="@+id/ivLikeIcon"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_like_feather" />
-
-                    <TextView
-                        android:id="@+id/tvLikeCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="Thích"
-                        android:textSize="13sp"
-                        android:textColor="@color/outline" />
-
-                </LinearLayout>
-
-                <!-- Comment button -->
-                <LinearLayout
-                    android:id="@+id/btnCommentAction"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_comment_feather" />
-
-                    <TextView
-                        android:id="@+id/tvCommentCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="Bình luận"
-                        android:textSize="13sp"
-                        android:textColor="@color/outline" />
-
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/tvCommentCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="0"
+                    android:textSize="14sp"
+                    android:textColor="@color/outline"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
         </LinearLayout>
+
+        <!-- Bottom divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/outline_variant" />
 
     </LinearLayout>
 

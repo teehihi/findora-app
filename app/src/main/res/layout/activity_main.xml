@@ -339,13 +339,15 @@
                 android:indeterminateTint="@color/primary"
                 android:visibility="gone" />
 
-            <!-- ── RecyclerView (post cards, với padding ngang) ── -->
+    <!-- ── RecyclerView (post cards, với padding ngang) ── -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="8dp"
                 android:clipToPadding="false"
+                android:background="@color/surface_container_high"
                 android:nestedScrollingEnabled="false" />
 
             <!-- ── Empty state ── -->
