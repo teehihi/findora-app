@@ -7,7 +7,7 @@
 
     <!-- Auth - chung -->
     <string name="auth_email_label">Địa chỉ Email</string>
-    <string name="auth_email_hint">ten@example.com</string>
+    <string name="auth_email_hint">example@findora.com</string>
     <string name="auth_password_label">Mật khẩu</string>
     <string name="auth_password_hint">••••••••</string>
     <string name="auth_forgot">Quên mật khẩu?</string>
@@ -27,7 +27,7 @@
     <string name="register_fullname_label">Họ và tên</string>
     <string name="register_fullname_hint">Nguyễn Văn A</string>
     <string name="register_phone_label">Số điện thoại</string>
-    <string name="register_phone_hint">0901234567</string>
+    <string name="register_phone_hint">0931652105</string>
     <string name="register_have_account">Đã có tài khoản? </string>
     <string name="register_switch_login">Đăng nhập</string>
 

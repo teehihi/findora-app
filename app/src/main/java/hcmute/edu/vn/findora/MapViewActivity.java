@@ -12,7 +12,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -174,9 +176,198 @@ public class MapViewActivity extends AppCompatActivity {
             AnnotationPlugin annotationPlugin = AnnotationPluginImplKt.getAnnotations(mapView);
             pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, mapView);
             
+            // Setup marker click listener (single tap)
+            pointAnnotationManager.addClickListener(pointAnnotation -> {
+                // Find post by marker position
+                Point clickedPoint = pointAnnotation.getPoint();
+                Post clickedPost = findPostByPoint(clickedPoint);
+                
+                if (clickedPost != null) {
+                    openPostDetail(clickedPost);
+                    return true;
+                }
+                return false;
+            });
+            
+            // Setup marker long-press listener
+            pointAnnotationManager.addLongClickListener(pointAnnotation -> {
+                // Find post by marker position
+                Point clickedPoint = pointAnnotation.getPoint();
+                Post clickedPost = findPostByPoint(clickedPoint);
+                
+                if (clickedPost != null) {
+                    showMarkerPopup(clickedPost);
+                    return true;
+                }
+                return false;
+            });
+            
             // Load posts from Firestore
             loadPosts();
         });
+    }
+    
+    /**
+     * Tìm bài viết theo tọa độ marker
+     */
+    private Post findPostByPoint(Point point) {
+        for (Post post : allPosts) {
+            if (post.getLat() != null && post.getLng() != null) {
+                // Check if this is the clicked marker (with small tolerance)
+                double latDiff = Math.abs(post.getLat() - point.latitude());
+                double lngDiff = Math.abs(post.getLng() - point.longitude());
+                
+                if (latDiff < 0.0001 && lngDiff < 0.0001) {
+                    return post;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Hiển thị popup tóm tắt thông tin bài viết
+     * Modern center-screen card with dim background overlay
+     */
+    private void showMarkerPopup(Post post) {
+        // Create dim overlay
+        View dimOverlay = new View(this);
+        dimOverlay.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        dimOverlay.setBackgroundColor(0xCC000000); // 80% opacity black
+        
+        // Add overlay to root view
+        android.view.ViewGroup rootView = (android.view.ViewGroup) findViewById(android.R.id.content);
+        rootView.addView(dimOverlay);
+        
+        // Inflate popup layout
+        View popupView = getLayoutInflater().inflate(R.layout.popup_marker_info, null);
+        
+        // Bind data
+        ImageView ivPopupImage = popupView.findViewById(R.id.ivPopupImage);
+        TextView tvPopupType = popupView.findViewById(R.id.tvPopupType);
+        TextView tvPopupTitle = popupView.findViewById(R.id.tvPopupTitle);
+        TextView tvPopupDescription = popupView.findViewById(R.id.tvPopupDescription);
+        TextView tvPopupLocation = popupView.findViewById(R.id.tvPopupLocation);
+        com.google.android.material.button.MaterialButton btnViewDetail = popupView.findViewById(R.id.btnViewDetail);
+        
+        // Set type badge with subtle styling
+        if ("lost".equals(post.getType())) {
+            tvPopupType.setText("THẤT LẠC");
+            tvPopupType.setTextColor(0xFFFF3B30); // Red
+            tvPopupType.setBackgroundResource(R.drawable.bg_badge_subtle);
+        } else {
+            tvPopupType.setText("TÌM THẤY");
+            tvPopupType.setTextColor(0xFF34C759); // Green
+            tvPopupType.setBackgroundResource(R.drawable.bg_badge_found_subtle);
+        }
+        
+        // Set title and description
+        tvPopupTitle.setText(post.getTitle());
+        tvPopupDescription.setText(post.getDescription());
+        
+        // Set location
+        if (post.getAddress() != null && !post.getAddress().isEmpty()) {
+            tvPopupLocation.setText(post.getAddress());
+        } else {
+            tvPopupLocation.setText(String.format(java.util.Locale.getDefault(), 
+                "%.4f, %.4f", post.getLat(), post.getLng()));
+        }
+        
+        // Load image with rounded corners
+        if (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) {
+            Glide.with(this)
+                .load(post.getImageUrl())
+                .centerCrop()
+                .placeholder(R.drawable.bg_img_placeholder)
+                .error(R.drawable.bg_img_placeholder)
+                .into(ivPopupImage);
+        }
+        
+        // Get screen width for responsive sizing (85-90% width)
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int popupWidth = (int) (screenWidth * 0.9); // 90% screen width
+        
+        // Measure popup with screen width constraint
+        popupView.measure(
+            View.MeasureSpec.makeMeasureSpec(popupWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        );
+        
+        // Create popup window
+        android.widget.PopupWindow popupWindow = new android.widget.PopupWindow(
+            popupView,
+            popupWidth,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        );
+        
+        // Set transparent background
+        popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        
+        // Enable dismiss
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setFocusable(true);
+        
+        // Remove overlay when popup dismissed
+        popupWindow.setOnDismissListener(() -> {
+            rootView.removeView(dimOverlay);
+        });
+        
+        // CTA button click
+        btnViewDetail.setOnClickListener(v -> {
+            popupWindow.dismiss();
+            openPostDetail(post);
+        });
+        
+        // Dismiss on overlay click
+        dimOverlay.setOnClickListener(v -> popupWindow.dismiss());
+        
+        // Show at center of screen
+        popupWindow.showAtLocation(mapView, android.view.Gravity.CENTER, 0, 0);
+        
+        // Fade in overlay
+        dimOverlay.setAlpha(0f);
+        dimOverlay.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start();
+        
+        // Scale + fade animation (from marker)
+        popupView.setScaleX(0.7f);
+        popupView.setScaleY(0.7f);
+        popupView.setAlpha(0f);
+        popupView.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .alpha(1f)
+            .setDuration(250)
+            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+            .start();
+    }
+    
+    /**
+     * Mở màn hình chi tiết bài viết
+     */
+    private void openPostDetail(Post post) {
+        Intent intent = new Intent(this, PostDetailActivity.class);
+        intent.putExtra("postId", post.getId());
+        intent.putExtra("title", post.getTitle());
+        intent.putExtra("description", post.getDescription());
+        intent.putExtra("type", post.getType());
+        intent.putExtra("userId", post.getUserId());
+        intent.putExtra("timestamp", post.getCreatedAt() != null ? post.getCreatedAt().toDate().getTime() : 0L);
+        intent.putExtra("imageUrl", post.getImageUrl());
+        
+        if (post.getLat() != null && post.getLng() != null) {
+            intent.putExtra("lat", post.getLat());
+            intent.putExtra("lng", post.getLng());
+            intent.putExtra("address", post.getAddress());
+        }
+        
+        startActivity(intent);
     }
     
     /**

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern bottom-anchored marker popup card -->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="24dp"
+    android:layout_marginEnd="24dp"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    android:elevation="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/surface">
+
+        <!-- Image Section (16:9 ratio) -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:id="@+id/ivPopupImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="@color/surface_variant"
+                android:contentDescription="Item image" />
+
+            <!-- Gradient overlay for better text readability -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/gradient_overlay" />
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Content Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Badge (subtle, small) -->
+            <TextView
+                android:id="@+id/tvPopupType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="THẤT LẠC"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/error"
+                android:background="@drawable/bg_badge_subtle"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="8dp"
+                android:letterSpacing="0.05" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tvPopupTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đồng hồ Orient Star"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/on_surface"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Description -->
+            <TextView
+                android:id="@+id/tvPopupDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đồng hồ Orient Star Automatic mặt xanh, dây kim loại"
+                android:textSize="14sp"
+                android:textColor="@color/on_surface_variant"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Location -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_location_pin"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:id="@+id/tvPopupLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Phường Hiệp Bình Chánh, Thủ Đức"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+            </LinearLayout>
+
+            <!-- CTA Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewDetail"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Xem chi tiết"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_arrow_right"
+                app:iconGravity="end"
+                app:iconSize="20dp"
+                app:cornerRadius="12dp"
+                style="@style/Widget.Material3.Button" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

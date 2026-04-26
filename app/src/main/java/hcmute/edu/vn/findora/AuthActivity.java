@@ -3,6 +3,7 @@ package hcmute.edu.vn.findora;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ public class AuthActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
 
+    private ScrollView scrollView;
     private TextView tvTitle, tvSubtitle, tvForgot, tvSwitchPrompt, tvSwitchAction;
     private MaterialButton btnSubmit, btnGoogle, btnFacebook;
     private TextInputEditText etEmail, etPassword, etFullName, etPhone;
@@ -42,6 +44,7 @@ public class AuthActivity extends AppCompatActivity {
         loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
 
         // Bind views
+        scrollView = findViewById(R.id.scrollView);
         tvTitle = findViewById(R.id.tvTitle);
         tvSubtitle = findViewById(R.id.tvSubtitle);
         tvForgot = findViewById(R.id.tvForgot);
@@ -58,6 +61,9 @@ public class AuthActivity extends AppCompatActivity {
         lblPhone = findViewById(R.id.lblPhone);
         tilFullName = findViewById(R.id.tilFullName);
         tilPhone = findViewById(R.id.tilPhone);
+
+        // Setup auto-scroll when keyboard appears
+        setupAutoScroll();
 
         tvSwitchAction.setOnClickListener(v -> toggleAuthMode());
 
@@ -95,6 +101,23 @@ public class AuthActivity extends AppCompatActivity {
         );
     }
 
+
+    // ========== Auto Scroll Setup ==========
+
+    private void setupAutoScroll() {
+        View.OnFocusChangeListener scrollListener = (v, hasFocus) -> {
+            if (hasFocus && scrollView != null) {
+                scrollView.postDelayed(() -> {
+                    scrollView.smoothScrollTo(0, v.getBottom());
+                }, 200);
+            }
+        };
+
+        if (etFullName != null) etFullName.setOnFocusChangeListener(scrollListener);
+        if (etPhone != null) etPhone.setOnFocusChangeListener(scrollListener);
+        if (etEmail != null) etEmail.setOnFocusChangeListener(scrollListener);
+        if (etPassword != null) etPassword.setOnFocusChangeListener(scrollListener);
+    }
 
     // ========== Forgot Password ==========
 

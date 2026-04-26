@@ -80,6 +80,25 @@ public class EditProfileActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         btnChangeAvatar.setOnClickListener(v -> pickImage.launch("image/*"));
         btnSaveProfile.setOnClickListener(v -> saveProfile());
+        
+        // Setup auto-scroll when keyboard appears
+        setupAutoScroll();
+    }
+    
+    /**
+     * Setup auto-scroll when EditText gains focus
+     */
+    private void setupAutoScroll() {
+        android.view.View.OnFocusChangeListener scrollListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                v.postDelayed(() -> {
+                    v.getParent().requestChildFocus(v, v);
+                }, 200);
+            }
+        };
+
+        if (etFullName != null) etFullName.setOnFocusChangeListener(scrollListener);
+        if (etPhone != null) etPhone.setOnFocusChangeListener(scrollListener);
     }
 
     private void loadCurrentData() {

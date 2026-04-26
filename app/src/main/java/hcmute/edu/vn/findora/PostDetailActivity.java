@@ -43,7 +43,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private ImageView ivDetailImage, ivMapPlaceholder;
     private TextView tvDetailType, tvDetailTitle, tvDetailTimeHeader, tvDetailDescription, tvDetailLocation, tvUserName, tvUserStatus;
     private TextView tvInfoTime, tvInfoCategory;
-    private ImageButton btnBack, btnLike;
+    private ImageButton btnBack, btnLike, btnMoreOptions;
     private TextView tvLikeCount, tvCommentCount;
     private com.google.firebase.firestore.FirebaseFirestore db;
     private com.mapbox.maps.MapView mapViewDetail;
@@ -112,6 +112,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvInfoTime          = findViewById(R.id.tvInfoTime);
         tvInfoCategory      = findViewById(R.id.tvInfoCategory);
         btnBack             = findViewById(R.id.btnBack);
+        btnMoreOptions      = findViewById(R.id.btnMoreOptions);
         mapViewDetail       = findViewById(R.id.mapViewDetail);
         ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
         cvMapPreview        = findViewById(R.id.cvMapPreview);
@@ -148,6 +149,9 @@ public class PostDetailActivity extends AppCompatActivity {
         
         // Send comment button click
         btnSendComment.setOnClickListener(v -> sendComment());
+        
+        // More options button click
+        btnMoreOptions.setOnClickListener(v -> showMoreOptionsMenu());
         
         // Scroll to comment input when focused
         etComment.setOnFocusChangeListener((v, hasFocus) -> {
@@ -905,4 +909,93 @@ public class PostDetailActivity extends AppCompatActivity {
             commentText
         );
     }
+
+    /**
+     * Hiển thị menu tùy chọn (3 chấm)
+     */
+    private void showMoreOptionsMenu() {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() == null) return;
+        
+        String currentUserId = auth.getCurrentUser().getUid();
+        boolean isOwner = currentUserId.equals(currentPostOwnerId);
+        
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, btnMoreOptions);
+        
+        if (isOwner) {
+            popup.getMenu().add(0, 1, 0, "Chỉnh sửa");
+            popup.getMenu().add(0, 2, 1, "Xóa bài");
+        } else {
+            popup.getMenu().add(0, 3, 0, "Báo cáo bài viết");
+        }
+        
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                editPost();
+                return true;
+            } else if (id == 2) {
+                showDeleteConfirmDialog();
+                return true;
+            } else if (id == 3) {
+                Toast.makeText(this, "Chức năng báo cáo đang được phát triển", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
+        });
+        
+        popup.show();
+    }
+    
+    private void editPost() {
+        Intent editIntent = new Intent(this, CreatePostActivity.class);
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            editIntent.putExtra("editPostId", currentPostId);
+            editIntent.putExtra("title", extras.getString("title", ""));
+            editIntent.putExtra("description", extras.getString("description", ""));
+            editIntent.putExtra("type", extras.getString("type", "lost"));
+            editIntent.putExtra("imageUrl", extras.getString("imageUrl", ""));
+            
+            if (extras.containsKey("lat") && extras.containsKey("lng")) {
+                editIntent.putExtra("lat", extras.getDouble("lat"));
+                editIntent.putExtra("lng", extras.getDouble("lng"));
+                editIntent.putExtra("address", extras.getString("address", ""));
+            }
+        }
+        startActivity(editIntent);
+        finish();
+    }
+    
+    private void showDeleteConfirmDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Xóa bài viết")
+            .setMessage("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.")
+            .setPositiveButton("Xóa", (dialog, which) -> deletePost())
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+    
+    private void deletePost() {
+        if (currentPostId == null || currentPostId.isEmpty()) {
+            Toast.makeText(this, "Không thể xóa bài viết", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog = 
+            new hcmute.edu.vn.findora.utils.LoadingDialog(this);
+        loadingDialog.show("Đang xóa bài viết...");
+        
+        db.collection("posts").document(currentPostId).delete()
+            .addOnSuccessListener(aVoid -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Đã xóa bài viết thành công", Toast.LENGTH_SHORT).show();
+                finish();
+            })
+            .addOnFailureListener(e -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+    }
+
 }

@@ -185,6 +185,9 @@ public class CreatePostActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
         
+        // Setup auto-scroll when keyboard appears
+        setupAutoScroll();
+        
         // Handle Edit Mode
         Bundle extras = getIntent().getExtras();
         if (extras != null && extras.containsKey("editPostId")) {
@@ -225,6 +228,46 @@ public class CreatePostActivity extends AppCompatActivity {
         btnLost.setOnClickListener(v  -> setTypeSelected("lost"));
         btnFound.setOnClickListener(v -> setTypeSelected("found"));
         btnSubmit.setOnClickListener(v -> submitPost());
+    }
+    
+    /**
+     * Setup auto-scroll when EditText gains focus
+     */
+    private void setupAutoScroll() {
+        // Find ScrollView
+        final android.widget.ScrollView scrollView = findViewById(R.id.scrollViewCreatePost);
+        
+        android.view.View.OnFocusChangeListener scrollListener = (v, hasFocus) -> {
+            if (hasFocus && scrollView != null) {
+                // Don't clear focus, just scroll
+                v.postDelayed(() -> {
+                    // Get the EditText's position relative to ScrollView
+                    int scrollViewTop = scrollView.getScrollY();
+                    int[] viewLocation = new int[2];
+                    v.getLocationInWindow(viewLocation);
+                    
+                    int[] scrollLocation = new int[2];
+                    scrollView.getLocationInWindow(scrollLocation);
+                    
+                    // Calculate how much to scroll
+                    int viewTop = viewLocation[1] - scrollLocation[1] + scrollViewTop;
+                    int viewBottom = viewTop + v.getHeight();
+                    
+                    // Get visible area (screen height - keyboard height estimate)
+                    int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                    int keyboardHeight = (int) (screenHeight * 0.4);
+                    int visibleHeight = screenHeight - keyboardHeight;
+                    
+                    // Scroll so the EditText is in the middle of visible area
+                    int targetScroll = viewTop - (visibleHeight / 3);
+                    
+                    scrollView.smoothScrollTo(0, Math.max(0, targetScroll));
+                }, 300);
+            }
+        };
+
+        if (etTitle != null) etTitle.setOnFocusChangeListener(scrollListener);
+        if (etDescription != null) etDescription.setOnFocusChangeListener(scrollListener);
     }
     
     // ActivityResultLauncher for picking image from gallery
@@ -323,6 +366,14 @@ public class CreatePostActivity extends AppCompatActivity {
      */
     private void handleImageSelected(Uri uri) {
         selectedImageUri = uri;
+        
+        // Update ImageView to show full image
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        ivImagePreview.setLayoutParams(params);
+        
         ivImagePreview.setImageURI(selectedImageUri);
         ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
         ivImagePreview.setImageTintList(null);
