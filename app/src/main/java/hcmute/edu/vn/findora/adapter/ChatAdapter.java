@@ -183,7 +183,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             bindReplyQuote(holder, message, true);
 
             if (message.getImageUrl() != null && !message.getImageUrl().isEmpty()) {
-                holder.ivSentImage.setVisibility(View.VISIBLE);
+                holder.cvSentImage.setVisibility(View.VISIBLE);
                 holder.tvSentMessage.setVisibility(View.GONE);
                 com.bumptech.glide.Glide.with(context)
                         .load(message.getImageUrl())
@@ -191,7 +191,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                         .error(R.drawable.ic_image)
                         .into(holder.ivSentImage);
             } else {
-                holder.ivSentImage.setVisibility(View.GONE);
+                holder.cvSentImage.setVisibility(View.GONE);
                 holder.tvSentMessage.setVisibility(View.VISIBLE);
                 holder.tvSentMessage.setText(message.getText());
             }
@@ -260,7 +260,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             bindReplyQuote(holder, message, false);
 
             if (message.getImageUrl() != null && !message.getImageUrl().isEmpty()) {
-                holder.ivReceivedImage.setVisibility(View.VISIBLE);
+                holder.cvReceivedImage.setVisibility(View.VISIBLE);
                 holder.tvReceivedMessage.setVisibility(View.GONE);
                 com.bumptech.glide.Glide.with(context)
                         .load(message.getImageUrl())
@@ -268,7 +268,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                         .error(R.drawable.ic_image)
                         .into(holder.ivReceivedImage);
             } else {
-                holder.ivReceivedImage.setVisibility(View.GONE);
+                holder.cvReceivedImage.setVisibility(View.GONE);
                 holder.tvReceivedMessage.setVisibility(View.VISIBLE);
                 holder.tvReceivedMessage.setText(message.getText());
             }
@@ -617,6 +617,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         TextView tvSentMessage, tvSentTime, tvReceivedMessage, tvReceivedTime;
         TextView tvReplySenderSent, tvReplyTextSent, tvReplySenderReceived, tvReplyTextReceived;
         android.widget.ImageView ivReceivedAvatar, ivReadIndicator, ivSentImage, ivReceivedImage, ivSeenAvatar;
+        androidx.cardview.widget.CardView cvSentImage, cvReceivedImage;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -643,6 +644,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             ivSentImage             = itemView.findViewById(R.id.ivSentImage);
             ivReceivedImage         = itemView.findViewById(R.id.ivReceivedImage);
             ivSeenAvatar            = itemView.findViewById(R.id.ivSeenAvatar);
+            cvSentImage             = itemView.findViewById(R.id.cvSentImage);
+            cvReceivedImage         = itemView.findViewById(R.id.cvReceivedImage);
         }
     }
 }

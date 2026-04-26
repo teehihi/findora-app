@@ -164,6 +164,9 @@ public class ChatActivity extends AppCompatActivity {
             showReplyPreview(message);
         });
         adapter.attachSwipeToReply(rvMessages);
+        
+        // Scroll to bottom when keyboard opens
+        setupKeyboardListener();
 
         // Load other user info
         loadOtherUserInfo();
@@ -179,6 +182,29 @@ public class ChatActivity extends AppCompatActivity {
     
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+    
+    /**
+     * Setup listener để scroll RecyclerView khi keyboard hiện
+     */
+    private void setupKeyboardListener() {
+        final android.view.View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            android.graphics.Rect r = new android.graphics.Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
+            int screenHeight = rootView.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+            
+            // If keyboard is visible (keypad height > 15% of screen)
+            if (keypadHeight > screenHeight * 0.15) {
+                // Scroll to bottom
+                if (adapter != null && adapter.getItemCount() > 0) {
+                    rvMessages.postDelayed(() -> {
+                        rvMessages.smoothScrollToPosition(adapter.getItemCount() - 1);
+                    }, 100);
+                }
+            }
+        });
     }
 
     private void listenToOtherUserPresence() {

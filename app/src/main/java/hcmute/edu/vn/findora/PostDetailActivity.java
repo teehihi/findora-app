@@ -98,8 +98,10 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private ImageView ivUserAvatar;
+    private androidx.core.widget.NestedScrollView scrollView;
     
     private void initViews() {
+        scrollView          = findViewById(R.id.scrollViewDetail);
         ivDetailImage       = findViewById(R.id.ivDetailImage);
         tvDetailType        = findViewById(R.id.tvDetailType);
         tvDetailTitle       = findViewById(R.id.tvDetailTitle);
@@ -147,6 +149,15 @@ public class PostDetailActivity extends AppCompatActivity {
         
         // Send comment button click
         btnSendComment.setOnClickListener(v -> sendComment());
+        
+        // Scroll to comment input when focused
+        etComment.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && scrollView != null) {
+                v.postDelayed(() -> {
+                    scrollView.smoothScrollTo(0, scrollView.getBottom());
+                }, 300);
+            }
+        });
     }
     
     private void initializeMap() {

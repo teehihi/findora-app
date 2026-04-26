@@ -102,14 +102,24 @@
                 android:paddingTop="12dp"
                 android:paddingBottom="12dp">
 
-                <ImageView
-                    android:id="@+id/ivSentImage"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:scaleType="centerCrop"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cvSentImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
                     android:visibility="gone"
-                    android:layout_marginBottom="8dp"
-                    android:contentDescription="Sent image" />
+                    android:layout_marginBottom="8dp">
+                    
+                    <ImageView
+                        android:id="@+id/ivSentImage"
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:maxHeight="300dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="Sent image" />
+                </androidx.cardview.widget.CardView>
 
                 <TextView
                     android:id="@+id/tvSentMessage"
@@ -264,14 +274,24 @@
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp">
 
-                    <ImageView
-                        android:id="@+id/ivReceivedImage"
-                        android:layout_width="200dp"
-                        android:layout_height="200dp"
-                        android:scaleType="centerCrop"
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cvReceivedImage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
                         android:visibility="gone"
-                        android:layout_marginBottom="8dp"
-                        android:contentDescription="Received image" />
+                        android:layout_marginBottom="8dp">
+                        
+                        <ImageView
+                            android:id="@+id/ivReceivedImage"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:maxHeight="300dp"
+                            android:adjustViewBounds="true"
+                            android:scaleType="centerCrop"
+                            android:contentDescription="Received image" />
+                    </androidx.cardview.widget.CardView>
 
                     <TextView
                         android:id="@+id/tvReceivedMessage"
