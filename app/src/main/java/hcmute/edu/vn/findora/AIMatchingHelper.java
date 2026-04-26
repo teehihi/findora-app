@@ -13,10 +13,19 @@ import hcmute.edu.vn.findora.model.Post;
  * 
  * CHỨC NĂNG CHÍNH:
  * - Tìm các bài đăng "found" phù hợp với bài đăng "lost" và ngược lại
- * - Sử dụng thuật toán AI kết hợp 3 yếu tố:
- *   1. Text Similarity (Độ tương đồng văn bản) - 40%
- *   2. Location Distance (Khoảng cách địa lý) - 40%
- *   3. Time Proximity (Thời gian gần nhau) - 20%
+ * - Sử dụng thuật toán AI kết hợp 3 yếu tố theo thứ tự ưu tiên:
+ *   1. Image Similarity (Độ tương đồng hình ảnh qua AI) - 50% (Ưu tiên cao nhất)
+ *   2. Content Similarity (Độ tương đồng nội dung) - 40%
+ *   3. Location Distance (Khoảng cách địa lý) - 10% (Chỉ là yếu tố phụ)
+ * 
+ * LOGIC MATCHING:
+ * - Ưu tiên 1: So sánh ảnh bằng TensorFlow Lite classification
+ *   → Nếu cùng label (VD: cả 2 đều là "key") → điểm cao
+ * - Ưu tiên 2: So sánh tiêu đề và mô tả
+ *   → Tìm từ khóa trùng khớp (mèo, chìa khóa, ví, điện thoại...)
+ * - Ưu tiên 3: Khoảng cách địa lý
+ *   → Chỉ dùng để xếp hạng khi Image và Content đã match
+ *   → Nếu > 500km → loại bỏ hoàn toàn
  * 
  * ĐƯỢC GỌI TỪ:
  * - MainActivity.java: Hiển thị gợi ý AI cho người dùng
@@ -36,12 +45,12 @@ import hcmute.edu.vn.findora.model.Post;
  * </pre>
  * 
  * THUẬT TOÁN:
+ * - Image Classification Matching (TensorFlow Lite)
  * - Jaccard Similarity cho văn bản (tính độ giống nhau giữa 2 tập từ)
  * - Haversine Formula cho khoảng cách địa lý (tính khoảng cách trên mặt cầu)
- * - Linear Interpolation cho thời gian (tính điểm dựa trên khoảng thời gian)
  * 
  * @author Findora Team
- * @version 1.0
+ * @version 2.0
  * @since 2024
  */
 public class AIMatchingHelper {
@@ -51,27 +60,24 @@ public class AIMatchingHelper {
     // ==================== NGƯỠNG CẤU HÌNH ====================
     
     /**
-     * Điểm tối thiểu để 2 bài đăng được coi là match (30%).
-     * Nếu điểm < 0.3 thì không hiển thị gợi ý.
+     * Điểm tối thiểu để 2 bài đăng được coi là match (20%).
+     * Nếu điểm < 0.2 thì không hiển thị gợi ý.
      */
-    private static final double MIN_MATCH_SCORE = 0.3;
+    private static final double MIN_MATCH_SCORE = 0.2;
     
     /**
-     * Khoảng cách tối đa để 2 bài đăng được coi là gần nhau (50km).
-     * Nếu khoảng cách > 50km thì điểm location = 0.
+     * Khoảng cách tối đa TUYỆT ĐỐI để 2 bài đăng có thể match (500km).
+     * Nếu khoảng cách > 500km thì KHÔNG BAO GIỜ match.
      * 
-     * LƯU Ý: Tăng từ 10km lên 50km để phù hợp với khu vực rộng hơn
-     * (VD: Thủ Đức ↔ Quận 1 ~10km, TP.HCM ↔ Bình Dương ~30km)
+     * VÍ DỤ: TP.HCM ↔ Hà Nội (~1700km) → KHÔNG match
+     */
+    private static final double ABSOLUTE_MAX_DISTANCE_KM = 500.0;
+    
+    /**
+     * Khoảng cách để tính điểm location (50km).
+     * Dùng để tính điểm phụ khi image và text đã match.
      */
     private static final double MAX_DISTANCE_KM = 50.0;
-    
-    /**
-     * Khoảng cách tối đa TUYỆT ĐỐI để 2 bài đăng có thể match (100km).
-     * Nếu khoảng cách > 100km thì KHÔNG BAO GIỜ match, bất kể điểm text cao thế nào.
-     * 
-     * VÍ DỤ: Thủ Đức (TP.HCM) ↔ Hà Nội (~1700km) → KHÔNG match
-     */
-    private static final double ABSOLUTE_MAX_DISTANCE_KM = 100.0;
     
     /**
      * Khoảng thời gian tối đa để 2 bài đăng được coi là gần nhau (30 ngày).
@@ -147,9 +153,9 @@ public class AIMatchingHelper {
                     post.getLat(), post.getLng()
                 );
                 
-                // Nếu quá xa (> 100km) thì KHÔNG match, bỏ qua luôn
+                // Nếu quá xa (> 500km) thì KHÔNG match, bỏ qua luôn
                 if (distance > ABSOLUTE_MAX_DISTANCE_KM) {
-                    Log.d(TAG, String.format("Skipped: %s - Too far (%.1f km)", 
+                    Log.d(TAG, String.format("Skipped: %s - Too far (%.1f km > 500km)", 
                         post.getTitle(), distance));
                     continue;
                 }
@@ -177,33 +183,116 @@ public class AIMatchingHelper {
     /**
      * Tính điểm match tổng hợp giữa 2 bài đăng.
      * 
-     * CHỨC NĂNG:
-     * - Kết hợp 3 yếu tố: Title (50%) + Location (30%) + Time (20%)
-     * - Ưu tiên title similarity để match chính xác (mèo với mèo, chìa khóa với chìa khóa)
-     * - Trả về điểm từ 0.0 (không match) đến 1.0 (match hoàn hảo)
+     * LOGIC MỚI - Ưu tiên theo thứ tự:
+     * 1. Hình ảnh (Image AI Classification) - Nếu có
+     * 2. Nội dung (Title + Description) - Luôn tính
+     * 3. Vị trí (Location) - Yếu tố phụ
      * 
      * ĐƯỢC GỌI TỪ:
      * - findMatches(): Tính điểm cho từng cặp bài đăng
-     * 
-     * CÔNG THỨC:
-     * totalScore = (titleScore × 0.5) + (locationScore × 0.3) + (timeScore × 0.2)
      * 
      * @param post1 Bài đăng thứ nhất (thường là bài đăng hiện tại)
      * @param post2 Bài đăng thứ hai (bài đăng cần so sánh)
      * @return Điểm match từ 0.0 đến 1.0
      */
     private static double calculateMatchScore(Post post1, Post post2) {
-        double titleScore = calculateTitleSimilarity(post1, post2);
+        // 1. Image similarity - Ưu tiên cao nhất nếu có
+        double imageScore = calculateImageSimilarity(post1, post2);
+        boolean hasImageMatch = (post1.getImageLabel() != null && !post1.getImageLabel().isEmpty() &&
+                                 post2.getImageLabel() != null && !post2.getImageLabel().isEmpty());
+        
+        // 2. Content similarity - Title + Description
+        double contentScore = calculateContentSimilarity(post1, post2);
+        
+        // 3. Location score - Yếu tố phụ
         double locationScore = calculateLocationScore(post1, post2);
-        double timeScore = calculateTimeScore(post1, post2);
         
-        // Weighted average - ưu tiên title (50%)
-        double totalScore = (titleScore * 0.5) + (locationScore * 0.3) + (timeScore * 0.2);
-        
-        Log.d(TAG, String.format("Scores - Title: %.2f, Location: %.2f, Time: %.2f, Total: %.2f",
-            titleScore, locationScore, timeScore, totalScore));
+        // Tính điểm tổng - Điều chỉnh trọng số dựa trên việc có image hay không
+        double totalScore;
+        if (hasImageMatch) {
+            // Có image → Ưu tiên Image (50%) + Content (40%) + Location (10%)
+            totalScore = (imageScore * 0.5) + (contentScore * 0.4) + (locationScore * 0.1);
+            Log.d(TAG, String.format("WITH IMAGE - Image: %.2f, Content: %.2f, Location: %.2f, Total: %.2f",
+                imageScore, contentScore, locationScore, totalScore));
+        } else {
+            // Không có image → Chỉ dựa vào Content (80%) + Location (20%)
+            totalScore = (contentScore * 0.8) + (locationScore * 0.2);
+            Log.d(TAG, String.format("NO IMAGE - Content: %.2f, Location: %.2f, Total: %.2f",
+                contentScore, locationScore, totalScore));
+        }
         
         return totalScore;
+    }
+    
+    
+    // ==================== IMAGE SIMILARITY ====================
+    
+    /**
+     * Tính độ tương đồng hình ảnh giữa 2 bài đăng (AI Classification).
+     * 
+     * CHỨC NĂNG:
+     * - So sánh imageLabel từ TensorFlow Lite classification
+     * - Nếu cùng label (VD: cả 2 đều là "key") → điểm cao
+     * - Điểm được nhân với confidence để đảm bảo độ chính xác
+     * 
+     * ĐƯỢC GỌI TỪ:
+     * - calculateMatchScore(): Tính điểm image similarity
+     * 
+     * @param post1 Bài đăng thứ nhất
+     * @param post2 Bài đăng thứ hai
+     * @return Điểm từ 0.0 đến 1.0 (hoặc -1 nếu không có image)
+     */
+    private static double calculateImageSimilarity(Post post1, Post post2) {
+        String label1 = post1.getImageLabel();
+        String label2 = post2.getImageLabel();
+        
+        // Nếu không có label → trả về 0 (sẽ không dùng image score)
+        if (label1 == null || label1.isEmpty() || label2 == null || label2.isEmpty()) {
+            return 0.0;
+        }
+        
+        // So sánh label (case-insensitive)
+        if (label1.equalsIgnoreCase(label2)) {
+            // Cùng label → lấy confidence trung bình
+            double conf1 = post1.getConfidence() != null ? post1.getConfidence() : 0.5;
+            double conf2 = post2.getConfidence() != null ? post2.getConfidence() : 0.5;
+            
+            // Điểm = trung bình confidence của 2 ảnh
+            double score = (conf1 + conf2) / 2.0;
+            
+            Log.d(TAG, String.format("✓ Image MATCH! '%s' vs '%s' (Conf: %.0f%% & %.0f%%) → Score: %.2f",
+                label1, label2, conf1*100, conf2*100, score));
+            
+            return score;
+        }
+        
+        Log.d(TAG, String.format("✗ Image mismatch: '%s' vs '%s'", label1, label2));
+        return 0.0;
+    }
+    
+    
+    // ==================== CONTENT SIMILARITY ====================
+    
+    /**
+     * Tính độ tương đồng nội dung giữa 2 bài đăng (Title + Description).
+     * 
+     * CHỨC NĂNG:
+     * - Kết hợp Title similarity (70%) và Description similarity (30%)
+     * - Ưu tiên title vì title thường chứa từ khóa chính
+     * 
+     * ĐƯỢC GỌI TỪ:
+     * - calculateMatchScore(): Tính điểm content similarity (40% tổng điểm)
+     * 
+     * @param post1 Bài đăng thứ nhất
+     * @param post2 Bài đăng thứ hai
+     * @return Điểm từ 0.0 đến 1.0
+     */
+    private static double calculateContentSimilarity(Post post1, Post post2) {
+        double titleScore = calculateTitleSimilarity(post1, post2);
+        double descScore = calculateTextSimilarity(post1, post2);
+        
+        // Title quan trọng hơn description
+        return (titleScore * 0.7) + (descScore * 0.3);
     }
     
     
@@ -256,12 +345,12 @@ public class AIMatchingHelper {
         
         double jaccard = (double) intersection.size() / union.size();
         
-        // Bonus LỚN nếu có từ khóa quan trọng giống nhau (ưu tiên matching chính xác)
-        double keywordBonus = calculateKeywordBonus(title1, title2) * 2.0; // x2 bonus
+        // Bonus LỚN nếu có từ khóa quan trọng giống nhau
+        double keywordBonus = calculateKeywordBonus(title1, title2) * 3.0; // x3 bonus để dễ match hơn
         
         double finalScore = Math.min(1.0, jaccard + keywordBonus);
         
-        Log.d(TAG, String.format("Title similarity - Jaccard: %.2f, Keyword bonus: %.2f, Final: %.2f",
+        Log.d(TAG, String.format("  → Jaccard: %.2f, Keyword bonus: %.2f, Final: %.2f",
             jaccard, keywordBonus, finalScore));
         
         return finalScore;
@@ -406,49 +495,27 @@ public class AIMatchingHelper {
      * CHỨC NĂNG:
      * - Tính khoảng cách thực tế bằng Haversine Formula
      * - Chuyển đổi khoảng cách thành điểm (càng gần = điểm càng cao)
+     * - Đây là yếu tố PHỤ, chỉ dùng để xếp hạng khi Image và Content đã match
      * 
      * ĐƯỢC GỌI TỪ:
-     * - calculateMatchScore(): Tính điểm location (40% tổng điểm)
+     * - calculateMatchScore(): Tính điểm location (10% tổng điểm - yếu tố phụ)
      * 
      * LOGIC CHUYỂN ĐỔI:
      * - Khoảng cách ≤ 1km → 100% (1.0)
      * - Khoảng cách ≥ 50km → 0% (0.0)
      * - Khoảng cách 1-50km → Linear interpolation
-     * - Không có location → 0% (0.0) - BẮT BUỘC phải có location
-     * 
-     * LƯU Ý: Đã tăng MAX_DISTANCE từ 10km lên 50km để phù hợp với khu vực rộng
+     * - Không có location → 50% (0.5) - điểm trung bình
      * 
      * @param post1 Bài đăng thứ nhất (có lat, lng)
      * @param post2 Bài đăng thứ hai (có lat, lng)
      * @return Điểm từ 0.0 (xa) đến 1.0 (gần)
-     * 
-     * VÍ DỤ:
-     * <pre>
-     * {@code
-     * // Post 1: Thủ Đức (10.8505, 106.7717)
-     * // Post 2: Thủ Đức (10.8510, 106.7720) → cách ~0.5km
-     * double score = calculateLocationScore(post1, post2);
-     * // → distance = 0.5km
-     * // → score = 1.0 (100% vì < 1km)
-     * 
-     * // Post 3: Quận 1 (10.7769, 106.7009) → cách ~8km
-     * double score2 = calculateLocationScore(post1, post3);
-     * // → distance = 8km
-     * // → score = 1.0 - (8/50) = 0.84 (84%)
-     * 
-     * // Post 4: Bình Dương → cách ~30km
-     * double score3 = calculateLocationScore(post1, post4);
-     * // → distance = 30km
-     * // → score = 1.0 - (30/50) = 0.4 (40%)
-     * }
-     * </pre>
      */
     private static double calculateLocationScore(Post post1, Post post2) {
         // Kiểm tra có location không
         if (post1.getLat() == null || post1.getLng() == null ||
             post2.getLat() == null || post2.getLng() == null) {
-            // KHÔNG có location → điểm = 0 (bắt buộc phải có location)
-            return 0.0;
+            // KHÔNG có location → điểm trung bình (vì location chỉ là yếu tố phụ)
+            return 0.5;
         }
         
         double distance = calculateDistance(
