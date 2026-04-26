@@ -178,48 +178,94 @@ public class AIMatchingHelper {
      * Tính điểm match tổng hợp giữa 2 bài đăng.
      * 
      * CHỨC NĂNG:
-     * - Kết hợp 3 yếu tố: Text (40%) + Location (40%) + Time (20%)
+     * - Kết hợp 3 yếu tố: Title (50%) + Location (30%) + Time (20%)
+     * - Ưu tiên title similarity để match chính xác (mèo với mèo, chìa khóa với chìa khóa)
      * - Trả về điểm từ 0.0 (không match) đến 1.0 (match hoàn hảo)
      * 
      * ĐƯỢC GỌI TỪ:
      * - findMatches(): Tính điểm cho từng cặp bài đăng
      * 
      * CÔNG THỨC:
-     * totalScore = (textScore × 0.4) + (locationScore × 0.4) + (timeScore × 0.2)
+     * totalScore = (titleScore × 0.5) + (locationScore × 0.3) + (timeScore × 0.2)
      * 
      * @param post1 Bài đăng thứ nhất (thường là bài đăng hiện tại)
      * @param post2 Bài đăng thứ hai (bài đăng cần so sánh)
      * @return Điểm match từ 0.0 đến 1.0
-     * 
-     * VÍ DỤ:
-     * <pre>
-     * {@code
-     * // Post 1: "Mất mèo vàng ở Thủ Đức" (hôm nay)
-     * // Post 2: "Tìm thấy mèo vàng ở Thủ Đức" (hôm qua)
-     * double score = calculateMatchScore(post1, post2);
-     * // → textScore = 0.9 (giống nhau 90%)
-     * // → locationScore = 1.0 (cùng khu vực)
-     * // → timeScore = 0.95 (cách nhau 1 ngày)
-     * // → totalScore = 0.9×0.4 + 1.0×0.4 + 0.95×0.2 = 0.95 (95%)
-     * }
-     * </pre>
      */
     private static double calculateMatchScore(Post post1, Post post2) {
-        double textScore = calculateTextSimilarity(post1, post2);
+        double titleScore = calculateTitleSimilarity(post1, post2);
         double locationScore = calculateLocationScore(post1, post2);
         double timeScore = calculateTimeScore(post1, post2);
         
-        // Weighted average
-        double totalScore = (textScore * 0.4) + (locationScore * 0.4) + (timeScore * 0.2);
+        // Weighted average - ưu tiên title (50%)
+        double totalScore = (titleScore * 0.5) + (locationScore * 0.3) + (timeScore * 0.2);
         
-        Log.d(TAG, String.format("Scores - Text: %.2f, Location: %.2f, Time: %.2f, Total: %.2f",
-            textScore, locationScore, timeScore, totalScore));
+        Log.d(TAG, String.format("Scores - Title: %.2f, Location: %.2f, Time: %.2f, Total: %.2f",
+            titleScore, locationScore, timeScore, totalScore));
         
         return totalScore;
     }
     
     
     // ==================== TEXT SIMILARITY ====================
+    
+    /**
+     * Tính độ tương đồng TIÊU ĐỀ giữa 2 bài đăng (chỉ so sánh title).
+     * 
+     * CHỨC NĂNG:
+     * - Ưu tiên so sánh tiêu đề để match chính xác (mèo với mèo, chìa khóa với chìa khóa)
+     * - Sử dụng Jaccard Similarity + Keyword Matching
+     * - Thêm bonus lớn nếu có từ khóa quan trọng giống nhau
+     * 
+     * ĐƯỢC GỌI TỪ:
+     * - calculateMatchScore(): Tính điểm title similarity (50% tổng điểm)
+     * 
+     * @param post1 Bài đăng thứ nhất
+     * @param post2 Bài đăng thứ hai
+     * @return Điểm từ 0.0 đến 1.0+
+     */
+    private static double calculateTitleSimilarity(Post post1, Post post2) {
+        String title1 = post1.getTitle().toLowerCase();
+        String title2 = post2.getTitle().toLowerCase();
+        
+        Log.d(TAG, String.format("Comparing titles: '%s' vs '%s'", title1, title2));
+        
+        // Tokenize thành words
+        String[] words1 = title1.split("\\s+");
+        String[] words2 = title2.split("\\s+");
+        
+        // Tạo set để tính Jaccard
+        java.util.Set<String> set1 = new java.util.HashSet<>();
+        java.util.Set<String> set2 = new java.util.HashSet<>();
+        
+        for (String word : words1) {
+            if (word.length() > 1) set1.add(word); // Bỏ qua từ quá ngắn
+        }
+        for (String word : words2) {
+            if (word.length() > 1) set2.add(word);
+        }
+        
+        // Tính Jaccard similarity
+        java.util.Set<String> intersection = new java.util.HashSet<>(set1);
+        intersection.retainAll(set2);
+        
+        java.util.Set<String> union = new java.util.HashSet<>(set1);
+        union.addAll(set2);
+        
+        if (union.isEmpty()) return 0.0;
+        
+        double jaccard = (double) intersection.size() / union.size();
+        
+        // Bonus LỚN nếu có từ khóa quan trọng giống nhau (ưu tiên matching chính xác)
+        double keywordBonus = calculateKeywordBonus(title1, title2) * 2.0; // x2 bonus
+        
+        double finalScore = Math.min(1.0, jaccard + keywordBonus);
+        
+        Log.d(TAG, String.format("Title similarity - Jaccard: %.2f, Keyword bonus: %.2f, Final: %.2f",
+            jaccard, keywordBonus, finalScore));
+        
+        return finalScore;
+    }
     
     /**
      * Tính độ tương đồng văn bản giữa 2 bài đăng (title + description).
@@ -325,9 +371,20 @@ public class AIMatchingHelper {
      */
     private static double calculateKeywordBonus(String text1, String text2) {
         String[] keywords = {
-            "mèo", "chó", "ví", "điện thoại", "iphone", "samsung",
-            "chìa khóa", "xe", "túi xách", "laptop", "máy tính",
-            "đồng hồ", "nhẫn", "vòng", "dây chuyền"
+            // Động vật
+            "mèo", "chó", "thú cưng", "pet", "con mèo", "con chó",
+            // Đồ điện tử
+            "ví", "điện thoại", "iphone", "samsung", "oppo", "xiaomi", "vivo",
+            "laptop", "máy tính", "macbook", "ipad", "tablet", "tai nghe", "airpod",
+            // Đồ dùng cá nhân
+            "chìa khóa", "chìa khoá", "xe", "xe máy", "ô tô", "túi xách", "ba lô", "cặp",
+            "ví tiền", "thẻ", "cmnd", "cccd", "bằng lái", "giấy tờ",
+            // Trang sức
+            "đồng hồ", "nhẫn", "vòng", "dây chuyền", "bông tai", "lắc tay",
+            // Quần áo
+            "áo", "quần", "giày", "dép", "mũ", "kính", "kính mắt",
+            // Khác
+            "sách", "vở", "bút", "cặp sách", "balo"
         };
         
         int matchCount = 0;

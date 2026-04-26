@@ -33,7 +33,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import hcmute.edu.vn.findora.adapter.CommentAdapter;
 import hcmute.edu.vn.findora.adapter.PostAdapter;
 import hcmute.edu.vn.findora.model.Post;
-import hcmute.edu.vn.findora.utils.MatchUtils;
 import hcmute.edu.vn.findora.MapboxHelper;
 
 /**
@@ -330,51 +329,34 @@ public class PostDetailActivity extends AppCompatActivity {
     }
     
     private void findSmartMatches(Post currentPost) {
-        String oppositeType = "lost".equals(currentPost.getType()) ? "found" : "lost";
-        
         db.collection("posts")
-            .whereEqualTo("type", oppositeType)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 pbSmartMatches.setVisibility(View.GONE);
                 
-                // Helper class to store score
-                class ScoredPost implements Comparable<ScoredPost> {
-                    Post post;
-                    double score;
-                    ScoredPost(Post post, double score) { this.post = post; this.score = score; }
-                    
-                    @Override
-                    public int compareTo(ScoredPost o) {
-                        return Double.compare(o.score, this.score); // DESCENDING
-                    }
-                }
-                
-                List<ScoredPost> results = new ArrayList<>();
+                // Chuyển đổi tất cả posts từ Firestore
+                List<Post> allPosts = new ArrayList<>();
                 for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                    Post otherPost = doc.toObject(Post.class);
-                    otherPost.setId(doc.getId());
-                    
-                    double sc = MatchUtils.calculateMatchScore(currentPost, otherPost);
-                    if (sc >= 0.5) { // Threshold
-                        results.add(new ScoredPost(otherPost, sc));
-                    }
+                    Post post = doc.toObject(Post.class);
+                    post.setId(doc.getId());
+                    allPosts.add(post);
                 }
                 
-                if (results.isEmpty()) {
+                // Sử dụng AIMatchingHelper với logic mới (Title 50% + Location 30% + Time 20%)
+                List<AIMatchingHelper.MatchResult> matches = AIMatchingHelper.findMatches(currentPost, allPosts);
+                
+                if (matches.isEmpty()) {
                     tvNoSmartMatches.setVisibility(View.VISIBLE);
                     rvSmartMatches.setVisibility(View.GONE);
                 } else {
                     tvNoSmartMatches.setVisibility(View.GONE);
                     rvSmartMatches.setVisibility(View.VISIBLE);
                     
-                    Collections.sort(results);
-                    
                     smartMatchesList.clear();
-                    // Grab top 5 matched posts
-                    int limit = Math.min(results.size(), 5);
+                    // Lấy top 5 bài đăng match tốt nhất
+                    int limit = Math.min(matches.size(), 5);
                     for (int i = 0; i < limit; i++) {
-                        smartMatchesList.add(results.get(i).post);
+                        smartMatchesList.add(matches.get(i).post);
                     }
                     smartMatchesAdapter.notifyDataSetChanged();
                 }
