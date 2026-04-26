@@ -28,6 +28,7 @@
         android:layout_height="match_parent">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingBottom="88dp"
@@ -78,7 +79,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:background="@drawable/bg_ios_icon_btn"
-                        android:src="@drawable/ic_notifications"
+                        android:src="@drawable/ic_noti_feather"
                         app:tint="@color/on_surface_variant"
                         android:contentDescription="Notifications" />
                     
@@ -99,16 +100,6 @@
                         android:visibility="gone" />
                     
                 </FrameLayout>
-                
-                <ImageButton
-                    android:id="@+id/btnRefreshMatches"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_ios_icon_btn"
-                    android:src="@drawable/ic_refresh"
-                    app:tint="@color/primary"
-                    android:contentDescription="Tìm matches ngay" />
 
             </LinearLayout>
 
@@ -392,6 +383,25 @@
     </androidx.core.widget.NestedScrollView>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Scroll to top FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScrollTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="104dp"
+        android:src="@drawable/ic_chevrons_up_feather"
+        android:visibility="gone"
+        app:backgroundTint="#CC000000"
+        app:tint="@android:color/white"
+        app:elevation="4dp"
+        app:fabSize="mini"
+        app:maxImageSize="24dp"
+        app:borderWidth="0dp"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="Lên đầu trang" />
 
     <!-- ── Bottom Navigation Bar (Flat Design) ── -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

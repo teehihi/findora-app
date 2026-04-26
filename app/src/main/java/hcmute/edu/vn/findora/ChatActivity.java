@@ -78,6 +78,11 @@ public class ChatActivity extends AppCompatActivity {
     // Loading dialog
     private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
 
+    // Sound khi gửi tin nhắn
+    private android.media.SoundPool soundPool;
+    private int soundSend = -1;
+    private boolean soundLoaded = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,6 +92,15 @@ public class ChatActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         
         loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
+
+        // Init send sound
+        android.media.AudioAttributes attrs = new android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+        soundPool = new android.media.SoundPool.Builder().setMaxStreams(1).setAudioAttributes(attrs).build();
+        soundPool.setOnLoadCompleteListener((sp, id, status) -> { if (status == 0) soundLoaded = true; });
+        try { soundSend = soundPool.load(this, R.raw.chat_send_sound, 1); } catch (Exception ignored) {}
 
         if (auth.getCurrentUser() == null) {
             finish();
@@ -352,8 +366,6 @@ public class ChatActivity extends AppCompatActivity {
         if (text.isEmpty() || chatId == null) return;
 
         etMessage.setText("");
-        
-        loadingDialog.show("Đang gửi...");
 
         Timestamp now = Timestamp.now();
 
@@ -379,11 +391,11 @@ public class ChatActivity extends AppCompatActivity {
                 .collection("messages")
                 .add(msgData)
                 .addOnSuccessListener(documentReference -> {
-                    loadingDialog.dismiss();
+                    if (soundPool != null && soundLoaded && soundSend > 0)
+                        soundPool.play(soundSend, 1f, 1f, 1, 0, 1f);
                     sendMessageNotification(text);
                 })
                 .addOnFailureListener(e -> {
-                    loadingDialog.dismiss();
                     Toast.makeText(this, "Lỗi gửi tin nhắn", Toast.LENGTH_SHORT).show();
                 });
 
@@ -549,6 +561,8 @@ public class ChatActivity extends AppCompatActivity {
                 .collection("messages")
                 .add(message)
                 .addOnSuccessListener(docRef -> {
+                    if (soundPool != null && soundLoaded && soundSend > 0)
+                        soundPool.play(soundSend, 1f, 1f, 1, 0, 1f);
                     // Send notification
                     sendMessageNotification("[Ảnh]");
                 });
@@ -568,6 +582,7 @@ public class ChatActivity extends AppCompatActivity {
         if (presenceListener != null && otherUserId != null) {
             PresenceManager.removePresenceListener(otherUserId, presenceListener);
         }
+        if (soundPool != null) { soundPool.release(); soundPool = null; }
     }
 }
 

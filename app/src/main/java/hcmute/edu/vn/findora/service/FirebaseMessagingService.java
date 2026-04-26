@@ -5,12 +5,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.messaging.RemoteMessage;
 
 import hcmute.edu.vn.findora.ChatActivity;
@@ -20,248 +25,215 @@ import hcmute.edu.vn.findora.R;
 
 /**
  * Firebase Cloud Messaging Service - Xử lý thông báo push
- * 
- * CHỨC NĂNG:
- * - Nhận thông báo từ Firebase Cloud Messaging
- * - Hiển thị notification cho user
- * - Xử lý click vào notification
- * 
- * LOẠI THÔNG BÁO:
- * 1. AI_MATCH: Tìm thấy bài đăng phù hợp (AI matching)
- * 2. NEW_MESSAGE: Tin nhắn mới
- * 3. POST_VIEW: Có người xem bài đăng của bạn
- * 4. SYSTEM: Thông báo hệ thống
+ *
+ * SOUND MAPPING:
+ * - new_message  → chat_noti_sound
+ * - ai_match, like, comment, post_found, system → sound_noti
  */
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
-    
+
     private static final String TAG = "FCMService";
-    
-    // Notification Channels
-    private static final String CHANNEL_AI_MATCH = "ai_match";
-    private static final String CHANNEL_MESSAGES = "messages";
-    private static final String CHANNEL_SYSTEM = "system";
-    
+
+    // Notification Channels — mỗi channel có sound riêng
+    public static final String CHANNEL_MESSAGES = "messages";
+    public static final String CHANNEL_GENERAL  = "general";   // ai_match, like, comment, system
+
+    // Firestore listener cho notification realtime
+    private ListenerRegistration notificationListener;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannels();
+        startNotificationListener();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (notificationListener != null) notificationListener.remove();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // FCM push (khi app ở background / foreground qua FCM server)
+    // ─────────────────────────────────────────────────────────────
+
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        
-        Log.d(TAG, "From: " + remoteMessage.getFrom());
-        
-        // Kiểm tra có data payload không
+        Log.d(TAG, "FCM received from: " + remoteMessage.getFrom());
+
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             handleDataMessage(remoteMessage.getData());
         }
-        
-        // Kiểm tra có notification payload không
         if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
             showNotification(
                 remoteMessage.getNotification().getTitle(),
                 remoteMessage.getNotification().getBody(),
-                "system",
-                null
+                CHANNEL_GENERAL, null
             );
         }
     }
-    
-    /**
-     * Xử lý data message từ FCM
-     */
+
     private void handleDataMessage(java.util.Map<String, String> data) {
-        String type = data.get("type");
+        String type  = data.get("type");
         String title = data.get("title");
-        String body = data.get("body");
-        
-        if (type == null || title == null || body == null) {
-            Log.w(TAG, "Invalid notification data");
-            return;
-        }
-        
-        switch (type) {
-            case "ai_match":
-                // Thông báo AI tìm thấy match
-                showNotification(title, body, CHANNEL_AI_MATCH, data);
-                break;
-                
-            case "new_message":
-                // Thông báo tin nhắn mới
-                showNotification(title, body, CHANNEL_MESSAGES, data);
-                break;
-                
-            case "post_view":
-            case "system":
-                // Thông báo hệ thống
-                showNotification(title, body, CHANNEL_SYSTEM, data);
-                break;
-                
-            default:
-                Log.w(TAG, "Unknown notification type: " + type);
-        }
+        String body  = data.get("body");
+        if (type == null || title == null || body == null) return;
+
+        String channel = "new_message".equals(type) ? CHANNEL_MESSAGES : CHANNEL_GENERAL;
+        showNotification(title, body, channel, data);
     }
-    
-    /**
-     * Hiển thị notification
-     */
-    private void showNotification(String title, String body, String channelId, java.util.Map<String, String> data) {
-        NotificationManager notificationManager = 
-            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        
-        // Tạo notification channel (Android 8.0+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannels(notificationManager);
-        }
-        
-        // Tạo intent khi click vào notification
+
+    // ─────────────────────────────────────────────────────────────
+    // Firestore realtime listener — push khi app đang chạy
+    // ─────────────────────────────────────────────────────────────
+
+    private void startNotificationListener() {
+        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        String uid = user.getUid();
+        notificationListener = FirebaseFirestore.getInstance()
+            .collection("notifications")
+            .whereEqualTo("userId", uid)
+            .whereEqualTo("read", false)
+            .addSnapshotListener((snapshots, error) -> {
+                if (error != null || snapshots == null) return;
+                for (com.google.firebase.firestore.DocumentChange change : snapshots.getDocumentChanges()) {
+                    if (change.getType() == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        java.util.Map<String, Object> data = change.getDocument().getData();
+                        String type  = (String) data.get("type");
+                        String title = (String) data.get("title");
+                        String body  = (String) data.get("body");
+                        if (title == null || body == null) continue;
+
+                        // Build extra map để tạo intent
+                        java.util.Map<String, String> extras = new java.util.HashMap<>();
+                        extras.put("type",       type != null ? type : "system");
+                        if (data.get("chatId")    != null) extras.put("chatId",    (String) data.get("chatId"));
+                        if (data.get("senderId")  != null) extras.put("senderId",  (String) data.get("senderId"));
+                        if (data.get("senderName")!= null) extras.put("senderName",(String) data.get("senderName"));
+                        if (data.get("postId")    != null) extras.put("postId",    (String) data.get("postId"));
+
+                        String channel = "new_message".equals(type) ? CHANNEL_MESSAGES : CHANNEL_GENERAL;
+                        showNotification(title, body, channel, extras);
+                    }
+                }
+            });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Hiển thị notification
+    // ─────────────────────────────────────────────────────────────
+
+    public void showNotification(String title, String body, String channelId,
+                                  java.util.Map<String, String> data) {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        createNotificationChannels(); // idempotent
+
         Intent intent = createIntentForNotification(data);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 
-            0, 
-            intent, 
+        PendingIntent pi = PendingIntent.getActivity(
+            this, (int) System.currentTimeMillis(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
-        
-        // Chọn icon và màu dựa trên loại thông báo
-        int icon = getIconForChannel(channelId);
-        int color = getColorForChannel(channelId);
-        
-        // Build notification
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(icon)
+            .setSmallIcon(getIconForChannel(channelId))
             .setContentTitle(title)
             .setContentText(body)
-            .setColor(color)
+            .setColor(getColorForChannel(channelId))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent);
-        
-        // Hiển thị notification
-        int notificationId = (int) System.currentTimeMillis();
-        notificationManager.notify(notificationId, builder.build());
+            .setContentIntent(pi);
+
+        nm.notify((int) System.currentTimeMillis(), builder.build());
     }
-    
-    /**
-     * Tạo notification channels (Android 8.0+)
-     */
-    private void createNotificationChannels(NotificationManager notificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Channel 1: AI Match (Ưu tiên cao)
-            NotificationChannel aiChannel = new NotificationChannel(
-                CHANNEL_AI_MATCH,
-                "Gợi ý AI",
-                NotificationManager.IMPORTANCE_HIGH
-            );
-            aiChannel.setDescription("Thông báo khi AI tìm thấy bài đăng phù hợp");
-            aiChannel.enableVibration(true);
-            notificationManager.createNotificationChannel(aiChannel);
-            
-            // Channel 2: Messages (Ưu tiên cao)
-            NotificationChannel messageChannel = new NotificationChannel(
-                CHANNEL_MESSAGES,
-                "Tin nhắn",
-                NotificationManager.IMPORTANCE_HIGH
-            );
-            messageChannel.setDescription("Thông báo tin nhắn mới");
-            messageChannel.enableVibration(true);
-            notificationManager.createNotificationChannel(messageChannel);
-            
-            // Channel 3: System (Ưu tiên trung bình)
-            NotificationChannel systemChannel = new NotificationChannel(
-                CHANNEL_SYSTEM,
-                "Hệ thống",
-                NotificationManager.IMPORTANCE_DEFAULT
-            );
-            systemChannel.setDescription("Thông báo hệ thống");
-            notificationManager.createNotificationChannel(systemChannel);
+
+    // ─────────────────────────────────────────────────────────────
+    // Notification Channels với custom sound
+    // ─────────────────────────────────────────────────────────────
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Channel tin nhắn → chat_noti_sound
+        if (nm.getNotificationChannel(CHANNEL_MESSAGES) == null) {
+            Uri chatSound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.chat_noti_sound);
+            AudioAttributes chatAttrs = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+            NotificationChannel msgChannel = new NotificationChannel(
+                CHANNEL_MESSAGES, "Tin nhắn", NotificationManager.IMPORTANCE_HIGH);
+            msgChannel.setDescription("Thông báo tin nhắn mới");
+            msgChannel.setSound(chatSound, chatAttrs);
+            msgChannel.enableVibration(true);
+            nm.createNotificationChannel(msgChannel);
+        }
+
+        // Channel chung (like, AI match, comment...) → sound_noti
+        if (nm.getNotificationChannel(CHANNEL_GENERAL) == null) {
+            Uri generalSound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.sound_noti);
+            AudioAttributes generalAttrs = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+            NotificationChannel generalChannel = new NotificationChannel(
+                CHANNEL_GENERAL, "Thông báo", NotificationManager.IMPORTANCE_DEFAULT);
+            generalChannel.setDescription("Like, AI match, bình luận và các thông báo khác");
+            generalChannel.setSound(generalSound, generalAttrs);
+            nm.createNotificationChannel(generalChannel);
         }
     }
-    
-    /**
-     * Tạo intent dựa trên loại thông báo
-     */
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
+
     private Intent createIntentForNotification(java.util.Map<String, String> data) {
-        if (data == null) {
-            return new Intent(this, MainActivity.class);
-        }
-        
+        if (data == null) return new Intent(this, MainActivity.class);
         String type = data.get("type");
-        
         if ("new_message".equals(type)) {
-            // Mở ChatActivity
-            Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("chatId", data.get("chatId"));
-            intent.putExtra("otherUserId", data.get("senderId"));
-            intent.putExtra("otherUserName", data.get("senderName"));
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            return intent;
-            
-        } else if ("ai_match".equals(type)) {
-            // Mở PostDetailActivity
-            Intent intent = new Intent(this, PostDetailActivity.class);
-            intent.putExtra("postId", data.get("postId"));
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            return intent;
-            
-        } else {
-            // Mở MainActivity
-            return new Intent(this, MainActivity.class);
+            Intent i = new Intent(this, ChatActivity.class);
+            i.putExtra("chatId",        data.get("chatId"));
+            i.putExtra("otherUserId",   data.get("senderId"));
+            i.putExtra("otherUserName", data.get("senderName"));
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            return i;
+        } else if ("ai_match".equals(type) || "like".equals(type)
+                || "comment".equals(type) || "post_found".equals(type)) {
+            Intent i = new Intent(this, PostDetailActivity.class);
+            i.putExtra("postId", data.get("postId"));
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            return i;
         }
+        return new Intent(this, MainActivity.class);
     }
-    
-    /**
-     * Lấy icon cho notification
-     */
+
     private int getIconForChannel(String channelId) {
-        switch (channelId) {
-            case CHANNEL_AI_MATCH:
-                return R.drawable.ic_ai_sparkle;
-            case CHANNEL_MESSAGES:
-                return R.drawable.ic_chat;
-            default:
-                return R.drawable.ic_notifications;
-        }
+        return CHANNEL_MESSAGES.equals(channelId) ? R.drawable.ic_chat : R.drawable.ic_notifications;
     }
-    
-    /**
-     * Lấy màu cho notification
-     */
+
     private int getColorForChannel(String channelId) {
-        switch (channelId) {
-            case CHANNEL_AI_MATCH:
-                return 0xFF4285F4; // Blue
-            case CHANNEL_MESSAGES:
-                return 0xFF34A853; // Green
-            default:
-                return 0xFF5F6368; // Gray
-        }
+        return CHANNEL_MESSAGES.equals(channelId) ? 0xFF34A853 : 0xFF4285F4;
     }
-    
-    /**
-     * Được gọi khi FCM token mới được tạo
-     */
+
+    // ─────────────────────────────────────────────────────────────
+    // Token management
+    // ─────────────────────────────────────────────────────────────
+
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
-        Log.d(TAG, "Refreshed token: " + token);
-        
-        // Gửi token lên server hoặc lưu vào Firestore
-        sendTokenToServer(token);
-    }
-    
-    /**
-     * Gửi FCM token lên Firestore
-     */
-    private void sendTokenToServer(String token) {
-        // TODO: Lưu token vào Firestore user document
-        com.google.firebase.auth.FirebaseUser user = 
-            com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
-        
+        Log.d(TAG, "New FCM token: " + token);
+        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(user.getUid())
+            FirebaseFirestore.getInstance()
+                .collection("users").document(user.getUid())
                 .update("fcmToken", token)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "FCM token updated"))
+                .addOnSuccessListener(v -> Log.d(TAG, "FCM token updated"))
                 .addOnFailureListener(e -> Log.e(TAG, "Failed to update FCM token", e));
         }
     }

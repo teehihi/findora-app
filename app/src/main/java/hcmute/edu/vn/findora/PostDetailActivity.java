@@ -243,15 +243,15 @@ public class PostDetailActivity extends AppCompatActivity {
             tvUserName.setText("Anonymous User");
         }
 
-        // Badge: LOST (Red) / FOUND (Blue)
+        // Badge: LOST (Red) / FOUND (Green)
         if ("lost".equals(type)) {
-            tvDetailType.setText("MẤT");
+            tvDetailType.setText("THẤT LẠC");
             tvDetailType.setBackgroundResource(R.drawable.bg_badge_lost);
-            tvDetailType.setTextColor(android.graphics.Color.parseColor("#D32F2F"));
+            tvDetailType.setTextColor(android.graphics.Color.WHITE);
         } else {
-            tvDetailType.setText("NHẶT ĐƯỢC");
+            tvDetailType.setText("TÌM THẤY");
             tvDetailType.setBackgroundResource(R.drawable.bg_badge_found);
-            tvDetailType.setTextColor(android.graphics.Color.parseColor("#1976D2"));
+            tvDetailType.setTextColor(android.graphics.Color.WHITE);
         }
 
         // Format times

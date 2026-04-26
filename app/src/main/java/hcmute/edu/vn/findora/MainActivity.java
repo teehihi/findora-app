@@ -143,18 +143,30 @@ public class MainActivity extends AppCompatActivity {
         btnNotification = findViewById(R.id.btnNotification);
         tvNotificationBadge = findViewById(R.id.tvNotificationBadge);
 
-        // Pull to refresh
+        // Pull to refresh - reload posts + AI matches
         androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setColorSchemeResources(R.color.primary);
         swipeRefresh.setOnRefreshListener(() -> {
             loadPosts();
+            WorkManagerHelper.runAIMatchingNow(this);
             swipeRefresh.setRefreshing(false);
         });
-        
-        ImageButton btnRefreshMatches = findViewById(R.id.btnRefreshMatches);
-        btnRefreshMatches.setOnClickListener(v -> {
-            android.widget.Toast.makeText(this, "Đang tìm matches mới...", android.widget.Toast.LENGTH_SHORT).show();
-            WorkManagerHelper.runAIMatchingNow(this);
+
+        // Scroll to top FAB
+        com.google.android.material.floatingactionbutton.FloatingActionButton fabScrollTop = findViewById(R.id.fabScrollTop);
+        androidx.core.widget.NestedScrollView nestedScrollView = findViewById(R.id.nestedScrollView);
+        if (nestedScrollView != null) {
+            nestedScrollView.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener)
+                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                    if (scrollY > 600) {
+                        fabScrollTop.show();
+                    } else {
+                        fabScrollTop.hide();
+                    }
+                });
+        }
+        fabScrollTop.setOnClickListener(v -> {
+            if (nestedScrollView != null) nestedScrollView.smoothScrollTo(0, 0);
         });
         
         // Notification button click
