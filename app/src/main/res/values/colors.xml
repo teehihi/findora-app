@@ -67,4 +67,10 @@
     <color name="secondary_container">#F3F4F6</color>
     <color name="on_secondary">#FFFFFF</color>
     <color name="on_secondary_container">#171717</color>
+
+    <!-- Additional Colors for Resolve Flow -->
+    <color name="primary_green">#22C55E</color>
+    <color name="green_50">#DCFCE7</color>
+    <color name="gray_200">#E5E7EB</color>
+    <color name="gray_300">#D1D5DB</color>
 </resources>

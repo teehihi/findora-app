@@ -160,6 +160,8 @@ public class MyPostsActivity extends AppCompatActivity {
             }
         }
 
+        // Cập nhật adapter với thông tin tab hiện tại
+        myPostsAdapter.setCurrentTab(currentFilter);
         myPostsAdapter.notifyDataSetChanged();
 
         if (displayedPosts.isEmpty()) {

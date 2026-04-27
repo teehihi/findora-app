@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -26,6 +27,7 @@ import java.util.Locale;
 import hcmute.edu.vn.findora.CreatePostActivity;
 import hcmute.edu.vn.findora.R;
 import hcmute.edu.vn.findora.PostDetailActivity;
+import hcmute.edu.vn.findora.ResolvePostBottomSheet;
 import hcmute.edu.vn.findora.model.Post;
 
 public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHolder> {
@@ -33,10 +35,15 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
     private final Context context;
     private final List<Post> postList;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String currentTab = "lost"; // Mặc định là tab "Thất lạc"
 
     public MyPostsAdapter(Context context, List<Post> postList) {
         this.context = context;
         this.postList = postList;
+    }
+
+    public void setCurrentTab(String tab) {
+        this.currentTab = tab;
     }
 
     @NonNull
@@ -112,15 +119,62 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
             context.startActivity(intent);
         });
 
-        // Resolved Button
-        holder.btnResolved.setOnClickListener(v -> {
-            db.collection("posts").document(post.getId())
-                .update("status", "resolved")
-                .addOnSuccessListener(aVoid ->
-                    Toast.makeText(context, "Đã đánh dấu hoàn tất!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                    Toast.makeText(context, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-        });
+        // Resolved Button - Check status và hiển thị text phù hợp
+        String status = post.getStatus();
+        if ("resolved".equals(status) || "closed".equals(status)) {
+            // Đã giải quyết → Disable button, đổi text và style
+            holder.btnResolved.setText("Đã giải quyết");
+            holder.btnResolved.setEnabled(false);
+            holder.btnResolved.setBackgroundResource(R.drawable.bg_button_disabled);
+            holder.btnResolved.setTextColor(android.graphics.Color.parseColor("#9CA3AF"));
+            holder.btnResolved.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_circle, 0, 0, 0);
+        } else {
+            // Chưa giải quyết → Enable button, text "Giải quyết"
+            holder.btnResolved.setText("Giải quyết");
+            holder.btnResolved.setEnabled(true);
+            holder.btnResolved.setBackgroundResource(R.drawable.bg_button_primary_ios);
+            holder.btnResolved.setTextColor(android.graphics.Color.parseColor("#FFFFFF"));
+            holder.btnResolved.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+            
+            holder.btnResolved.setOnClickListener(v -> {
+                if ("lost".equals(currentTab)) {
+                    // Tab "Thất lạc": Hiển thị flow đầy đủ (3 options)
+                    ResolvePostBottomSheet bottomSheet = ResolvePostBottomSheet.newInstance(
+                        post.getId(),
+                        post.getUserId()
+                    );
+                    bottomSheet.show(((AppCompatActivity) context).getSupportFragmentManager(), 
+                                   "ResolvePostBottomSheet");
+                } else {
+                    // Tab "Tìm thấy": Đánh dấu đã trả lại cho chủ nhân (đơn giản)
+                    resolveFoundPost(post);
+                }
+            });
+        }
+    }
+
+    /**
+     * Đánh dấu bài "Tìm thấy" là đã trả lại cho chủ nhân
+     */
+    private void resolveFoundPost(Post post) {
+        new androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Xác nhận")
+            .setMessage("Bạn đã trả lại đồ vật cho chủ nhân?")
+            .setPositiveButton("Đã trả lại", (dialog, which) -> {
+                db.collection("posts").document(post.getId())
+                    .update("status", "resolved", 
+                           "resolvedAt", com.google.firebase.Timestamp.now())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(context, "Đã đánh dấu hoàn tất!", Toast.LENGTH_SHORT).show();
+                        // Update post object và refresh UI
+                        post.setStatus("resolved");
+                        notifyDataSetChanged();
+                    })
+                    .addOnFailureListener(e -> 
+                        Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
     }
 
     @Override

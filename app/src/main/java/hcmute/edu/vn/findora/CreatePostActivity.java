@@ -199,11 +199,19 @@ public class CreatePostActivity extends AppCompatActivity {
 
             existingImageUrl = extras.getString("imageUrl", "");
             if (existingImageUrl != null && !existingImageUrl.isEmpty()) {
+                // Thay đổi kích thước ImageView để hiển thị ảnh đầy đủ
+                android.view.ViewGroup.LayoutParams params = ivImagePreview.getLayoutParams();
+                params.width = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+                params.height = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+                ivImagePreview.setLayoutParams(params);
+                ivImagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                ivImagePreview.setImageTintList(null);
+                
+                // Load ảnh từ URL
                 com.bumptech.glide.Glide.with(this)
                         .load(existingImageUrl)
                         .centerCrop()
                         .into(ivImagePreview);
-                ivImagePreview.setImageTintList(null);
             }
             
             // Load existing location if available

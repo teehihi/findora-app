@@ -34,6 +34,7 @@ import hcmute.edu.vn.findora.adapter.CommentAdapter;
 import hcmute.edu.vn.findora.adapter.PostAdapter;
 import hcmute.edu.vn.findora.model.Post;
 import hcmute.edu.vn.findora.MapboxHelper;
+import hcmute.edu.vn.findora.ResolvePostBottomSheet;
 
 /**
  * Màn hình chi tiết bài đăng - Stitch Design Style.
@@ -416,14 +417,8 @@ public class PostDetailActivity extends AppCompatActivity {
                                     android.graphics.Color.parseColor("#9CA3AF")));
                             btnChat.setTextColor(android.graphics.Color.WHITE);
                             btnChat.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-                        } else if ("lost".equals(type)) {
-                            // Bài LOST chưa resolve → nút "Đã tìm thấy"
-                            btnChat.setText("Đã tìm thấy");
-                            btnChat.setTextColor(android.graphics.Color.parseColor("#15803D"));
-                            btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_circle, 0, 0, 0);
-                            btnChat.setOnClickListener(v -> showConfirmReceivedDialog(postId));
                         } else {
-                            // Bài FOUND → nút "Chỉnh sửa"
+                            // Chưa resolve → nút "Chỉnh sửa" (cho cả LOST và FOUND)
                             btnChat.setText("Chỉnh sửa");
                             btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
                             btnChat.setOnClickListener(v -> {
@@ -447,16 +442,6 @@ public class PostDetailActivity extends AppCompatActivity {
         } else if (auth.getCurrentUser() != null) {
             // Người xem (không phải chủ bài): Hiển thị nút Gọi điện và Nhắn tin
             
-            // Check if post is already resolved
-            String status = extras.getString("status", "active");
-            if ("resolved".equals(status)) {
-                btnChat.setText("Đã hoàn tất");
-                btnChat.setEnabled(false);
-                btnChat.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.GRAY));
-                btnCall.setVisibility(View.GONE);
-                return;
-            }
-
             // Nút gọi điện
             btnCall.setText("Gọi điện");
             btnCall.setOnClickListener(v -> {
@@ -1044,49 +1029,20 @@ public class PostDetailActivity extends AppCompatActivity {
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Step 1: Hiển thị dialog "Bạn đã nhận được đồ?"
+     * @deprecated Không còn sử dụng - Tính năng "Đã tìm thấy" đã chuyển sang MyPostsActivity
+     * Giữ lại để tránh lỗi compile với code cũ
      */
+    @Deprecated
     private void showConfirmReceivedDialog(String postId) {
-        ConfirmReceivedDialog dialog = ConfirmReceivedDialog.newInstance();
-        dialog.setOnConfirmListener(new ConfirmReceivedDialog.OnConfirmListener() {
-            @Override
-            public void onSomeoneReturned() {
-                // Step 2: Fetch chatted users → show select helper dialog
-                showSelectHelperDialog(postId);
-            }
-
-            @Override
-            public void onFoundMyself() {
-                // Resolve post without awarding points
-                resolvePostSelf(postId);
-            }
-
-            @Override
-            public void onClosePost() {
-                // Close post without resolving
-                closePost(postId);
-            }
-        });
-        dialog.show(getSupportFragmentManager(), "ConfirmReceivedDialog");
+        // Không còn dùng nữa
     }
 
     /**
-     * Step 2: Hiển thị dialog chọn người trả đồ
+     * @deprecated Không còn sử dụng - đã thay bằng ResolvePostBottomSheet
      */
+    @Deprecated
     private void showSelectHelperDialog(String postId) {
-        SelectHelperDialog dialog = SelectHelperDialog.newInstance(postId);
-        dialog.setOnResolvedListener(finderName -> {
-            // Update UI: đổi nút thành "Đã hoàn tất"
-            TextView btnChat = findViewById(R.id.btnChat);
-            if (btnChat != null) {
-                btnChat.setText("Đã hoàn tất ✓");
-                btnChat.setEnabled(false);
-                btnChat.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#9CA3AF")));
-            }
-        });
-        dialog.show(getSupportFragmentManager(), "SelectHelperDialog");
+        // Không còn dùng nữa
     }
 
     /**
