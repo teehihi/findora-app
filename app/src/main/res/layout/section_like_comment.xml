@@ -22,7 +22,7 @@
             android:id="@+id/btnLike"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_favorite"
+            android:src="@drawable/ic_like_selector"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Like" />
 
@@ -45,7 +45,7 @@
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:src="@drawable/ic_comment"
+            android:src="@drawable/ic_comment_feather"
             android:tint="@color/text_secondary"
             android:contentDescription="Comments" />
 

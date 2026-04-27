@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
 
     // UI
     private RecyclerView         recyclerView;
@@ -269,11 +270,20 @@ public class MainActivity extends AppCompatActivity {
         loadPosts();
 
         // Xin quyền thông báo (Android 13+)
+        requestNotificationPermission();
+    }
+
+    /**
+     * Request notification permission (Android 13+)
+     */
+    private void requestNotificationPermission() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(
-                    new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Request permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE);
             }
         }
     }
@@ -528,6 +538,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted, get location
@@ -535,6 +546,14 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 // Permission denied, use default
                 tvLocation.setText(R.string.location_hcmc);
+            }
+        } else if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Notification permission granted
+                Log.d(TAG, "Notification permission granted");
+            } else {
+                // Notification permission denied
+                Log.d(TAG, "Notification permission denied");
             }
         }
     }
