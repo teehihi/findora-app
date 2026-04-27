@@ -442,7 +442,12 @@ public class PostDetailActivity extends AppCompatActivity {
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
-                            String phoneNumber = documentSnapshot.getString("phoneNumber");
+                            // Thử cả 2 field: phone và phoneNumber
+                            String phoneNumber = documentSnapshot.getString("phone");
+                            if (phoneNumber == null || phoneNumber.isEmpty()) {
+                                phoneNumber = documentSnapshot.getString("phoneNumber");
+                            }
+                            
                             if (phoneNumber != null && !phoneNumber.isEmpty()) {
                                 Intent callIntent = new Intent(Intent.ACTION_DIAL);
                                 callIntent.setData(android.net.Uri.parse("tel:" + phoneNumber));
