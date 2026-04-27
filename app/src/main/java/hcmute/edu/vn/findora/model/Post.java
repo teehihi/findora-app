@@ -210,6 +210,23 @@ public class Post {
      */
     private java.util.List<String> likes;
 
+    // ==================== GAMIFICATION FIELDS ====================
+
+    /** Trạng thái bài đăng: "active", "resolved", "closed" */
+    private String status = "active";
+
+    /** UID của người đã trả lại đồ vật */
+    private String resolvedBy;
+
+    /** Rating từ 1-5 sao mà owner đánh giá finder */
+    private int rating;
+
+    /** Nhận xét kèm theo rating */
+    private String ratingComment;
+
+    /** Thời gian resolve */
+    private Timestamp resolvedAt;
+
     // ==================== CONSTRUCTORS ====================
     
     /**
@@ -360,4 +377,16 @@ public class Post {
     public java.util.List<String> getLikes() { return likes; }
     /** Set danh sách likes. @param likes List user IDs */
     public void setLikes(java.util.List<String> likes) { this.likes = likes; }
+
+    // --- Gamification ---
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getResolvedBy() { return resolvedBy; }
+    public void setResolvedBy(String resolvedBy) { this.resolvedBy = resolvedBy; }
+    public int getRating() { return rating; }
+    public void setRating(int rating) { this.rating = rating; }
+    public String getRatingComment() { return ratingComment; }
+    public void setRatingComment(String ratingComment) { this.ratingComment = ratingComment; }
+    public Timestamp getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(Timestamp resolvedAt) { this.resolvedAt = resolvedAt; }
 }

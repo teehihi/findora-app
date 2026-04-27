@@ -59,12 +59,12 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
         if ("lost".equals(post.getType())) {
             holder.tvMyPostBadge.setText("MẤT");
             holder.tvMyPostBadge.setBackgroundResource(R.drawable.bg_badge_lost);
-            holder.tvMyPostBadge.setTextColor(android.graphics.Color.parseColor("#D32F2F"));
+            holder.tvMyPostBadge.setTextColor(android.graphics.Color.parseColor("#FFFFFF"));
         } else {
             holder.tvMyPostBadge.setText("NHẶT ĐƯỢC");
             // Assuming we reuse the default blue for FOUND
-            holder.tvMyPostBadge.setBackgroundResource(R.drawable.bg_circle_light_blue);
-            holder.tvMyPostBadge.setTextColor(android.graphics.Color.parseColor("#1976D2"));
+            holder.tvMyPostBadge.setBackgroundResource(R.drawable.bg_badge_found);
+            holder.tvMyPostBadge.setTextColor(android.graphics.Color.parseColor("#FFFFFF"));
         }
 
         // Image

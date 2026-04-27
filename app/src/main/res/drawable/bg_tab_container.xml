@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Badge Lost: Red background for better contrast -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#DC2626" />
+    <solid android:color="#F3F4F6" />
     <corners android:radius="12dp" />
 </shape>

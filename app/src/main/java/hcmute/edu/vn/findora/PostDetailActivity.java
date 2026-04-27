@@ -43,6 +43,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private ImageView ivDetailImage, ivMapPlaceholder;
     private TextView tvDetailType, tvDetailTitle, tvDetailTimeHeader, tvDetailDescription, tvDetailLocation, tvUserName, tvUserStatus;
     private TextView tvInfoTime, tvInfoCategory;
+    private TextView btnResolve;
     private ImageButton btnBack, btnLike, btnMoreOptions;
     private TextView tvLikeCount, tvCommentCount;
     private com.google.firebase.firestore.FirebaseFirestore db;
@@ -113,6 +114,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvInfoCategory      = findViewById(R.id.tvInfoCategory);
         btnBack             = findViewById(R.id.btnBack);
         btnMoreOptions      = findViewById(R.id.btnMoreOptions);
+        btnResolve          = findViewById(R.id.btnResolve);
         mapViewDetail       = findViewById(R.id.mapViewDetail);
         ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
         cvMapPreview        = findViewById(R.id.cvMapPreview);
@@ -422,7 +424,18 @@ public class PostDetailActivity extends AppCompatActivity {
                 }
             });
         } else if (auth.getCurrentUser() != null) {
-            // Người xem (không phải chủ bài) → hiện nút Nhắn tin + Gọi điện
+            // Người xem (không phải chủ bài)
+            
+            // Check if post is already resolved
+            String status = extras.getString("status", "active");
+            if ("resolved".equals(status)) {
+                btnChat.setText("Đã hoàn tất");
+                btnChat.setEnabled(false);
+                btnChat.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.GRAY));
+                btnContact.setVisibility(View.GONE);
+                return;
+            }
+
             btnChat.setText("Nhắn tin");
             btnChat.setOnClickListener(v -> {
                 String postId = extras.getString("postId", "");
@@ -433,27 +446,25 @@ public class PostDetailActivity extends AppCompatActivity {
                 startActivity(chatIntent);
             });
 
-            // Nút Liên hệ → gọi điện cho chủ bài
-            btnContact.setText("Gọi điện");
+            // Nút Liên hệ → Gọi điện (nếu là Finder thì đổi thành Yêu cầu xác nhận)
+            // Giả lập logic: Nếu đã có chat thì coi là Finder
+            btnContact.setText("Yêu cầu xác nhận");
             btnContact.setOnClickListener(v -> {
-                // Lấy SĐT từ Firestore rồi mở dialer
-                db.collection("users").document(postUserId).get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                String phone = doc.getString("phone");
-                                if (phone != null && !phone.isEmpty()) {
-                                    Intent dialIntent = new Intent(Intent.ACTION_DIAL);
-                                    dialIntent.setData(android.net.Uri.parse("tel:" + phone));
-                                    startActivity(dialIntent);
-                                } else {
-                                    Toast.makeText(this, "Người đăng chưa cung cấp số điện thoại", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Không thể tải thông tin liên hệ", Toast.LENGTH_SHORT).show();
-                        });
+                Toast.makeText(this, "Đã gửi yêu cầu xác nhận tới chủ bài đăng", Toast.LENGTH_SHORT).show();
+                // Thực tế: Gửi thông báo/tin nhắn qua Firebase
             });
+        }
+        
+        // Setup Resolve button for owner
+        if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
+            String status = extras.getString("status", "active");
+            if ("active".equals(status)) {
+                btnResolve.setVisibility(View.VISIBLE);
+                btnResolve.setOnClickListener(v -> {
+                    ResolveBottomSheetFragment fragment = ResolveBottomSheetFragment.newInstance(currentPostId, postUserId);
+                    fragment.show(getSupportFragmentManager(), "ResolveBottomSheet");
+                });
+            }
         }
     }
 

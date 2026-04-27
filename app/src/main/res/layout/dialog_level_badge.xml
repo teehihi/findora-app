@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <!-- Badge icon large -->
+    <ImageView
+        android:id="@+id/ivBadgeLarge"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_newbie"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Level name -->
+    <TextView
+        android:id="@+id/tvBadgeName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Người mới"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/on_surface"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Points range -->
+    <TextView
+        android:id="@+id/tvBadgeRange"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 – 99 FindoPoint"
+        android:textSize="14sp"
+        android:textColor="#71717A"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Description -->
+    <TextView
+        android:id="@+id/tvBadgeDesc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bạn đang bắt đầu hành trình tìm kiếm và trả lại đồ vật!"
+        android:textSize="13sp"
+        android:textColor="@color/on_surface_variant"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Current points badge -->
+    <TextView
+        android:id="@+id/tvCurrentPoints"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 FP hiện tại"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#15803D"
+        android:background="@drawable/bg_level_badge"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp" />
+
+</LinearLayout>

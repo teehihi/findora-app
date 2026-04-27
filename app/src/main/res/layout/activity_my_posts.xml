@@ -75,7 +75,7 @@
                     android:text="@string/my_posts_tab_lost"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/white"
                     android:background="@drawable/bg_tab_selected" />
 
                 <TextView

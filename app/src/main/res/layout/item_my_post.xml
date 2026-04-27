@@ -50,12 +50,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="LOST"
-                        android:textSize="9sp"
+                        android:textSize="11sp"
                         android:textStyle="bold"
-                        android:textColor="#FFFFFF"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="4dp"
-                        android:background="@drawable/bg_badge_lost" />
+                        android:textColor="#DC2626"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:background="@drawable/bg_badge_lost"
+                        android:includeFontPadding="false" />
 
                     <TextView
                         android:id="@+id/tvMyPostTime"

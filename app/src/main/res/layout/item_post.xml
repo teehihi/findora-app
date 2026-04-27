@@ -147,12 +147,13 @@
                 android:layout_gravity="top|start"
                 android:layout_margin="10dp"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
+                android:paddingVertical="6dp"
                 android:text="TÌM THẤY"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="@color/white"
-                android:background="@drawable/bg_chip_active" />
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_badge_lost"
+                android:includeFontPadding="false" />
 
             <!-- Location overlay at bottom of image -->
             <LinearLayout

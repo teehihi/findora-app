@@ -84,6 +84,12 @@
         <activity
             android:name=".NotificationActivity"
             android:exported="false" />
+        <activity
+            android:name=".LeaderboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".VoucherMarketActivity"
+            android:exported="false" />
         
         <!-- Firebase Cloud Messaging Service -->
         <service

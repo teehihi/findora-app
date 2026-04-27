@@ -96,14 +96,14 @@ public class MyPostsActivity extends AppCompatActivity {
         if ("lost".equals(currentFilter)) {
             // Lost is Active
             btnTabLost.setBackgroundResource(R.drawable.bg_tab_selected);
-            btnTabLost.setTextColor(getResources().getColor(R.color.primary));
+            btnTabLost.setTextColor(getResources().getColor(R.color.white));
             // Found is Inactive
             btnTabFound.setBackgroundResource(R.drawable.bg_tab_unselected);
             btnTabFound.setTextColor(android.graphics.Color.parseColor("#5F6368"));
         } else {
             // Found is Active
             btnTabFound.setBackgroundResource(R.drawable.bg_tab_selected);
-            btnTabFound.setTextColor(getResources().getColor(R.color.primary));
+            btnTabFound.setTextColor(getResources().getColor(R.color.white));
             // Lost is Inactive
             btnTabLost.setBackgroundResource(R.drawable.bg_tab_unselected);
             btnTabLost.setTextColor(android.graphics.Color.parseColor("#5F6368"));

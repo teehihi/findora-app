@@ -102,9 +102,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         if ("lost".equals(post.getType())) {
             holder.tvType.setText("THẤT LẠC");
             holder.tvType.setBackgroundResource(R.drawable.bg_badge_lost);
+            holder.tvType.setTextColor(android.graphics.Color.parseColor("#FFFFFF")); // White text
         } else {
             holder.tvType.setText("TÌM THẤY");
             holder.tvType.setBackgroundResource(R.drawable.bg_badge_found);
+            holder.tvType.setTextColor(android.graphics.Color.parseColor("#FFFFFF")); // White text
         }
 
         // Image - click to open fullscreen

@@ -39,6 +39,10 @@
     <color name="success">#22C55E</color>
     <color name="warning">#F59E0B</color>
     <color name="info">#3B82F6</color>
+    
+    <!-- Rating Colors -->
+    <color name="rating_filled">#22C55E</color>
+    <color name="rating_empty">#E5E7EB</color>
 
     <!-- Badge Colors -->
     <color name="badge_lost_bg">#FEE2E2</color>

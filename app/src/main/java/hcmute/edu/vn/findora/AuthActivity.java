@@ -538,32 +538,24 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     /**
-     * Hiển thị dialog đăng nhập thành công rồi chuyển hướng
+     * Hiển thị thông báo đăng nhập thành công rồi chuyển hướng
      */
     private void showLoginSuccessDialog(com.google.firebase.auth.FirebaseUser user) {
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_login_success);
-        dialog.setCancelable(false);
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-            dialog.getWindow().setLayout(
-                (int) (getResources().getDisplayMetrics().widthPixels * 0.85),
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-        }
-
-        android.widget.TextView tvWelcome = dialog.findViewById(R.id.tvWelcome);
-        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
-            tvWelcome.setText("Chào mừng, " + user.getDisplayName() + "!");
-        }
-
-        dialog.show();
-
-        new android.os.Handler().postDelayed(() -> {
-            if (dialog.isShowing()) dialog.dismiss();
+        // Kiểm tra activity còn tồn tại không
+        if (isFinishing() || isDestroyed()) {
             navigateToHome();
-        }, 1500);
+            return;
+        }
+
+        // Hiển thị Toast thay vì Dialog để tránh crash
+        String welcomeMessage = "Đăng nhập thành công!";
+        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
+            welcomeMessage = "Chào mừng, " + user.getDisplayName() + "! 👋";
+        }
+        
+        Toast.makeText(this, welcomeMessage, Toast.LENGTH_SHORT).show();
+        
+        // Chuyển về home ngay lập tức
+        navigateToHome();
     }
 }
