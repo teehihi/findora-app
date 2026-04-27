@@ -91,7 +91,7 @@ public class ProfileActivity extends AppCompatActivity {
         findViewById(R.id.btnLeaderboard).setOnClickListener(v ->
             startActivity(new Intent(this, LeaderboardActivity.class)));
         findViewById(R.id.btnWallet).setOnClickListener(v ->
-            android.widget.Toast.makeText(this, "Ví & Điểm - Sắp ra mắt!", android.widget.Toast.LENGTH_SHORT).show());
+            startActivity(new Intent(this, WalletActivity.class)));
         findViewById(R.id.btnVoucherMarket).setOnClickListener(v ->
             startActivity(new Intent(this, VoucherMarketActivity.class)));
 

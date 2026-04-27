@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_rounded_top_white">
+
+    <!-- Drag Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_drag_handle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bạn đã nhận được đồ?"
+            android:textSize="18sp"
+            android:textColor="#171717"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chọn cách bạn tìm lại được đồ vật"
+            android:textSize="14sp"
+            android:textColor="#71717A"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Button 1: Someone returned it -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSomeoneReturned"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Có, người khác đã trả lại"
+            android:textSize="15sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:backgroundTint="#22C55E"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"
+            app:icon="@drawable/ic_check_circle"
+            app:iconTint="#FFFFFF"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp" />
+
+        <!-- Button 2: Found myself -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFoundMyself"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Tự tôi tìm thấy"
+            android:textSize="15sp"
+            android:textColor="#15803D"
+            android:textStyle="bold"
+            android:backgroundTint="#DCFCE7"
+            android:layout_marginTop="8dp"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"
+            app:icon="@drawable/ic_person"
+            app:iconTint="#15803D"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:strokeWidth="0dp" />
+
+        <!-- Button 3: Close post -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClosePost"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Không tìm thấy (Đóng bài)"
+            android:textSize="15sp"
+            android:textColor="#71717A"
+            android:backgroundTint="#F3F4F6"
+            android:layout_marginTop="8dp"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"
+            app:icon="@drawable/ic_close"
+            app:iconTint="#71717A"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:strokeWidth="0dp" />
+
+        <!-- Cancel -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Để sau"
+            android:textSize="14sp"
+            android:textColor="#71717A"
+            android:backgroundTint="@android:color/transparent"
+            android:layout_marginTop="4dp"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"
+            app:strokeWidth="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

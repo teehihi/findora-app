@@ -375,20 +375,20 @@ public class PostDetailActivity extends AppCompatActivity {
         TextView btnCall = findViewById(R.id.btnCall);
         TextView btnChat = findViewById(R.id.btnChat);
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        
+
         if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
-            // Chủ bài đăng: Chỉ hiển thị nút Chỉnh sửa
+            // Nút xóa bài
             btnCall.setText("Xóa bài");
             int iosRed = android.graphics.Color.parseColor("#FF3B30");
             btnCall.setTextColor(iosRed);
-            
+
             android.graphics.drawable.Drawable trashIcon = ContextCompat.getDrawable(this, R.drawable.ic_trash_ios);
             if (trashIcon != null) {
                 androidx.core.graphics.drawable.DrawableCompat.setTint(
                         androidx.core.graphics.drawable.DrawableCompat.wrap(trashIcon).mutate(), iosRed);
                 btnCall.setCompoundDrawablesWithIntrinsicBounds(trashIcon, null, null, null);
             }
-            
+
             btnCall.setOnClickListener(v -> {
                 String postId = extras.getString("postId", "");
                 if (postId != null && !postId.isEmpty()) {
@@ -401,26 +401,49 @@ public class PostDetailActivity extends AppCompatActivity {
                 }
             });
 
-            btnChat.setText("Chỉnh sửa");
-            btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
-            btnChat.setOnClickListener(v -> {
-                Intent editIntent = new Intent(this, CreatePostActivity.class);
-                editIntent.putExtra("editPostId", extras.getString("postId", ""));
-                editIntent.putExtra("title", title);
-                editIntent.putExtra("description", description);
-                editIntent.putExtra("type", type);
-                editIntent.putExtra("imageUrl", imageUrl);
-                
-                // Pass location data
-                if (extras.containsKey("lat") && extras.containsKey("lng")) {
-                    editIntent.putExtra("lat", extras.getDouble("lat"));
-                    editIntent.putExtra("lng", extras.getDouble("lng"));
-                    editIntent.putExtra("address", extras.getString("address", ""));
-                }
-                
-                startActivity(editIntent);
-                finish();
-            });
+            // Đọc status thực tế từ Firestore thay vì dùng Intent extras
+            String postId = extras.getString("postId", "");
+            if (!postId.isEmpty()) {
+                db.collection("posts").document(postId).get()
+                    .addOnSuccessListener(doc -> {
+                        String status = doc.getString("status");
+                        if ("resolved".equals(status) || "closed".equals(status)) {
+                            // Đã hoàn tất → disable nút
+                            btnChat.setText("Đã hoàn tất ✓");
+                            btnChat.setEnabled(false);
+                            btnChat.setBackgroundTintList(
+                                android.content.res.ColorStateList.valueOf(
+                                    android.graphics.Color.parseColor("#9CA3AF")));
+                            btnChat.setTextColor(android.graphics.Color.WHITE);
+                            btnChat.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+                        } else if ("lost".equals(type)) {
+                            // Bài LOST chưa resolve → nút "Đã tìm thấy"
+                            btnChat.setText("Đã tìm thấy");
+                            btnChat.setTextColor(android.graphics.Color.parseColor("#15803D"));
+                            btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_circle, 0, 0, 0);
+                            btnChat.setOnClickListener(v -> showConfirmReceivedDialog(postId));
+                        } else {
+                            // Bài FOUND → nút "Chỉnh sửa"
+                            btnChat.setText("Chỉnh sửa");
+                            btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
+                            btnChat.setOnClickListener(v -> {
+                                Intent editIntent = new Intent(this, CreatePostActivity.class);
+                                editIntent.putExtra("editPostId", postId);
+                                editIntent.putExtra("title", title);
+                                editIntent.putExtra("description", description);
+                                editIntent.putExtra("type", type);
+                                editIntent.putExtra("imageUrl", imageUrl);
+                                if (extras.containsKey("lat") && extras.containsKey("lng")) {
+                                    editIntent.putExtra("lat", extras.getDouble("lat"));
+                                    editIntent.putExtra("lng", extras.getDouble("lng"));
+                                    editIntent.putExtra("address", extras.getString("address", ""));
+                                }
+                                startActivity(editIntent);
+                                finish();
+                            });
+                        }
+                    });
+            }
         } else if (auth.getCurrentUser() != null) {
             // Người xem (không phải chủ bài): Hiển thị nút Gọi điện và Nhắn tin
             
@@ -1014,6 +1037,88 @@ public class PostDetailActivity extends AppCompatActivity {
                 loadingDialog.dismiss();
                 Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ITEM RETURN CONFIRMATION FLOW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Step 1: Hiển thị dialog "Bạn đã nhận được đồ?"
+     */
+    private void showConfirmReceivedDialog(String postId) {
+        ConfirmReceivedDialog dialog = ConfirmReceivedDialog.newInstance();
+        dialog.setOnConfirmListener(new ConfirmReceivedDialog.OnConfirmListener() {
+            @Override
+            public void onSomeoneReturned() {
+                // Step 2: Fetch chatted users → show select helper dialog
+                showSelectHelperDialog(postId);
+            }
+
+            @Override
+            public void onFoundMyself() {
+                // Resolve post without awarding points
+                resolvePostSelf(postId);
+            }
+
+            @Override
+            public void onClosePost() {
+                // Close post without resolving
+                closePost(postId);
+            }
+        });
+        dialog.show(getSupportFragmentManager(), "ConfirmReceivedDialog");
+    }
+
+    /**
+     * Step 2: Hiển thị dialog chọn người trả đồ
+     */
+    private void showSelectHelperDialog(String postId) {
+        SelectHelperDialog dialog = SelectHelperDialog.newInstance(postId);
+        dialog.setOnResolvedListener(finderName -> {
+            // Update UI: đổi nút thành "Đã hoàn tất"
+            TextView btnChat = findViewById(R.id.btnChat);
+            if (btnChat != null) {
+                btnChat.setText("Đã hoàn tất ✓");
+                btnChat.setEnabled(false);
+                btnChat.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#9CA3AF")));
+            }
+        });
+        dialog.show(getSupportFragmentManager(), "SelectHelperDialog");
+    }
+
+    /**
+     * Tự tìm thấy: resolve post, không tặng điểm
+     */
+    private void resolvePostSelf(String postId) {
+        db.collection("posts").document(postId)
+                .update("status", "resolved", "resolvedBy", "self")
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Đã đánh dấu tìm thấy!", Toast.LENGTH_SHORT).show();
+                    TextView btnChat = findViewById(R.id.btnChat);
+                    if (btnChat != null) {
+                        btnChat.setText("Đã hoàn tất ✓");
+                        btnChat.setEnabled(false);
+                    }
+                })
+                .addOnFailureListener(e ->
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    /**
+     * Đóng bài mà không tìm thấy
+     */
+    private void closePost(String postId) {
+        db.collection("posts").document(postId)
+                .update("status", "closed")
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Đã đóng bài đăng", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e ->
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
 }

@@ -157,6 +157,7 @@ public class ChatActivity extends AppCompatActivity {
         btnImage.setOnClickListener(v -> selectImage());
         btnAttach.setOnClickListener(v -> selectImage());
         btnCancelReply.setOnClickListener(v -> cancelReply());
+        btnMore.setOnClickListener(v -> showMoreMenu());
 
         // Setup swipe-to-reply
         adapter.setOnReplyListener(message -> {
@@ -609,6 +610,58 @@ public class ChatActivity extends AppCompatActivity {
             PresenceManager.removePresenceListener(otherUserId, presenceListener);
         }
         if (soundPool != null) { soundPool.release(); soundPool = null; }
+    }
+    
+    /**
+     * Show popup menu with Report option
+     */
+    private void showMoreMenu() {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, btnMore);
+        popup.getMenu().add(0, 1, 0, "🚨 Báo cáo người dùng");
+        popup.getMenu().add(0, 2, 0, "🔇 Tắt thông báo");
+        popup.getMenu().add(0, 3, 0, "🗑️ Xóa cuộc trò chuyện");
+        
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                showReportDialog();
+                return true;
+            } else if (id == 2) {
+                Toast.makeText(this, "Tính năng sắp ra mắt", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == 3) {
+                Toast.makeText(this, "Tính năng sắp ra mắt", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
+        });
+        
+        popup.show();
+    }
+    
+    /**
+     * Show Report User Dialog
+     */
+    private void showReportDialog() {
+        // Get other user info
+        db.collection("users").document(otherUserId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String userName = documentSnapshot.getString("fullName");
+                        String userAvatar = documentSnapshot.getString("photoUrl");
+                        
+                        ReportUserDialog dialog = ReportUserDialog.newInstance(
+                                otherUserId,
+                                userName != null ? userName : "User",
+                                userAvatar
+                        );
+                        dialog.show(getSupportFragmentManager(), "ReportUserDialog");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }
 
