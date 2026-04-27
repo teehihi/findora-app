@@ -43,7 +43,6 @@ public class PostDetailActivity extends AppCompatActivity {
     private ImageView ivDetailImage, ivMapPlaceholder;
     private TextView tvDetailType, tvDetailTitle, tvDetailTimeHeader, tvDetailDescription, tvDetailLocation, tvUserName, tvUserStatus;
     private TextView tvInfoTime, tvInfoCategory;
-    private TextView btnResolve;
     private ImageButton btnBack, btnLike, btnMoreOptions;
     private TextView tvLikeCount, tvCommentCount;
     private com.google.firebase.firestore.FirebaseFirestore db;
@@ -114,7 +113,6 @@ public class PostDetailActivity extends AppCompatActivity {
         tvInfoCategory      = findViewById(R.id.tvInfoCategory);
         btnBack             = findViewById(R.id.btnBack);
         btnMoreOptions      = findViewById(R.id.btnMoreOptions);
-        btnResolve          = findViewById(R.id.btnResolve);
         mapViewDetail       = findViewById(R.id.mapViewDetail);
         ivMapPlaceholder    = findViewById(R.id.ivMapPlaceholder);
         cvMapPreview        = findViewById(R.id.cvMapPreview);
@@ -374,11 +372,35 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void setupOwnerActions(Bundle extras, String title, String description, String type, String imageUrl, String postUserId) {
-        TextView btnContact = findViewById(R.id.btnContact);
+        TextView btnCall = findViewById(R.id.btnCall);
         TextView btnChat = findViewById(R.id.btnChat);
         FirebaseAuth auth = FirebaseAuth.getInstance();
         
         if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
+            // Chủ bài đăng: Chỉ hiển thị nút Chỉnh sửa
+            btnCall.setText("Xóa bài");
+            int iosRed = android.graphics.Color.parseColor("#FF3B30");
+            btnCall.setTextColor(iosRed);
+            
+            android.graphics.drawable.Drawable trashIcon = ContextCompat.getDrawable(this, R.drawable.ic_trash_ios);
+            if (trashIcon != null) {
+                androidx.core.graphics.drawable.DrawableCompat.setTint(
+                        androidx.core.graphics.drawable.DrawableCompat.wrap(trashIcon).mutate(), iosRed);
+                btnCall.setCompoundDrawablesWithIntrinsicBounds(trashIcon, null, null, null);
+            }
+            
+            btnCall.setOnClickListener(v -> {
+                String postId = extras.getString("postId", "");
+                if (postId != null && !postId.isEmpty()) {
+                    db.collection("posts").document(postId).delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, "Đã xóa bài đăng thành công", Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                }
+            });
+
             btnChat.setText("Chỉnh sửa");
             btnChat.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_edit_ios, 0, 0, 0);
             btnChat.setOnClickListener(v -> {
@@ -399,32 +421,8 @@ public class PostDetailActivity extends AppCompatActivity {
                 startActivity(editIntent);
                 finish();
             });
-
-            btnContact.setText("Xóa bài");
-            int iosRed = android.graphics.Color.parseColor("#FF3B30");
-            btnContact.setTextColor(iosRed);
-            
-            android.graphics.drawable.Drawable trashIcon = ContextCompat.getDrawable(this, R.drawable.ic_trash_ios);
-            if (trashIcon != null) {
-                androidx.core.graphics.drawable.DrawableCompat.setTint(
-                        androidx.core.graphics.drawable.DrawableCompat.wrap(trashIcon).mutate(), iosRed);
-                btnContact.setCompoundDrawablesWithIntrinsicBounds(trashIcon, null, null, null);
-                btnContact.getCompoundDrawables()[0].setTintList(null);
-            }
-            
-            btnContact.setOnClickListener(v -> {
-                String postId = extras.getString("postId", "");
-                if (postId != null && !postId.isEmpty()) {
-                    db.collection("posts").document(postId).delete()
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Đã xóa bài đăng thành công", Toast.LENGTH_SHORT).show();
-                            finish();
-                        })
-                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                }
-            });
         } else if (auth.getCurrentUser() != null) {
-            // Người xem (không phải chủ bài)
+            // Người xem (không phải chủ bài): Hiển thị nút Gọi điện và Nhắn tin
             
             // Check if post is already resolved
             String status = extras.getString("status", "active");
@@ -432,10 +430,34 @@ public class PostDetailActivity extends AppCompatActivity {
                 btnChat.setText("Đã hoàn tất");
                 btnChat.setEnabled(false);
                 btnChat.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.GRAY));
-                btnContact.setVisibility(View.GONE);
+                btnCall.setVisibility(View.GONE);
                 return;
             }
 
+            // Nút gọi điện
+            btnCall.setText("Gọi điện");
+            btnCall.setOnClickListener(v -> {
+                // Lấy số điện thoại từ Firestore
+                db.collection("users").document(postUserId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String phoneNumber = documentSnapshot.getString("phoneNumber");
+                            if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                                Intent callIntent = new Intent(Intent.ACTION_DIAL);
+                                callIntent.setData(android.net.Uri.parse("tel:" + phoneNumber));
+                                startActivity(callIntent);
+                            } else {
+                                Toast.makeText(this, "Người dùng chưa cập nhật số điện thoại", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+            });
+
+            // Nút nhắn tin
             btnChat.setText("Nhắn tin");
             btnChat.setOnClickListener(v -> {
                 String postId = extras.getString("postId", "");
@@ -445,26 +467,6 @@ public class PostDetailActivity extends AppCompatActivity {
                 chatIntent.putExtra("postTitle", title);
                 startActivity(chatIntent);
             });
-
-            // Nút Liên hệ → Gọi điện (nếu là Finder thì đổi thành Yêu cầu xác nhận)
-            // Giả lập logic: Nếu đã có chat thì coi là Finder
-            btnContact.setText("Yêu cầu xác nhận");
-            btnContact.setOnClickListener(v -> {
-                Toast.makeText(this, "Đã gửi yêu cầu xác nhận tới chủ bài đăng", Toast.LENGTH_SHORT).show();
-                // Thực tế: Gửi thông báo/tin nhắn qua Firebase
-            });
-        }
-        
-        // Setup Resolve button for owner
-        if (auth.getCurrentUser() != null && auth.getCurrentUser().getUid().equals(postUserId)) {
-            String status = extras.getString("status", "active");
-            if ("active".equals(status)) {
-                btnResolve.setVisibility(View.VISIBLE);
-                btnResolve.setOnClickListener(v -> {
-                    ResolveBottomSheetFragment fragment = ResolveBottomSheetFragment.newInstance(currentPostId, postUserId);
-                    fragment.show(getSupportFragmentManager(), "ResolveBottomSheet");
-                });
-            }
         }
     }
 

@@ -26,19 +26,19 @@
         android:elevation="0dp">
 
         <TextView
-            android:id="@+id/btnContact"
+            android:id="@+id/btnCall"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginEnd="12dp"
             android:background="@drawable/bg_btn_outline_ios"
             android:gravity="center"
-            android:text="Liên hệ"
+            android:text="Gọi điện"
             android:textColor="#22C55E"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:drawableStart="@drawable/ic_person"
-            android:paddingStart="24dp"
+            android:drawableStart="@drawable/ic_phone_feather"
+            android:paddingStart="20dp"
             android:paddingEnd="16dp"
             android:drawablePadding="-8dp"
             app:drawableTint="#22C55E" />
@@ -50,7 +50,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_button_primary_ios"
             android:gravity="center"
-            android:text="Trò chuyện"
+            android:text="Nhắn tin"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="16sp"
@@ -59,20 +59,6 @@
             android:paddingEnd="16dp"
             android:drawablePadding="-8dp"
             app:drawableTint="@color/white" />
-
-        <TextView
-            android:id="@+id/btnResolve"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_weight="1.2"
-            android:layout_marginStart="12dp"
-            android:background="@drawable/bg_button_primary_ios"
-            android:gravity="center"
-            android:text="Xác nhận trả đồ"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:visibility="gone" />
 
     </LinearLayout>
 
