@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Web Client ID cho Google Sign-In (Auto-generated từ google-services.json) -->
+    <string name="default_web_client_id" translatable="false">32712775834-at73e6qgmgo8shir419fks3v8daj8pjn.apps.googleusercontent.com</string>
+</resources>

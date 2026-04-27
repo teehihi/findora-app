@@ -2,17 +2,28 @@ package hcmute.edu.vn.findora;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -20,10 +31,16 @@ import java.util.Map;
 
 public class AuthActivity extends AppCompatActivity {
 
+    private static final String TAG = "AuthActivity";
+    
     private boolean isLoginMode = true;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private hcmute.edu.vn.findora.utils.LoadingDialog loadingDialog;
+    
+    // Google Sign-In
+    private GoogleSignInClient googleSignInClient;
+    private ActivityResultLauncher<Intent> googleSignInLauncher;
 
     private ScrollView scrollView;
     private TextView tvTitle, tvSubtitle, tvForgot, tvSwitchPrompt, tvSwitchAction;
@@ -42,6 +59,28 @@ public class AuthActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         loadingDialog = new hcmute.edu.vn.findora.utils.LoadingDialog(this);
+        
+        // Configure Google Sign-In
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        
+        googleSignInClient = GoogleSignIn.getClient(this, gso);
+        
+        // Register Google Sign-In launcher
+        googleSignInLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
+                        handleGoogleSignInResult(task);
+                    } else {
+                        loadingDialog.dismiss();
+                        Toast.makeText(this, "Đăng nhập Google bị hủy", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
 
         // Bind views
         scrollView = findViewById(R.id.scrollView);
@@ -92,10 +131,10 @@ public class AuthActivity extends AppCompatActivity {
         // Forgot Password
         tvForgot.setOnClickListener(v -> forgotPassword());
 
-        // Google & Facebook - thông báo chưa khả dụng
-        btnGoogle.setOnClickListener(v ->
-            Toast.makeText(this, "Đăng nhập Google sẽ sớm được hỗ trợ", Toast.LENGTH_SHORT).show()
-        );
+        // Google Sign-In
+        btnGoogle.setOnClickListener(v -> signInWithGoogle());
+        
+        // Facebook - chưa hỗ trợ
         btnFacebook.setOnClickListener(v ->
             Toast.makeText(this, "Đăng nhập Facebook sẽ sớm được hỗ trợ", Toast.LENGTH_SHORT).show()
         );
@@ -337,5 +376,163 @@ public class AuthActivity extends AppCompatActivity {
     private void navigateToHome() {
         startActivity(new Intent(this, MainActivity.class));
         finish();
+    }
+    
+    // ========== Google Sign-In ==========
+    
+    /**
+     * Bắt đầu flow đăng nhập Google
+     */
+    private void signInWithGoogle() {
+        loadingDialog.show("Đang kết nối với Google...");
+        Intent signInIntent = googleSignInClient.getSignInIntent();
+        googleSignInLauncher.launch(signInIntent);
+    }
+    
+    /**
+     * Xử lý kết quả từ Google Sign-In
+     */
+    private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            Log.d(TAG, "Google Sign-In successful: " + account.getEmail());
+            
+            // Authenticate với Firebase
+            firebaseAuthWithGoogle(account.getIdToken());
+            
+        } catch (ApiException e) {
+            loadingDialog.dismiss();
+            Log.e(TAG, "Google Sign-In failed", e);
+            
+            String errorMessage;
+            switch (e.getStatusCode()) {
+                case 12501: // User cancelled
+                    errorMessage = "Đăng nhập bị hủy";
+                    break;
+                case 12500: // Sign-In failed
+                    errorMessage = "Đăng nhập thất bại. Vui lòng thử lại";
+                    break;
+                case 7: // Network error
+                    errorMessage = "Lỗi kết nối mạng";
+                    break;
+                default:
+                    errorMessage = "Lỗi: " + e.getStatusCode();
+            }
+            
+            Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Authenticate với Firebase sử dụng Google ID Token
+     */
+    private void firebaseAuthWithGoogle(String idToken) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "Firebase auth successful");
+                        
+                        // Lấy thông tin user
+                        com.google.firebase.auth.FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            String uid = firebaseUser.getUid();
+                            String email = firebaseUser.getEmail();
+                            String displayName = firebaseUser.getDisplayName();
+                            String photoUrl = firebaseUser.getPhotoUrl() != null 
+                                    ? firebaseUser.getPhotoUrl().toString() 
+                                    : null;
+                            
+                            Log.d(TAG, "User info - UID: " + uid);
+                            Log.d(TAG, "User info - Email: " + email);
+                            Log.d(TAG, "User info - DisplayName: " + displayName);
+                            Log.d(TAG, "User info - PhotoUrl: " + photoUrl);
+                            
+                            // Xử lý trường hợp displayName null
+                            if (displayName == null || displayName.isEmpty()) {
+                                displayName = email != null ? email.split("@")[0] : "User";
+                                Log.d(TAG, "DisplayName was null, using: " + displayName);
+                            }
+                            
+                            // Kiểm tra xem user đã tồn tại trong Firestore chưa
+                            checkAndSaveGoogleUser(uid, email, displayName, photoUrl);
+                        } else {
+                            loadingDialog.dismiss();
+                            Log.e(TAG, "FirebaseUser is null after successful auth");
+                            Toast.makeText(this, "Lỗi: Không lấy được thông tin user", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        loadingDialog.dismiss();
+                        Log.e(TAG, "Firebase auth failed", task.getException());
+                        Toast.makeText(this, 
+                                "Xác thực Firebase thất bại: " + 
+                                (task.getException() != null ? task.getException().getMessage() : "Unknown error"), 
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+    
+    /**
+     * Kiểm tra và lưu thông tin user Google vào Firestore
+     */
+    private void checkAndSaveGoogleUser(String uid, String email, String displayName, String photoUrl) {
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // User đã tồn tại → đăng nhập thành công
+                        loadingDialog.dismiss();
+                        Log.d(TAG, "User already exists, navigating to home");
+                        Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                        navigateToHome();
+                    } else {
+                        // User mới → lưu vào Firestore
+                        Log.d(TAG, "New user, saving to Firestore");
+                        saveGoogleUserToFirestore(uid, email, displayName, photoUrl);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Lỗi khi check → vẫn lưu user mới
+                    Log.e(TAG, "Error checking user existence", e);
+                    saveGoogleUserToFirestore(uid, email, displayName, photoUrl);
+                });
+    }
+    
+    /**
+     * Lưu thông tin user Google vào Firestore
+     */
+    private void saveGoogleUserToFirestore(String uid, String email, String displayName, String photoUrl) {
+        Log.d(TAG, "Saving user to Firestore...");
+        Log.d(TAG, "  UID: " + uid);
+        Log.d(TAG, "  Email: " + email);
+        Log.d(TAG, "  DisplayName: " + displayName);
+        
+        Map<String, Object> user = new HashMap<>();
+        user.put("uid", uid);
+        user.put("email", email != null ? email : "");
+        user.put("fullName", displayName != null && !displayName.isEmpty() ? displayName : "User");
+        user.put("photoUrl", photoUrl != null ? photoUrl : "");
+        user.put("phone", ""); // Google không cung cấp số điện thoại
+        user.put("authProvider", "google");
+        user.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+        
+        db.collection("users").document(uid)
+                .set(user)
+                .addOnSuccessListener(aVoid -> {
+                    loadingDialog.dismiss();
+                    Log.d(TAG, "User saved to Firestore successfully");
+                    Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
+                    navigateToHome();
+                })
+                .addOnFailureListener(e -> {
+                    loadingDialog.dismiss();
+                    Log.e(TAG, "Failed to save user to Firestore", e);
+                    Toast.makeText(this, 
+                            "Lỗi lưu thông tin: " + e.getMessage(), 
+                            Toast.LENGTH_LONG).show();
+                    
+                    // Vẫn cho phép đăng nhập dù lưu Firestore thất bại
+                    // navigateToHome();
+                });
     }
 }
