@@ -427,6 +427,7 @@ public class AuthActivity extends AppCompatActivity {
      * Authenticate với Firebase sử dụng Google ID Token
      */
     private void firebaseAuthWithGoogle(String idToken) {
+        loadingDialog.show("Đang xác thực với Firebase...");
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         
         mAuth.signInWithCredential(credential)
@@ -456,6 +457,7 @@ public class AuthActivity extends AppCompatActivity {
                             }
                             
                             // Kiểm tra xem user đã tồn tại trong Firestore chưa
+                            loadingDialog.show("Đang tải thông tin tài khoản...");
                             checkAndSaveGoogleUser(uid, email, displayName, photoUrl);
                         } else {
                             loadingDialog.dismiss();
@@ -483,11 +485,11 @@ public class AuthActivity extends AppCompatActivity {
                         // User đã tồn tại → đăng nhập thành công
                         loadingDialog.dismiss();
                         Log.d(TAG, "User already exists, navigating to home");
-                        Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
-                        navigateToHome();
+                        showLoginSuccessDialog(mAuth.getCurrentUser());
                     } else {
                         // User mới → lưu vào Firestore
                         Log.d(TAG, "New user, saving to Firestore");
+                        loadingDialog.show("Đang tạo tài khoản...");
                         saveGoogleUserToFirestore(uid, email, displayName, photoUrl);
                     }
                 })
@@ -521,8 +523,7 @@ public class AuthActivity extends AppCompatActivity {
                 .addOnSuccessListener(aVoid -> {
                     loadingDialog.dismiss();
                     Log.d(TAG, "User saved to Firestore successfully");
-                    Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
-                    navigateToHome();
+                    showLoginSuccessDialog(mAuth.getCurrentUser());
                 })
                 .addOnFailureListener(e -> {
                     loadingDialog.dismiss();
@@ -534,5 +535,35 @@ public class AuthActivity extends AppCompatActivity {
                     // Vẫn cho phép đăng nhập dù lưu Firestore thất bại
                     // navigateToHome();
                 });
+    }
+
+    /**
+     * Hiển thị dialog đăng nhập thành công rồi chuyển hướng
+     */
+    private void showLoginSuccessDialog(com.google.firebase.auth.FirebaseUser user) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_login_success);
+        dialog.setCancelable(false);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.85),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+
+        android.widget.TextView tvWelcome = dialog.findViewById(R.id.tvWelcome);
+        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
+            tvWelcome.setText("Chào mừng, " + user.getDisplayName() + "!");
+        }
+
+        dialog.show();
+
+        new android.os.Handler().postDelayed(() -> {
+            if (dialog.isShowing()) dialog.dismiss();
+            navigateToHome();
+        }, 1500);
     }
 }
