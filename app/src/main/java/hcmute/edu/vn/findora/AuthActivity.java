@@ -355,6 +355,7 @@ public class AuthActivity extends AppCompatActivity {
         user.put("fullName", fullName);
         user.put("email", email);
         user.put("phone", phone);
+        user.put("points", 0); // Khởi tạo điểm = 0
         user.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
 
         db.collection("users").document(uid)
@@ -515,6 +516,7 @@ public class AuthActivity extends AppCompatActivity {
         user.put("fullName", displayName != null && !displayName.isEmpty() ? displayName : "User");
         user.put("photoUrl", photoUrl != null ? photoUrl : "");
         user.put("phone", ""); // Google không cung cấp số điện thoại
+        user.put("points", 0); // Khởi tạo điểm = 0
         user.put("authProvider", "google");
         user.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
         
