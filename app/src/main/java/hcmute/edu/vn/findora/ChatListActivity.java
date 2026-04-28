@@ -204,21 +204,88 @@ public class ChatListActivity extends AppCompatActivity {
                         return tsB.compareTo(tsA); // Descending order
                     });
                     
-                    chatDocs.addAll(tempList);
-                    adapter.notifyDataSetChanged();
-
-                    if (chatDocs.isEmpty()) {
-                        showEmpty();
-                    } else {
-                        rvChatList.setVisibility(View.VISIBLE);
-                        layoutEmpty.setVisibility(View.GONE);
-                    }
+                    // Filter out chats related to resolved posts
+                    filterResolvedChats(tempList);
                 });
     }
 
     private void showEmpty() {
         rvChatList.setVisibility(View.GONE);
         layoutEmpty.setVisibility(View.VISIBLE);
+    }
+    
+    /**
+     * Filter out chats related to resolved posts
+     * Ẩn các cuộc trò chuyện liên quan đến bài viết đã xác nhận
+     */
+    private void filterResolvedChats(List<DocumentSnapshot> tempList) {
+        if (tempList.isEmpty()) {
+            showEmpty();
+            return;
+        }
+        
+        // Counter to track how many posts we've checked
+        final int[] checkedCount = {0};
+        final int totalCount = tempList.size();
+        
+        for (DocumentSnapshot chatDoc : tempList) {
+            String postId = chatDoc.getString("postId");
+            
+            if (postId == null || postId.isEmpty()) {
+                // No postId, add to list
+                chatDocs.add(chatDoc);
+                checkedCount[0]++;
+                
+                if (checkedCount[0] == totalCount) {
+                    finishFilteringChats();
+                }
+                continue;
+            }
+            
+            // Check if post is resolved
+            db.collection("posts").document(postId).get()
+                .addOnSuccessListener(postDoc -> {
+                    checkedCount[0]++;
+                    
+                    if (postDoc.exists()) {
+                        String status = postDoc.getString("status");
+                        // Only add if post is NOT resolved/closed
+                        if (!"resolved".equals(status) && !"closed".equals(status)) {
+                            chatDocs.add(chatDoc);
+                        }
+                    } else {
+                        // Post doesn't exist anymore, still add chat (user might want to see history)
+                        chatDocs.add(chatDoc);
+                    }
+                    
+                    if (checkedCount[0] == totalCount) {
+                        finishFilteringChats();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    checkedCount[0]++;
+                    // On error, add chat anyway
+                    chatDocs.add(chatDoc);
+                    
+                    if (checkedCount[0] == totalCount) {
+                        finishFilteringChats();
+                    }
+                });
+        }
+    }
+    
+    /**
+     * Finish filtering and update UI
+     */
+    private void finishFilteringChats() {
+        adapter.notifyDataSetChanged();
+        
+        if (chatDocs.isEmpty()) {
+            showEmpty();
+        } else {
+            rvChatList.setVisibility(View.VISIBLE);
+            layoutEmpty.setVisibility(View.GONE);
+        }
     }
     
     /**

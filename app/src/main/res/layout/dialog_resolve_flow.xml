@@ -188,71 +188,9 @@
                 app:cornerRadius="12dp" />
         </LinearLayout>
 
-        <!-- Step 2: Select Helper -->
+        <!-- Step 2: Rating & Feedback (Moved up) -->
         <LinearLayout
             android:id="@+id/layoutStep2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="Ai đã giúp bạn?"
-                android:textColor="#71717A"
-                android:textSize="14sp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerHelpers"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:nestedScrollingEnabled="false" />
-
-            <!-- Bottom Buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStep2Back"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Quay lại"
-                    android:textAllCaps="false"
-                    android:textColor="#171717"
-                    android:textSize="16sp"
-                    app:backgroundTint="#FFFFFF"
-                    app:cornerRadius="12dp"
-                    app:strokeColor="#E5E7EB"
-                    app:strokeWidth="1dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStep2Continue"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:enabled="false"
-                    android:text="Tiếp tục"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#22C55E"
-                    app:cornerRadius="12dp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Step 3: Rating & Feedback -->
-        <LinearLayout
-            android:id="@+id/layoutStep3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -355,6 +293,163 @@
                 android:weightSum="2">
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStep2Back"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="Quay lại"
+                    android:textAllCaps="false"
+                    android:textColor="#171717"
+                    android:textSize="16sp"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#E5E7EB"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStep2Continue"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Tiếp tục"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#22C55E"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Step 3: OTP Generation (For Lost item owner) -->
+        <LinearLayout
+            android:id="@+id/layoutStep3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Mã xác nhận nhận đồ"
+                android:textColor="#71717A"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="Đưa mã này cho người trả đồ để xác nhận giao dịch"
+                android:textColor="#9CA3AF"
+                android:textSize="13sp" />
+
+            <!-- OTP Display Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardOtpDisplay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#F0FDF4"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#22C55E"
+                app:strokeWidth="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="32dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="MÃ XÁC NHẬN"
+                        android:textColor="#16A34A"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvOtpCode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.3"
+                        android:text="0000"
+                        android:textColor="#15803D"
+                        android:textSize="48sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Generate OTP Button (shown initially) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGenerateOtp"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="24dp"
+                android:text="Tạo mã xác nhận"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="#22C55E"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_refresh"
+                app:iconGravity="textStart" />
+
+            <!-- Loading Indicator -->
+            <ProgressBar
+                android:id="@+id/progressOtp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                android:indeterminateTint="#22C55E" />
+
+            <!-- Info Text -->
+            <LinearLayout
+                android:id="@+id/layoutOtpInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_info_box"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_info"
+                    android:tint="#3B82F6" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Mã này sẽ hết hạn sau 1 giờ. Người trả đồ cần nhập mã này để hoàn tất giao dịch."
+                    android:textColor="#1E40AF"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Bottom Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnStep3Back"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
@@ -370,12 +465,12 @@
                     app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStep3Confirm"
+                    android:id="@+id/btnStep3Complete"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Xác nhận"
+                    android:text="Hoàn tất"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"

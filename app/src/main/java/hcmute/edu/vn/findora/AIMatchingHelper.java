@@ -143,6 +143,14 @@ public class AIMatchingHelper {
             // Skip nếu là bài của chính mình
             if (post.getUserId().equals(currentPost.getUserId())) continue;
             
+            // ===== LOẠI BỎ BÀI ĐÃ GIẢI QUYẾT =====
+            // Không ghép cặp các bài đã resolved/closed
+            String status = post.getStatus();
+            if ("resolved".equals(status) || "closed".equals(status)) {
+                Log.d(TAG, String.format("Skipped: %s - Already resolved", post.getTitle()));
+                continue;
+            }
+            
             // ===== KIỂM TRA KHOẢNG CÁCH TUYỆT ĐỐI =====
             // Nếu cả 2 bài đều có location, kiểm tra khoảng cách
             if (currentPost.getLat() != null && currentPost.getLng() != null &&

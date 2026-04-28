@@ -535,6 +535,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 final List<String> finalLikes = likes;
                 db.collection("posts").document(post.getId())
                     .update("likes", finalLikes)
+                    .addOnSuccessListener(unused -> {
+                        // Update UI with actual server count
+                        int serverCount = finalLikes.size();
+                        boolean isLiked = finalLikes.contains(currentUserId);
+                        likeStateCache.put(post.getId(), new int[]{serverCount, isLiked ? 1 : 0});
+                        updateLikeUI(holder, isLiked, serverCount);
+                    })
                     .addOnFailureListener(e -> {
                         // Rollback UI và cache nếu Firestore lỗi
                         likeStateCache.put(post.getId(), new int[]{holder.currentLikeCount, wasLiked ? 1 : 0});

@@ -633,29 +633,37 @@ public class PostDetailActivity extends AppCompatActivity {
         
         String currentUserId = auth.getCurrentUser().getUid();
         
+        // Update Firestore using atomic operations
         if (isLiked) {
-            // Unlike
-            likesList.remove(currentUserId);
+            // Unlike - use arrayRemove
+            db.collection("posts").document(currentPostId)
+                .update("likes", com.google.firebase.firestore.FieldValue.arrayRemove(currentUserId))
+                .addOnSuccessListener(aVoid -> {
+                    likesList.remove(currentUserId);
+                    isLiked = false;
+                    updateLikeUI();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
         } else {
-            // Like
-            likesList.add(currentUserId);
-            
-            // Gửi notification nếu không phải chủ bài
-            if (!currentUserId.equals(currentPostOwnerId)) {
-                sendLikeNotification();
-            }
+            // Like - use arrayUnion
+            db.collection("posts").document(currentPostId)
+                .update("likes", com.google.firebase.firestore.FieldValue.arrayUnion(currentUserId))
+                .addOnSuccessListener(aVoid -> {
+                    likesList.add(currentUserId);
+                    isLiked = true;
+                    updateLikeUI();
+                    
+                    // Gửi notification nếu không phải chủ bài
+                    if (!currentUserId.equals(currentPostOwnerId)) {
+                        sendLikeNotification();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
         }
-        
-        // Update Firestore
-        db.collection("posts").document(currentPostId)
-            .update("likes", likesList)
-            .addOnSuccessListener(aVoid -> {
-                isLiked = !isLiked;
-                updateLikeUI();
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
     }
     
     /**

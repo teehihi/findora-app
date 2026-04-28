@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
 
 import hcmute.edu.vn.findora.adapter.HelperSelectionAdapter;
 import hcmute.edu.vn.findora.model.User;
@@ -48,22 +50,22 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
     private int selectedOption = 0;
     private String selectedHelperId = null;
     private int selectedRating = 0;
+    private String generatedOtp = "";
 
     private String postId;
     private String postOwnerId;
 
     // Views
     private LinearLayout layoutStep1, layoutStep2, layoutStep3;
-    private MaterialCardView cardOption1, cardOption2, cardOption3;
+    private MaterialCardView cardOption1, cardOption2, cardOption3, cardOtpDisplay;
     private ImageView radioOption1, radioOption2, radioOption3;
-    private MaterialButton btnStep1Continue, btnStep2Back, btnStep2Continue, btnStep3Back, btnStep3Confirm;
-    private RecyclerView recyclerHelpers;
+    private MaterialButton btnStep1Continue, btnStep2Back, btnStep2Continue, btnStep3Back, btnStep3Complete, btnGenerateOtp;
     private ImageView star1, star2, star3, star4, star5;
     private EditText etFeedback;
     private ImageButton btnClose;
-
-    private HelperSelectionAdapter helperAdapter;
-    private List<User> helpersList = new ArrayList<>();
+    private TextView tvOtpCode;
+    private android.widget.ProgressBar progressOtp;
+    private LinearLayout layoutOtpInfo;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -102,7 +104,13 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         setupStep1();
         setupStep2();
         setupStep3();
-        loadHelpers();
+        
+        // Ensure keyboard doesn't cover input
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            );
+        }
     }
 
     private void initViews(View view) {
@@ -113,6 +121,7 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         cardOption1 = view.findViewById(R.id.cardOption1);
         cardOption2 = view.findViewById(R.id.cardOption2);
         cardOption3 = view.findViewById(R.id.cardOption3);
+        cardOtpDisplay = view.findViewById(R.id.cardOtpDisplay);
 
         radioOption1 = view.findViewById(R.id.radioOption1);
         radioOption2 = view.findViewById(R.id.radioOption2);
@@ -122,9 +131,8 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         btnStep2Back = view.findViewById(R.id.btnStep2Back);
         btnStep2Continue = view.findViewById(R.id.btnStep2Continue);
         btnStep3Back = view.findViewById(R.id.btnStep3Back);
-        btnStep3Confirm = view.findViewById(R.id.btnStep3Confirm);
-
-        recyclerHelpers = view.findViewById(R.id.recyclerHelpers);
+        btnStep3Complete = view.findViewById(R.id.btnStep3Complete);
+        btnGenerateOtp = view.findViewById(R.id.btnGenerateOtp);
         
         star1 = view.findViewById(R.id.star1);
         star2 = view.findViewById(R.id.star2);
@@ -133,6 +141,9 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         star5 = view.findViewById(R.id.star5);
         
         etFeedback = view.findViewById(R.id.etFeedback);
+        tvOtpCode = view.findViewById(R.id.tvOtpCode);
+        progressOtp = view.findViewById(R.id.progressOtp);
+        layoutOtpInfo = view.findViewById(R.id.layoutOtpInfo);
         btnClose = view.findViewById(R.id.btnClose);
 
         btnClose.setOnClickListener(v -> dismiss());
@@ -186,18 +197,6 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void setupStep2() {
-        recyclerHelpers.setLayoutManager(new LinearLayoutManager(getContext()));
-        helperAdapter = new HelperSelectionAdapter(helpersList, user -> {
-            selectedHelperId = user.getUid();
-            btnStep2Continue.setEnabled(true);
-        });
-        recyclerHelpers.setAdapter(helperAdapter);
-
-        btnStep2Back.setOnClickListener(v -> navigateToStep(STEP_1));
-        btnStep2Continue.setOnClickListener(v -> navigateToStep(STEP_3));
-    }
-
-    private void setupStep3() {
         ImageView[] stars = {star1, star2, star3, star4, star5};
         
         for (int i = 0; i < stars.length; i++) {
@@ -205,10 +204,19 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
             stars[i].setOnClickListener(v -> setRating(rating));
         }
 
+        btnStep2Back.setOnClickListener(v -> navigateToStep(STEP_1));
+        btnStep2Continue.setOnClickListener(v -> navigateToStep(STEP_3));
+    }
+
+    private void setupStep3() {
+        btnGenerateOtp.setOnClickListener(v -> generateOtpWithLoading());
         btnStep3Back.setOnClickListener(v -> navigateToStep(STEP_2));
-        btnStep3Confirm.setOnClickListener(v -> {
-            String feedback = etFeedback.getText().toString().trim();
-            resolvePost(selectedHelperId, selectedRating, feedback);
+        btnStep3Complete.setOnClickListener(v -> {
+            if (generatedOtp.isEmpty()) {
+                Toast.makeText(getContext(), "Vui lòng tạo mã xác nhận trước", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dismiss();
         });
     }
 
@@ -233,31 +241,77 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         layoutStep1.setVisibility(step == STEP_1 ? View.VISIBLE : View.GONE);
         layoutStep2.setVisibility(step == STEP_2 ? View.VISIBLE : View.GONE);
         layoutStep3.setVisibility(step == STEP_3 ? View.VISIBLE : View.GONE);
+        
+        // Reset OTP display when entering step 3
+        if (step == STEP_3) {
+            resetOtpDisplay();
+        }
     }
-
-    private void loadHelpers() {
-        db.collection("posts").document(postId).collection("interested")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    helpersList.clear();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        String userId = doc.getId();
-                        loadUserDetails(userId);
-                    }
-                });
+    
+    /**
+     * Reset OTP display to initial state
+     */
+    private void resetOtpDisplay() {
+        btnGenerateOtp.setVisibility(View.VISIBLE);
+        cardOtpDisplay.setVisibility(View.GONE);
+        layoutOtpInfo.setVisibility(View.GONE);
+        progressOtp.setVisibility(View.GONE);
+        generatedOtp = "";
     }
-
-    private void loadUserDetails(String userId) {
-        db.collection("users").document(userId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        User user = doc.toObject(User.class);
-                        if (user != null) {
-                            helpersList.add(user);
-                            helperAdapter.notifyDataSetChanged();
-                        }
-                    }
+    
+    /**
+     * Generate OTP with loading animation
+     */
+    private void generateOtpWithLoading() {
+        // Show loading
+        btnGenerateOtp.setVisibility(View.GONE);
+        progressOtp.setVisibility(View.VISIBLE);
+        
+        // Simulate network delay (500ms)
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            generateOtp();
+            saveOtpToFirestore();
+            
+            // Hide loading, show OTP
+            progressOtp.setVisibility(View.GONE);
+            cardOtpDisplay.setVisibility(View.VISIBLE);
+            layoutOtpInfo.setVisibility(View.VISIBLE);
+        }, 500);
+    }
+    
+    /**
+     * Generate random 4-digit OTP
+     */
+    private void generateOtp() {
+        java.util.Random random = new java.util.Random();
+        int otp = 1000 + random.nextInt(9000); // 1000-9999
+        generatedOtp = String.valueOf(otp);
+        tvOtpCode.setText(generatedOtp);
+    }
+    
+    /**
+     * Save OTP to Firestore with expiration time (1 hour)
+     */
+    private void saveOtpToFirestore() {
+        String feedback = etFeedback.getText().toString().trim();
+        
+        Map<String, Object> otpData = new HashMap<>();
+        otpData.put("otp", generatedOtp);
+        otpData.put("rating", selectedRating);
+        otpData.put("review", feedback);
+        otpData.put("createdAt", Timestamp.now());
+        otpData.put("expiresAt", new Timestamp(System.currentTimeMillis() / 1000 + 3600, 0)); // 1 hour = 3600 seconds
+        otpData.put("verified", false);
+        
+        db.collection("posts").document(postId)
+                .update("pendingOtp", otpData)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Mã đã được tạo thành công", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    // Reset on error
+                    resetOtpDisplay();
                 });
     }
 

@@ -335,7 +335,12 @@ public class MainActivity extends AppCompatActivity {
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Post post = doc.toObject(Post.class);
                         post.setId(doc.getId());
-                        allPosts.add(post);
+                        
+                        // Ẩn các bài viết đã xác nhận (resolved/closed)
+                        String status = post.getStatus();
+                        if (!"resolved".equals(status) && !"closed".equals(status)) {
+                            allPosts.add(post);
+                        }
                     }
                     applyFilter(currentFilter);
                     updateAIBanner();

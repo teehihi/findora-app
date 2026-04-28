@@ -28,6 +28,8 @@ import hcmute.edu.vn.findora.CreatePostActivity;
 import hcmute.edu.vn.findora.R;
 import hcmute.edu.vn.findora.PostDetailActivity;
 import hcmute.edu.vn.findora.ResolvePostBottomSheet;
+import hcmute.edu.vn.findora.OTPVerificationBottomSheet;
+import hcmute.edu.vn.findora.model.Post;
 import hcmute.edu.vn.findora.model.Post;
 
 public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHolder> {
@@ -141,7 +143,7 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
             
             holder.btnResolved.setOnClickListener(v -> {
                 if ("lost".equals(currentTab)) {
-                    // Tab "Thất lạc": Hiển thị flow đầy đủ (3 options)
+                    // Tab "Thất lạc": Hiển thị flow đầy đủ (OTP generation)
                     ResolvePostBottomSheet bottomSheet = ResolvePostBottomSheet.newInstance(
                         post.getId(),
                         post.getUserId()
@@ -149,15 +151,45 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
                     bottomSheet.show(((AppCompatActivity) context).getSupportFragmentManager(), 
                                    "ResolvePostBottomSheet");
                 } else {
-                    // Tab "Tìm thấy": Đánh dấu đã trả lại cho chủ nhân (đơn giản)
-                    resolveFoundPost(post);
+                    // Tab "Tìm thấy": Hiển thị OTP verification
+                    showFoundPostResolveDialog(post);
                 }
             });
         }
     }
 
     /**
-     * Đánh dấu bài "Tìm thấy" là đã trả lại cho chủ nhân
+     * Hiển thị dialog xác nhận cho bài "Tìm thấy"
+     */
+    private void showFoundPostResolveDialog(Post post) {
+        new androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Xác nhận trả đồ")
+            .setMessage("Bạn đã trả lại đồ vật cho chủ nhân?")
+            .setPositiveButton("Đã trả lại", (dialog, which) -> {
+                // Show OTP verification dialog
+                String currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
+                    ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid()
+                    : null;
+                
+                if (currentUserId == null) {
+                    Toast.makeText(context, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                OTPVerificationBottomSheet otpSheet = OTPVerificationBottomSheet.newInstance(
+                    post.getId(),
+                    post.getUserId(),
+                    currentUserId
+                );
+                otpSheet.show(((AppCompatActivity) context).getSupportFragmentManager(), 
+                           "OTPVerificationBottomSheet");
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+
+    /**
+     * Đánh dấu bài "Tìm thấy" là đã trả lại cho chủ nhân (OLD - not used anymore)
      */
     private void resolveFoundPost(Post post) {
         new androidx.appcompat.app.AlertDialog.Builder(context)
