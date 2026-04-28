@@ -49,6 +49,14 @@ public class WalletActivity extends AppCompatActivity {
         loadUserBalance();
         loadTransactions();
     }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh data when returning to this activity
+        loadUserBalance();
+        loadTransactions();
+    }
 
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
@@ -98,6 +106,8 @@ public class WalletActivity extends AppCompatActivity {
                     android.util.Log.d("WalletActivity", "Transactions loaded: " + queryDocumentSnapshots.size());
                     
                     transactionList.clear();
+                    
+                    android.util.Log.d("WalletActivity", "Found " + queryDocumentSnapshots.size() + " transactions");
                     
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Transaction transaction = document.toObject(Transaction.class);

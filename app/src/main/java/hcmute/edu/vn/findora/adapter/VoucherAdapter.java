@@ -87,13 +87,9 @@ public class VoucherAdapter extends RecyclerView.Adapter<VoucherAdapter.VoucherV
                     ContextCompat.getColor(context, R.color.primary)));
             holder.btnRedeem.setTextColor(ContextCompat.getColor(context, R.color.white));
             
-            // Xử lý sự kiện click để hiển thị mã voucher
+            // Xử lý sự kiện click để đổi voucher
             holder.btnRedeem.setOnClickListener(v -> {
-                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-                builder.setTitle("Đổi voucher thành công!");
-                builder.setMessage("Mã voucher của bạn:\n\n" + voucher.voucherCode + "\n\nVui lòng sử dụng mã này khi thanh toán.");
-                builder.setPositiveButton("OK", null);
-                builder.show();
+                redeemVoucher(voucher, position);
             });
         } else {
             // Không đủ điểm: Nút màu xám nhạt (Locked)
@@ -109,6 +105,96 @@ public class VoucherAdapter extends RecyclerView.Adapter<VoucherAdapter.VoucherV
     @Override
     public int getItemCount() {
         return voucherList.size();
+    }
+
+    /**
+     * Xử lý đổi voucher: Trừ điểm, tạo transaction, lưu voucher
+     */
+    private void redeemVoucher(Voucher voucher, int position) {
+        String userId = com.google.firebase.auth.FirebaseAuth.getInstance().getUid();
+        if (userId == null) {
+            android.widget.Toast.makeText(context, "Vui lòng đăng nhập", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Hiển thị dialog xác nhận
+        new androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Xác nhận đổi voucher")
+            .setMessage("Bạn muốn đổi " + voucher.pointsRequired + " FP lấy voucher này?")
+            .setPositiveButton("Đồng ý", (dialog, which) -> {
+                executeRedemption(userId, voucher, position);
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+
+    /**
+     * Thực hiện đổi voucher: Update Firestore
+     */
+    private void executeRedemption(String userId, Voucher voucher, int position) {
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        
+        // Batch write để đảm bảo atomicity
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+        // 1. Trừ điểm của user
+        com.google.firebase.firestore.DocumentReference userRef = db.collection("users").document(userId);
+        batch.update(userRef, "points", com.google.firebase.firestore.FieldValue.increment(-voucher.pointsRequired));
+
+        // 2. Tạo transaction "spend"
+        com.google.firebase.firestore.DocumentReference transactionRef = db.collection("transactions").document();
+        java.util.Map<String, Object> transactionData = new java.util.HashMap<>();
+        transactionData.put("userId", userId);
+        transactionData.put("type", "spend");
+        transactionData.put("points", voucher.pointsRequired);
+        transactionData.put("title", "Đổi voucher");
+        transactionData.put("description", voucher.name);
+        transactionData.put("timestamp", com.google.firebase.Timestamp.now());
+        transactionData.put("relatedVoucherId", voucher.id);
+        batch.set(transactionRef, transactionData);
+        
+        android.util.Log.d("VoucherAdapter", "Creating transaction: " + transactionData.toString());
+
+        // 3. Lưu voucher đã đổi vào user_vouchers
+        com.google.firebase.firestore.DocumentReference userVoucherRef = db.collection("user_vouchers").document();
+        java.util.Map<String, Object> userVoucherData = new java.util.HashMap<>();
+        userVoucherData.put("userId", userId);
+        userVoucherData.put("voucherId", voucher.id);
+        userVoucherData.put("voucherCode", voucher.voucherCode);
+        userVoucherData.put("voucherName", voucher.name);
+        userVoucherData.put("brandName", voucher.brandName);
+        userVoucherData.put("pointsSpent", voucher.pointsRequired);
+        userVoucherData.put("redeemedAt", com.google.firebase.Timestamp.now());
+        userVoucherData.put("used", false);
+        batch.set(userVoucherRef, userVoucherData);
+
+        // Commit batch
+        batch.commit()
+            .addOnSuccessListener(aVoid -> {
+                android.util.Log.d("VoucherAdapter", "Transaction created successfully!");
+                
+                // Cập nhật điểm local
+                userCurrentPoints -= voucher.pointsRequired;
+                
+                // Hiển thị dialog thành công với mã voucher
+                new androidx.appcompat.app.AlertDialog.Builder(context)
+                    .setTitle("Đổi voucher thành công!")
+                    .setMessage("Mã voucher của bạn:\n\n" + voucher.voucherCode + "\n\nVui lòng sử dụng mã này khi thanh toán.")
+                    .setPositiveButton("OK", (d, w) -> {
+                        // Refresh adapter
+                        notifyDataSetChanged();
+                        
+                        // Refresh activity nếu cần
+                        if (context instanceof androidx.appcompat.app.AppCompatActivity) {
+                            ((androidx.appcompat.app.AppCompatActivity) context).recreate();
+                        }
+                    })
+                    .show();
+            })
+            .addOnFailureListener(e -> {
+                android.util.Log.e("VoucherAdapter", "Failed to create transaction: " + e.getMessage());
+                android.widget.Toast.makeText(context, "Lỗi: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+            });
     }
 
     public static class VoucherViewHolder extends RecyclerView.ViewHolder {
