@@ -88,17 +88,28 @@ public class WalletActivity extends AppCompatActivity {
     }
 
     private void loadTransactions() {
+        android.util.Log.d("WalletActivity", "Loading transactions for user: " + currentUserId);
+        
         db.collection("transactions")
                 .whereEqualTo("userId", currentUserId)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    android.util.Log.d("WalletActivity", "Transactions loaded: " + queryDocumentSnapshots.size());
+                    
                     transactionList.clear();
                     
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Transaction transaction = document.toObject(Transaction.class);
                         transaction.setId(document.getId());
                         transactionList.add(transaction);
+                        
+                        android.util.Log.d("WalletActivity", String.format(
+                            "Transaction: %s, %d points, type: %s",
+                            transaction.getTitle(),
+                            transaction.getPoints(),
+                            transaction.getType()
+                        ));
                     }
                     
                     adapter.notifyDataSetChanged();
@@ -122,6 +133,9 @@ public class WalletActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("WalletActivity", "Error loading transactions", e);
+                    android.widget.Toast.makeText(this, "Lỗi: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                    
                     layoutEmpty.setVisibility(View.VISIBLE);
                     rvTransactions.setVisibility(View.GONE);
                 });
