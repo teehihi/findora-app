@@ -64,10 +64,10 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             holder.ivIcon.setColorFilter(android.graphics.Color.parseColor("#22C55E"));
             holder.iconContainer.setBackgroundResource(R.drawable.bg_circle_green_light);
         } else {
-            // Spending points - Grey (#71717A)
+            // Spending points - Grey (#71717A) - Use bookmark icon for voucher redemption
             holder.tvPoints.setText("-" + points);
             holder.tvPoints.setTextColor(android.graphics.Color.parseColor("#71717A"));
-            holder.ivIcon.setImageResource(R.drawable.ic_ai_star);
+            holder.ivIcon.setImageResource(R.drawable.ic_bookmark_feather);
             holder.ivIcon.setColorFilter(android.graphics.Color.parseColor("#71717A"));
             holder.iconContainer.setBackgroundResource(R.drawable.bg_circle_grey_light);
         }

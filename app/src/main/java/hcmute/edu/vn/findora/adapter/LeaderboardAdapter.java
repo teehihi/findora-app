@@ -20,10 +20,15 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
 
     private Context context;
     private List<User> userList;
+    private String sortType = "points"; // "points", "rating", "totalReturned"
 
     public LeaderboardAdapter(Context context, List<User> userList) {
         this.context = context;
         this.userList = userList;
+    }
+    
+    public void setSortType(String sortType) {
+        this.sortType = sortType;
     }
 
     @NonNull
@@ -38,7 +43,26 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
         User user = userList.get(position);
         holder.txtRank.setText(String.valueOf(position + 4)); // Starts from Rank 4
         holder.txtName.setText(user.getFullName());
-        holder.txtPoints.setText(user.getPoints() + " FP");
+        
+        // Debug log
+        android.util.Log.d("LeaderboardAdapter", 
+            "User: " + user.getFullName() + 
+            " | sortType: " + sortType +
+            " | points: " + user.getPoints() +
+            " | rating: " + user.getRating() +
+            " | totalReturned: " + user.getTotalReturned());
+        
+        // Display value based on sort type
+        if ("points".equals(sortType)) {
+            holder.txtPoints.setText(user.getPoints() + " FP");
+        } else if ("rating".equals(sortType)) {
+            double rating = user.getRating() != null ? user.getRating() : 0.0;
+            holder.txtPoints.setText(String.format("%.1f ⭐", rating));
+        } else if ("totalReturned".equals(sortType)) {
+            Integer totalReturned = user.getTotalReturned();
+            int value = (totalReturned != null) ? totalReturned : 0;
+            holder.txtPoints.setText(value + " món");
+        }
 
         if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
             com.bumptech.glide.Glide.with(context)

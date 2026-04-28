@@ -612,7 +612,7 @@ public class CreatePostActivity extends AppCompatActivity {
         if (selectedImageUri != null) {
             String filename = UUID.randomUUID().toString() + ".jpg";
             StorageReference storageRef = storage.getReference()
-                    .child("images/" + auth.getCurrentUser().getUid() + "/" + filename);
+                    .child("post_images/" + filename);
 
             storageRef.putFile(selectedImageUri)
                     .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl().addOnSuccessListener(uri -> {

@@ -32,6 +32,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     private LeaderboardAdapter adapter;
     private List<User> userList;
     private FirebaseFirestore db;
+    private String currentSortType = "points"; // "points", "rating", "totalReturned"
 
     // Podium views
     private ImageView imgRank1, imgRank2, imgRank3;
@@ -46,13 +47,13 @@ public class LeaderboardActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         initViews();
         setupRecyclerView();
-        loadLeaderboardData("all_time");
+        loadLeaderboardData("points");
 
         btnBack.setOnClickListener(v -> finish());
         
-        tabWeek.setOnClickListener(v -> switchTab("week"));
-        tabMonth.setOnClickListener(v -> switchTab("month"));
-        tabAllTime.setOnClickListener(v -> switchTab("all_time"));
+        tabWeek.setOnClickListener(v -> switchTab("points"));
+        tabMonth.setOnClickListener(v -> switchTab("rating"));
+        tabAllTime.setOnClickListener(v -> switchTab("totalReturned"));
     }
 
     private void initViews() {
@@ -83,6 +84,8 @@ public class LeaderboardActivity extends AppCompatActivity {
     }
 
     private void switchTab(String type) {
+        currentSortType = type;
+        
         // Update UI Tabs
         tabWeek.setBackground(null);
         tabMonth.setBackground(null);
@@ -91,9 +94,9 @@ public class LeaderboardActivity extends AppCompatActivity {
         tabMonth.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
         tabAllTime.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
 
-        TextView selectedTab = tabAllTime;
-        if ("week".equals(type)) selectedTab = tabWeek;
-        else if ("month".equals(type)) selectedTab = tabMonth;
+        TextView selectedTab = tabWeek;
+        if ("rating".equals(type)) selectedTab = tabMonth;
+        else if ("totalReturned".equals(type)) selectedTab = tabAllTime;
 
         selectedTab.setBackgroundResource(R.drawable.bg_tab_selected);
         selectedTab.setTextColor(ContextCompat.getColor(this, R.color.on_primary));
@@ -101,10 +104,17 @@ public class LeaderboardActivity extends AppCompatActivity {
         loadLeaderboardData(type);
     }
 
-    private void loadLeaderboardData(String type) {
-        // Hiện tại chỉ demo "all_time" bằng cách lấy points từ users collection
+    private void loadLeaderboardData(String sortType) {
+        // Xác định field để sort
+        String sortField = "points";
+        if ("rating".equals(sortType)) {
+            sortField = "averageRating"; // Field thực tế trong Firestore
+        } else if ("totalReturned".equals(sortType)) {
+            sortField = "totalReturned";
+        }
+        
         db.collection("users")
-                .orderBy("points", Query.Direction.DESCENDING)
+                .orderBy(sortField, Query.Direction.DESCENDING)
                 .limit(20)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -115,32 +125,32 @@ public class LeaderboardActivity extends AppCompatActivity {
                         user.setUid(doc.getId());
                         topUsers.add(user);
                     }
-                    updatePodium(topUsers);
+                    updatePodium(topUsers, sortType);
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi khi tải bảng xếp hạng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Lỗi khi tải bảng xếp hạng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
-    private void updatePodium(List<User> topUsers) {
+    private void updatePodium(List<User> topUsers, String sortType) {
         if (topUsers.size() >= 1) {
             User rank1 = topUsers.get(0);
             txtNameRank1.setText(rank1.getFullName());
-            txtPointsRank1.setText(rank1.getPoints() + " FP");
+            txtPointsRank1.setText(getDisplayValue(rank1, sortType));
             loadAvatar(rank1.getPhotoUrl(), imgRank1);
         }
         
         if (topUsers.size() >= 2) {
             User rank2 = topUsers.get(1);
             txtNameRank2.setText(rank2.getFullName());
-            txtPointsRank2.setText(rank2.getPoints() + " FP");
+            txtPointsRank2.setText(getDisplayValue(rank2, sortType));
             loadAvatar(rank2.getPhotoUrl(), imgRank2);
         }
 
         if (topUsers.size() >= 3) {
             User rank3 = topUsers.get(2);
             txtNameRank3.setText(rank3.getFullName());
-            txtPointsRank3.setText(rank3.getPoints() + " FP");
+            txtPointsRank3.setText(getDisplayValue(rank3, sortType));
             loadAvatar(rank3.getPhotoUrl(), imgRank3);
         }
 
@@ -148,7 +158,21 @@ public class LeaderboardActivity extends AppCompatActivity {
         if (topUsers.size() > 3) {
             userList.addAll(topUsers.subList(3, topUsers.size()));
         }
+        adapter.setSortType(sortType);
         adapter.notifyDataSetChanged();
+    }
+    
+    private String getDisplayValue(User user, String sortType) {
+        if ("points".equals(sortType)) {
+            return user.getPoints() + " FP";
+        } else if ("rating".equals(sortType)) {
+            double rating = user.getRating() != null ? user.getRating() : 0.0;
+            return String.format("%.1f ⭐", rating);
+        } else if ("totalReturned".equals(sortType)) {
+            int totalReturned = user.getTotalReturned() != null ? user.getTotalReturned() : 0;
+            return totalReturned + " món";
+        }
+        return "";
     }
 
     private void loadAvatar(String url, ImageView imageView) {

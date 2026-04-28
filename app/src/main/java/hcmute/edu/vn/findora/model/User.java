@@ -24,7 +24,7 @@ public class User {
     private String level = "Người mới";
 
     /** Số lần đã trả lại đồ vật thành công */
-    private int totalReturned;
+    private Integer totalReturned;
 
     /** Số lần đã nhận lại đồ vật */
     private int totalReceived;
@@ -79,14 +79,17 @@ public class User {
     public String getLevel() { return level; }
     public void setLevel(String level) { this.level = level; }
 
-    public int getTotalReturned() { return totalReturned; }
-    public void setTotalReturned(int totalReturned) { this.totalReturned = totalReturned; }
+    public Integer getTotalReturned() { return totalReturned; }
+    public void setTotalReturned(Integer totalReturned) { this.totalReturned = totalReturned; }
 
     public int getTotalReceived() { return totalReceived; }
     public void setTotalReceived(int totalReceived) { this.totalReceived = totalReceived; }
 
     public double getAverageRating() { return averageRating; }
     public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+    
+    // Alias for leaderboard
+    public Double getRating() { return averageRating; }
 
     public int getTotalRatings() { return totalRatings; }
     public void setTotalRatings(int totalRatings) { this.totalRatings = totalRatings; }

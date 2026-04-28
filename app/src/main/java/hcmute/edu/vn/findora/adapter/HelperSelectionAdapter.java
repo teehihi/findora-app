@@ -17,8 +17,15 @@ import java.util.List;
 import hcmute.edu.vn.findora.R;
 import hcmute.edu.vn.findora.model.User;
 
+/**
+ * Adapter cho danh sách người giúp đỡ trong Step 2 của ResolvePostBottomSheet
+ * Cho phép chọn một người từ danh sách để đánh giá và trao điểm
+ */
 public class HelperSelectionAdapter extends RecyclerView.Adapter<HelperSelectionAdapter.ViewHolder> {
 
+    /**
+     * Interface callback khi user chọn một helper
+     */
     public interface OnHelperSelectedListener {
         void onHelperSelected(User user);
     }
@@ -88,6 +95,11 @@ public class HelperSelectionAdapter extends RecyclerView.Adapter<HelperSelection
         return helpers.size();
     }
 
+    /**
+     * Lấy helper đang được chọn
+     * 
+     * @return User object của helper được chọn, hoặc null nếu chưa chọn
+     */
     public User getSelectedHelper() {
         if (selectedPosition >= 0 && selectedPosition < helpers.size()) {
             return helpers.get(selectedPosition);

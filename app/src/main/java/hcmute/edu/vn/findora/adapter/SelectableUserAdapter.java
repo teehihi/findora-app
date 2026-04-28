@@ -18,8 +18,15 @@ import java.util.List;
 
 import hcmute.edu.vn.findora.R;
 
+/**
+ * Adapter cho danh sách user có thể chọn (với RadioButton)
+ * Sử dụng trong SelectHelperDialog để chọn người giúp đỡ
+ */
 public class SelectableUserAdapter extends RecyclerView.Adapter<SelectableUserAdapter.ViewHolder> {
 
+    /**
+     * Model đơn giản cho user item trong danh sách
+     */
     public static class UserItem {
         public String userId;
         public String name;
@@ -32,6 +39,9 @@ public class SelectableUserAdapter extends RecyclerView.Adapter<SelectableUserAd
         }
     }
 
+    /**
+     * Interface callback khi user được chọn
+     */
     public interface OnUserSelectedListener {
         void onUserSelected(UserItem user);
     }
@@ -50,6 +60,11 @@ public class SelectableUserAdapter extends RecyclerView.Adapter<SelectableUserAd
         this.listener = listener;
     }
 
+    /**
+     * Lấy user đang được chọn
+     * 
+     * @return UserItem được chọn, hoặc null nếu chưa chọn
+     */
     public UserItem getSelectedUser() {
         if (selectedPosition >= 0 && selectedPosition < users.size()) {
             return users.get(selectedPosition);

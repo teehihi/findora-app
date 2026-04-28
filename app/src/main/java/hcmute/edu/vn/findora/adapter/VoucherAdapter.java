@@ -108,7 +108,10 @@ public class VoucherAdapter extends RecyclerView.Adapter<VoucherAdapter.VoucherV
     }
 
     /**
-     * Xử lý đổi voucher: Trừ điểm, tạo transaction, lưu voucher
+     * Xử lý đổi voucher: Hiển thị dialog xác nhận trước khi thực hiện
+     * 
+     * @param voucher Voucher cần đổi
+     * @param position Vị trí của voucher trong danh sách
      */
     private void redeemVoucher(Voucher voucher, int position) {
         String userId = com.google.firebase.auth.FirebaseAuth.getInstance().getUid();
@@ -129,7 +132,16 @@ public class VoucherAdapter extends RecyclerView.Adapter<VoucherAdapter.VoucherV
     }
 
     /**
-     * Thực hiện đổi voucher: Update Firestore
+     * Thực hiện đổi voucher: Update Firestore với WriteBatch
+     * 
+     * LOGIC:
+     * 1. Trừ điểm của user (FieldValue.increment)
+     * 2. Tạo transaction "spend" ghi nhận việc tiêu điểm
+     * 3. Lưu voucher vào user_vouchers collection với flag used=false
+     * 
+     * @param userId ID của user đang đổi voucher
+     * @param voucher Voucher được đổi
+     * @param position Vị trí trong adapter (để refresh UI)
      */
     private void executeRedemption(String userId, Voucher voucher, int position) {
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();

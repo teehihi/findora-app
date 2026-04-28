@@ -30,6 +30,7 @@ android {
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: ""}\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY") ?: ""}\"")
+        buildConfigField("String", "FCM_SERVER_KEY", "\"${localProperties.getProperty("FCM_SERVER_KEY") ?: ""}\"")
         resValue("string", "mapbox_access_token", localProperties.getProperty("MAPBOX_ACCESS_TOKEN") ?: "")
         
         // Enable 16KB page size support for Android 16+
@@ -118,4 +119,7 @@ dependencies {
     // Kotlin coroutines (required for Gemini)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    
+    // OkHttp for FCM REST API
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

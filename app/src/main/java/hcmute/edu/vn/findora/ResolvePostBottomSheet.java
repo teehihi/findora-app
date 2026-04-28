@@ -70,6 +70,13 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
+    /**
+     * Tạo instance mới của ResolvePostBottomSheet
+     * 
+     * @param postId ID của bài viết cần giải quyết
+     * @param postOwnerId ID của chủ bài viết (người mất đồ)
+     * @return Instance của ResolvePostBottomSheet
+     */
     public static ResolvePostBottomSheet newInstance(String postId, String postOwnerId) {
         ResolvePostBottomSheet fragment = new ResolvePostBottomSheet();
         Bundle args = new Bundle();
@@ -113,6 +120,11 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Khởi tạo tất cả các view components từ layout
+     * 
+     * @param view Root view của dialog
+     */
     private void initViews(View view) {
         layoutStep1 = view.findViewById(R.id.layoutStep1);
         layoutStep2 = view.findViewById(R.id.layoutStep2);
@@ -149,6 +161,12 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         btnClose.setOnClickListener(v -> dismiss());
     }
 
+    /**
+     * Thiết lập sự kiện và logic cho Bước 1: Chọn trạng thái đồ vật
+     * - Option 1: Đã nhận lại được (từ người khác)
+     * - Option 2: Tự tìm thấy
+     * - Option 3: Chưa tìm thấy (đóng bài)
+     */
     private void setupStep1() {
         cardOption1.setOnClickListener(v -> selectOption(OPTION_RECEIVED));
         cardOption2.setOnClickListener(v -> selectOption(OPTION_FOUND_SELF));
@@ -164,6 +182,11 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Chọn một option trong Bước 1 và cập nhật UI
+     * 
+     * @param option OPTION_RECEIVED (1), OPTION_FOUND_SELF (2), hoặc OPTION_NOT_FOUND (3)
+     */
     private void selectOption(int option) {
         selectedOption = option;
         
@@ -184,18 +207,35 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         btnStep1Continue.setEnabled(true);
     }
 
+    /**
+     * Reset card về trạng thái không được chọn (màu trắng, viền xám)
+     * 
+     * @param card MaterialCardView cần reset
+     * @param radio ImageView radio button tương ứng
+     */
     private void resetCard(MaterialCardView card, ImageView radio) {
         card.setCardBackgroundColor(getResources().getColor(android.R.color.white));
         card.setStrokeColor(getResources().getColor(R.color.gray_200));
         radio.setImageResource(R.drawable.ic_radio_unchecked);
     }
 
+    /**
+     * Highlight card đã được chọn (màu xanh nhạt, viền xanh)
+     * 
+     * @param card MaterialCardView cần highlight
+     * @param radio ImageView radio button tương ứng
+     */
     private void highlightCard(MaterialCardView card, ImageView radio) {
         card.setCardBackgroundColor(getResources().getColor(R.color.green_50));
         card.setStrokeColor(getResources().getColor(R.color.primary_green));
         radio.setImageResource(R.drawable.ic_radio_checked);
     }
 
+    /**
+     * Thiết lập sự kiện và logic cho Bước 2: Đánh giá người giúp đỡ
+     * - Chọn số sao (1-5)
+     * - Nút Quay lại và Tiếp tục
+     */
     private void setupStep2() {
         ImageView[] stars = {star1, star2, star3, star4, star5};
         
@@ -208,6 +248,12 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         btnStep2Continue.setOnClickListener(v -> navigateToStep(STEP_3));
     }
 
+    /**
+     * Thiết lập sự kiện và logic cho Bước 3: Tạo mã OTP và hoàn tất
+     * - Tạo mã OTP 4 chữ số
+     * - Hiển thị mã cho người mất đồ
+     * - Nút Quay lại và Hoàn tất
+     */
     private void setupStep3() {
         btnGenerateOtp.setOnClickListener(v -> generateOtpWithLoading());
         btnStep3Back.setOnClickListener(v -> navigateToStep(STEP_2));
@@ -220,6 +266,11 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Cập nhật số sao được chọn và thay đổi icon sao
+     * 
+     * @param rating Số sao (1-5)
+     */
     private void setRating(int rating) {
         selectedRating = rating;
         ImageView[] stars = {star1, star2, star3, star4, star5};
@@ -235,6 +286,12 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Chuyển đổi giữa các bước (Step 1, 2, 3)
+     * Ẩn/hiện layout tương ứng
+     * 
+     * @param step STEP_1, STEP_2, hoặc STEP_3
+     */
     private void navigateToStep(int step) {
         currentStep = step;
         
@@ -380,6 +437,16 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
                 });
     }
 
+    /**
+     * Cập nhật trạng thái bài viết thành "resolved" và thực hiện các thao tác liên quan:
+     * - Cập nhật Post (status, resolvedAt, resolvedBy, rating, review)
+     * - Cộng điểm cho người giúp đỡ (nếu có)
+     * - Tạo Transaction ghi nhận điểm
+     * 
+     * @param helperId ID của người giúp đỡ (null nếu tự tìm thấy hoặc chưa tìm thấy)
+     * @param rating Số sao đánh giá (0 nếu không có)
+     * @param review Nhận xét (empty string nếu không có)
+     */
     private void resolvePost(String helperId, int rating, String review) {
         WriteBatch batch = db.batch();
 
@@ -431,6 +498,12 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Commit WriteBatch và xử lý kết quả
+     * Hiển thị thông báo thành công/thất bại và đóng dialog
+     * 
+     * @param batch WriteBatch cần commit
+     */
     private void commitBatch(WriteBatch batch) {
         batch.commit()
                 .addOnSuccessListener(aVoid -> {

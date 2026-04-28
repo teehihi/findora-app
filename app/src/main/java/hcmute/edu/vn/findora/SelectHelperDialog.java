@@ -27,6 +27,12 @@ import java.util.Map;
 
 import hcmute.edu.vn.findora.adapter.SelectableUserAdapter;
 
+/**
+ * Dialog để chọn người giúp đỡ từ danh sách những người đã chat về bài viết
+ * Sau khi chọn, sẽ cộng điểm cho người được chọn và đánh dấu bài viết là đã giải quyết
+ * 
+ * DEPRECATED: Chức năng này đã được thay thế bởi ResolvePostBottomSheet
+ */
 public class SelectHelperDialog extends BottomSheetDialogFragment {
 
     private static final String ARG_POST_ID = "postId";
@@ -43,12 +49,21 @@ public class SelectHelperDialog extends BottomSheetDialogFragment {
     private String postId;
     private String ownerId;
 
+    /**
+     * Interface callback khi bài viết được giải quyết thành công
+     */
     public interface OnResolvedListener {
         void onResolved(String finderName);
     }
 
     private OnResolvedListener resolvedListener;
 
+    /**
+     * Tạo instance mới của SelectHelperDialog
+     * 
+     * @param postId ID của bài viết cần chọn helper
+     * @return Instance của SelectHelperDialog
+     */
     public static SelectHelperDialog newInstance(String postId) {
         SelectHelperDialog dialog = new SelectHelperDialog();
         Bundle args = new Bundle();
@@ -144,6 +159,11 @@ public class SelectHelperDialog extends BottomSheetDialogFragment {
                 });
     }
 
+    /**
+     * Lấy thông tin chi tiết của từng user từ Firestore
+     * 
+     * @param userIds Danh sách user IDs cần lấy thông tin
+     */
     private void fetchUserInfos(List<String> userIds) {
         userList.clear();
         final int[] loaded = {0};
@@ -171,7 +191,10 @@ public class SelectHelperDialog extends BottomSheetDialogFragment {
     }
 
     /**
-     * Firestore Batch write: resolve post + award points
+     * Xác nhận chọn helper và thực hiện WriteBatch:
+     * 1. Update post status = "resolved"
+     * 2. Cộng điểm cho finder (+50 points, +1 totalReturned)
+     * 3. Tạo transaction record
      */
     private void confirmAndAwardPoints() {
         SelectableUserAdapter.UserItem selectedUser = adapter.getSelectedUser();

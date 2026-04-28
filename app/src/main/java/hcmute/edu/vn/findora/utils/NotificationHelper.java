@@ -115,27 +115,13 @@ public class NotificationHelper {
     /**
      * Gửi FCM push notification
      * 
-     * LƯU Ý: Cần implement Cloud Function hoặc backend server để gửi FCM
-     * Hiện tại chỉ lưu vào Firestore, FCM sẽ được trigger từ Cloud Function
+     * DISABLED: Chức năng push notification đã bị tắt
+     * Chỉ lưu notification vào Firestore để hiển thị trong app
      */
     private static void sendFCMNotification(String userId, Map<String, Object> notification) {
-        // Lấy FCM token của user
-        db.collection("users")
-            .document(userId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    String fcmToken = documentSnapshot.getString("fcmToken");
-                    if (fcmToken != null) {
-                        Log.d(TAG, "FCM token found: " + fcmToken);
-                        // TODO: Gọi Cloud Function để gửi FCM
-                        // Hoặc gọi backend API để gửi FCM
-                    } else {
-                        Log.w(TAG, "User has no FCM token");
-                    }
-                }
-            })
-            .addOnFailureListener(e -> Log.e(TAG, "Failed to get FCM token", e));
+        // Push notification đã bị tắt
+        // Notification chỉ hiển thị trong app (đã lưu vào Firestore ở trên)
+        Log.d(TAG, "Push notification disabled. Notification saved to Firestore only.");
     }
     
     /**
