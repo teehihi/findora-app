@@ -58,7 +58,10 @@ public class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.ViewHold
         Post post = postList.get(position);
 
         holder.tvMyPostTitle.setText(post.getTitle() != null ? post.getTitle() : "Chưa có tiêu đề");
-        holder.tvMyPostLocation.setText("Đang cập nhật khu vực");
+        
+        // Location - use actual address from post
+        String address = post.getAddress();
+        holder.tvMyPostLocation.setText(address != null && !address.isEmpty() ? address : "Đang cập nhật khu vực");
 
         // Badge (Lost/Found)
         if ("lost".equals(post.getType())) {
