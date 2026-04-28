@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_rounded"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chúc mừng!"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/on_surface"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Next Level Icon -->
+    <ImageView
+        android:id="@+id/ivNextLevelIcon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_good"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Message -->
+    <TextView
+        android:id="@+id/tvUpgradeMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bạn đã đủ điểm để lên cấp Người tốt!\n\nBạn có muốn nâng cấp ngay bây giờ không?"
+        android:textSize="15sp"
+        android:textColor="@color/on_surface_variant"
+        android:gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Để sau button -->
+        <TextView
+            android:id="@+id/btnLater"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Để sau"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/on_surface_variant"
+            android:background="@drawable/bg_chip_inactive"
+            android:gravity="center"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Nâng cấp button -->
+        <TextView
+            android:id="@+id/btnUpgradeNow"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Nâng cấp"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_button_primary_ios"
+            android:gravity="center"
+            android:layout_marginStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -69,6 +69,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private String currentPostOwnerId;
     private String currentPostTitle;
     private boolean isLiked = false;
+    private boolean isLikeProcessing = false; // Prevent double-click
     private List<String> likesList;
 
     @Override
@@ -625,6 +626,12 @@ public class PostDetailActivity extends AppCompatActivity {
      * - User B nhận notification: "User A đã thích bài đăng"
      */
     private void toggleLike() {
+        // Prevent double-click
+        if (isLikeProcessing) {
+            android.util.Log.d("PostDetail", "Like processing, ignoring click");
+            return;
+        }
+        
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() == null) {
             Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
@@ -632,25 +639,36 @@ public class PostDetailActivity extends AppCompatActivity {
         }
         
         String currentUserId = auth.getCurrentUser().getUid();
+        isLikeProcessing = true;
+        
+        android.util.Log.d("PostDetail", "Toggle like - Current state: " + (isLiked ? "LIKED" : "NOT LIKED"));
+        android.util.Log.d("PostDetail", "Likes list before: " + likesList.toString());
         
         // Update Firestore using atomic operations
         if (isLiked) {
             // Unlike - use arrayRemove
+            android.util.Log.d("PostDetail", "Unliking post...");
             db.collection("posts").document(currentPostId)
                 .update("likes", com.google.firebase.firestore.FieldValue.arrayRemove(currentUserId))
                 .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("PostDetail", "Unlike successful");
                     likesList.remove(currentUserId);
                     isLiked = false;
                     updateLikeUI();
+                    isLikeProcessing = false;
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("PostDetail", "Unlike failed: " + e.getMessage());
                     Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    isLikeProcessing = false;
                 });
         } else {
             // Like - use arrayUnion
+            android.util.Log.d("PostDetail", "Liking post...");
             db.collection("posts").document(currentPostId)
                 .update("likes", com.google.firebase.firestore.FieldValue.arrayUnion(currentUserId))
                 .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("PostDetail", "Like successful");
                     likesList.add(currentUserId);
                     isLiked = true;
                     updateLikeUI();
@@ -659,9 +677,13 @@ public class PostDetailActivity extends AppCompatActivity {
                     if (!currentUserId.equals(currentPostOwnerId)) {
                         sendLikeNotification();
                     }
+                    
+                    isLikeProcessing = false;
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("PostDetail", "Like failed: " + e.getMessage());
                     Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    isLikeProcessing = false;
                 });
         }
     }
@@ -694,18 +716,17 @@ public class PostDetailActivity extends AppCompatActivity {
      * - 10 likes (user chưa like): Icon xám, hiển thị "10"
      */
     private void updateLikeUI() {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
-            String currentUserId = auth.getCurrentUser().getUid();
-            isLiked = likesList.contains(currentUserId);
-        }
+        // KHÔNG tính lại isLiked từ likesList vì đã được set trong toggleLike()
+        // Chỉ update UI dựa trên isLiked hiện tại
         
-        // Update icon
+        android.util.Log.d("PostDetail", "updateLikeUI - isLiked: " + isLiked + ", count: " + likesList.size());
+        
+        // Update icon - use thumbs up like in feed
         if (isLiked) {
-            btnLike.setImageResource(R.drawable.ic_favorite_filled);
-            btnLike.setColorFilter(ContextCompat.getColor(this, R.color.error));
+            btnLike.setImageResource(R.drawable.ic_like_feather_filled);
+            btnLike.setColorFilter(ContextCompat.getColor(this, R.color.info));
         } else {
-            btnLike.setImageResource(R.drawable.ic_favorite);
+            btnLike.setImageResource(R.drawable.ic_like_feather);
             btnLike.setColorFilter(ContextCompat.getColor(this, R.color.text_secondary));
         }
         

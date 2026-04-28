@@ -291,27 +291,92 @@ public class ResolvePostBottomSheet extends BottomSheetDialogFragment {
     
     /**
      * Save OTP to Firestore with expiration time (1 hour)
+     * OTP được lưu vào collection riêng để dễ truy cập từ 2 phía
+     * 
+     * LOGIC:
+     * 1. Xóa tất cả OTP cũ của bài viết này (nếu có)
+     * 2. Tạo OTP mới
      */
     private void saveOtpToFirestore() {
         String feedback = etFeedback.getText().toString().trim();
         
+        // Bước 1: Xóa OTP cũ (nếu có) trước khi tạo OTP mới
+        // Sử dụng lostPostId + lostUserId để tìm OTP cũ
+        db.collection("otpCodes")
+                .whereEqualTo("lostPostId", postId)
+                .whereEqualTo("lostUserId", postOwnerId)
+                .whereEqualTo("verified", false)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        // Có OTP cũ → Xóa
+                        WriteBatch batch = db.batch();
+                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                            batch.delete(doc.getReference());
+                            android.util.Log.d("ResolvePost", "Deleting old OTP: " + doc.getId());
+                        }
+                        
+                        // Commit batch delete
+                        batch.commit()
+                                .addOnSuccessListener(aVoid -> {
+                                    android.util.Log.d("ResolvePost", "Old OTPs deleted successfully");
+                                    // Tạo OTP mới sau khi xóa thành công
+                                    createNewOtp(feedback);
+                                })
+                                .addOnFailureListener(e -> {
+                                    android.util.Log.e("ResolvePost", "Error deleting old OTPs: " + e.getMessage(), e);
+                                    // Vẫn tạo OTP mới dù xóa cũ thất bại
+                                    createNewOtp(feedback);
+                                });
+                    } else {
+                        // Không có OTP cũ → Tạo mới luôn
+                        android.util.Log.d("ResolvePost", "No old OTP found, creating new one");
+                        createNewOtp(feedback);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ResolvePost", "Error querying old OTPs: " + e.getMessage(), e);
+                    // Vẫn tạo OTP mới dù query thất bại
+                    createNewOtp(feedback);
+                });
+    }
+    
+    /**
+     * Tạo OTP mới và lưu vào Firestore
+     */
+    private void createNewOtp(String feedback) {
         Map<String, Object> otpData = new HashMap<>();
         otpData.put("otp", generatedOtp);
+        otpData.put("lostPostId", postId); // Bài viết Lost (người mất đồ)
+        otpData.put("lostUserId", postOwnerId); // User mất đồ
         otpData.put("rating", selectedRating);
         otpData.put("review", feedback);
         otpData.put("createdAt", Timestamp.now());
         otpData.put("expiresAt", new Timestamp(System.currentTimeMillis() / 1000 + 3600, 0)); // 1 hour = 3600 seconds
         otpData.put("verified", false);
         
-        db.collection("posts").document(postId)
-                .update("pendingOtp", otpData)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(getContext(), "Mã đã được tạo thành công", Toast.LENGTH_SHORT).show();
+        // Lưu vào collection otpCodes (auto-generate ID để tránh conflict)
+        db.collection("otpCodes")
+                .add(otpData)
+                .addOnSuccessListener(docRef -> {
+                    android.util.Log.d("ResolvePost", "OTP created successfully: " + generatedOtp + " (ID: " + docRef.getId() + ")");
+                    Toast.makeText(getContext(), "Mã đã được tạo thành công. Đưa mã này cho người trả đồ.", Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    // Reset on error
-                    resetOtpDisplay();
+                    android.util.Log.e("ResolvePost", "Error creating OTP: " + e.getMessage(), e);
+                    
+                    // Hiển thị lỗi chi tiết
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.contains("PERMISSION_DENIED")) {
+                        Toast.makeText(getContext(), 
+                            "Lỗi quyền truy cập Firestore. Vui lòng kiểm tra Security Rules cho collection 'otpCodes'.", 
+                            Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getContext(), "Lỗi: " + errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                    
+                    // KHÔNG reset OTP display để user vẫn thấy mã
+                    // User có thể chụp màn hình hoặc ghi nhớ mã này
                 });
     }
 

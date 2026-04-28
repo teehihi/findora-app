@@ -508,51 +508,51 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
         if (currentUserId == null) return;
 
-        // Optimistic update: cập nhật UI ngay lập tức, không chờ Firestore
+        // Lấy trạng thái hiện tại
         boolean wasLiked = holder.isLiked;
-        int newCount = wasLiked ? holder.currentLikeCount - 1 : holder.currentLikeCount + 1;
-        updateLikeUI(holder, !wasLiked, newCount);
+        int oldCount = holder.currentLikeCount;
+        
+        // Optimistic update: cập nhật UI ngay lập tức
+        boolean newLiked = !wasLiked;
+        int newCount = newLiked ? oldCount + 1 : oldCount - 1;
+        updateLikeUI(holder, newLiked, newCount);
+        
         // Sound effect
         playSound(soundLike);
-        // Update cache ngay để loadLikeState không ghi đè
-        if (post.getId() != null) {
-            likeStateCache.put(post.getId(), new int[]{newCount, !wasLiked ? 1 : 0});
-        }
+        
+        // Update cache
+        likeStateCache.put(post.getId(), new int[]{newCount, newLiked ? 1 : 0});
 
-        // Sync Firestore ở background
+        // Sync Firestore ở background using ATOMIC operations
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("posts").document(post.getId()).get()
-            .addOnSuccessListener(doc -> {
-                if (!doc.exists()) return;
-                @SuppressWarnings("unchecked")
-                List<String> likes = (List<String>) doc.get("likes");
-                if (likes == null) likes = new ArrayList<>();
-
-                boolean serverLiked = likes.contains(currentUserId);
-                if (serverLiked) likes.remove(currentUserId);
-                else likes.add(currentUserId);
-
-                final List<String> finalLikes = likes;
-                db.collection("posts").document(post.getId())
-                    .update("likes", finalLikes)
-                    .addOnSuccessListener(unused -> {
-                        // Update UI with actual server count
-                        int serverCount = finalLikes.size();
-                        boolean isLiked = finalLikes.contains(currentUserId);
-                        likeStateCache.put(post.getId(), new int[]{serverCount, isLiked ? 1 : 0});
-                        updateLikeUI(holder, isLiked, serverCount);
-                    })
-                    .addOnFailureListener(e -> {
-                        // Rollback UI và cache nếu Firestore lỗi
-                        likeStateCache.put(post.getId(), new int[]{holder.currentLikeCount, wasLiked ? 1 : 0});
-                        updateLikeUI(holder, wasLiked, holder.currentLikeCount);
-                    });
-            })
-            .addOnFailureListener(e -> {
-                // Rollback UI và cache nếu không đọc được Firestore
-                likeStateCache.put(post.getId(), new int[]{holder.currentLikeCount, wasLiked ? 1 : 0});
-                updateLikeUI(holder, wasLiked, holder.currentLikeCount);
-            });
+        
+        if (wasLiked) {
+            // Unlike - use arrayRemove
+            db.collection("posts").document(post.getId())
+                .update("likes", com.google.firebase.firestore.FieldValue.arrayRemove(currentUserId))
+                .addOnSuccessListener(unused -> {
+                    android.util.Log.d("PostAdapter", "Unlike successful for post: " + post.getId());
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("PostAdapter", "Unlike failed: " + e.getMessage());
+                    // Rollback UI
+                    updateLikeUI(holder, wasLiked, oldCount);
+                    likeStateCache.put(post.getId(), new int[]{oldCount, wasLiked ? 1 : 0});
+                });
+        } else {
+            // Like - use arrayUnion
+            db.collection("posts").document(post.getId())
+                .update("likes", com.google.firebase.firestore.FieldValue.arrayUnion(currentUserId))
+                .addOnSuccessListener(unused -> {
+                    android.util.Log.d("PostAdapter", "Like successful for post: " + post.getId());
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("PostAdapter", "Like failed: " + e.getMessage());
+                    // Rollback UI
+                    updateLikeUI(holder, wasLiked, oldCount);
+                    likeStateCache.put(post.getId(), new int[]{oldCount, wasLiked ? 1 : 0});
+                });
+        }
     }
 
     private void updateLikeUI(@NonNull PostViewHolder holder, boolean isLiked, int count) {

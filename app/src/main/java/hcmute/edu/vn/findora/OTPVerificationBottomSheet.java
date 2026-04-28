@@ -138,32 +138,41 @@ public class OTPVerificationBottomSheet extends BottomSheetDialogFragment {
             return;
         }
 
-        // Fetch OTP from Firestore
-        db.collection("posts").document(postId)
+        // Show loading
+        btnVerify.setEnabled(false);
+        btnVerify.setText("Đang xác minh...");
+
+        // Tìm OTP trong collection otpCodes
+        // Query: tìm OTP chưa verify và match với mã nhập vào
+        db.collection("otpCodes")
+                .whereEqualTo("otp", enteredOtp)
+                .whereEqualTo("verified", false)
                 .get()
-                .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) {
-                        showError("Không tìm thấy bài viết");
+                .addOnSuccessListener(querySnapshot -> {
+                    btnVerify.setEnabled(true);
+                    btnVerify.setText("Xác nhận");
+                    
+                    if (querySnapshot.isEmpty()) {
+                        showError("Mã không đúng hoặc đã được sử dụng");
+                        android.util.Log.e("OTPVerification", "No matching OTP found for: " + enteredOtp);
                         return;
                     }
 
+                    // Lấy OTP document đầu tiên (should be only one)
+                    DocumentSnapshot otpDoc = querySnapshot.getDocuments().get(0);
+                    
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> pendingOtp = (Map<String, Object>) doc.get("pendingOtp");
-
-                    if (pendingOtp == null) {
-                        showError("Chưa có mã xác nhận. Yêu cầu người nhận tạo mã.");
+                    Map<String, Object> otpData = otpDoc.getData();
+                    
+                    if (otpData == null) {
+                        showError("Lỗi: Không thể đọc dữ liệu OTP");
                         return;
                     }
 
-                    String correctOtp = (String) pendingOtp.get("otp");
-                    Timestamp expiresAt = (Timestamp) pendingOtp.get("expiresAt");
-                    Boolean verified = (Boolean) pendingOtp.get("verified");
+                    Timestamp expiresAt = (Timestamp) otpData.get("expiresAt");
+                    String lostPostId = (String) otpData.get("lostPostId");
 
-                    // Check if already verified
-                    if (verified != null && verified) {
-                        showError("Mã này đã được sử dụng");
-                        return;
-                    }
+                    android.util.Log.d("OTPVerification", "Found OTP: " + enteredOtp + " for lostPost: " + lostPostId);
 
                     // Check expiration
                     if (expiresAt != null && expiresAt.toDate().getTime() < System.currentTimeMillis()) {
@@ -171,21 +180,96 @@ public class OTPVerificationBottomSheet extends BottomSheetDialogFragment {
                         return;
                     }
 
-                    // Verify OTP
-                    if (!enteredOtp.equals(correctOtp)) {
-                        showError("Mã không đúng. Vui lòng thử lại.");
-                        return;
-                    }
-
-                    // OTP is correct, resolve the post
-                    resolvePost(pendingOtp);
+                    // OTP is correct, resolve both posts
+                    resolvePostsWithOtp(otpDoc.getId(), lostPostId, otpData);
                 })
                 .addOnFailureListener(e -> {
+                    btnVerify.setEnabled(true);
+                    btnVerify.setText("Xác nhận");
                     showError("Lỗi: " + e.getMessage());
+                    android.util.Log.e("OTPVerification", "Error fetching OTP", e);
                 });
     }
 
-    private void resolvePost(Map<String, Object> otpData) {
+    private void resolvePostsWithOtp(String otpDocId, String lostPostId, Map<String, Object> otpData) {
+        // Fetch both posts to validate with AI matching
+        db.collection("posts").document(lostPostId)
+                .get()
+                .addOnSuccessListener(lostPostDoc -> {
+                    if (!lostPostDoc.exists()) {
+                        showError("Lỗi: Không tìm thấy bài viết Lost");
+                        return;
+                    }
+                    
+                    db.collection("posts").document(postId)
+                            .get()
+                            .addOnSuccessListener(foundPostDoc -> {
+                                if (!foundPostDoc.exists()) {
+                                    showError("Lỗi: Không tìm thấy bài viết Found");
+                                    return;
+                                }
+                                
+                                // Convert to Post objects
+                                hcmute.edu.vn.findora.model.Post lostPost = lostPostDoc.toObject(hcmute.edu.vn.findora.model.Post.class);
+                                hcmute.edu.vn.findora.model.Post foundPost = foundPostDoc.toObject(hcmute.edu.vn.findora.model.Post.class);
+                                
+                                if (lostPost == null || foundPost == null) {
+                                    showError("Lỗi: Không thể đọc dữ liệu bài viết");
+                                    return;
+                                }
+                                
+                                // Set IDs (toObject doesn't include document ID)
+                                lostPost.setId(lostPostId);
+                                foundPost.setId(postId);
+                                
+                                // Calculate AI match score
+                                double matchScore = AIMatchingHelper.calculateMatchScore(lostPost, foundPost);
+                                int matchPercentage = (int) (matchScore * 100);
+                                
+                                android.util.Log.d("OTPVerification", String.format(
+                                    "AI Match Score: %.2f%% between Lost '%s' and Found '%s'",
+                                    matchScore * 100, lostPost.getTitle(), foundPost.getTitle()
+                                ));
+                                
+                                // If match score is low, show warning
+                                if (matchScore < 0.3) {
+                                    showAIMatchWarning(matchPercentage, otpDocId, lostPostId, otpData);
+                                } else {
+                                    // Good match, proceed directly
+                                    proceedWithResolution(otpDocId, lostPostId, otpData);
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                showError("Lỗi: " + e.getMessage());
+                                android.util.Log.e("OTPVerification", "Error fetching Found post", e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    showError("Lỗi: " + e.getMessage());
+                    android.util.Log.e("OTPVerification", "Error fetching Lost post", e);
+                });
+    }
+    
+    private void showAIMatchWarning(int matchPercentage, String otpDocId, String lostPostId, Map<String, Object> otpData) {
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+            .setTitle("⚠️ Cảnh báo độ khớp thấp")
+            .setMessage(String.format(
+                "Hệ thống AI phát hiện độ khớp giữa bài viết Lost và Found của bạn chỉ %d%%.\n\n" +
+                "Điều này có thể có nghĩa là:\n" +
+                "• Đây không phải cùng một vật phẩm\n" +
+                "• Mô tả hoặc hình ảnh không khớp\n\n" +
+                "Bạn có chắc chắn muốn tiếp tục?",
+                matchPercentage
+            ))
+            .setPositiveButton("Tiếp tục", (dialog, which) -> {
+                proceedWithResolution(otpDocId, lostPostId, otpData);
+            })
+            .setNegativeButton("Hủy", null)
+            .setCancelable(true)
+            .show();
+    }
+    
+    private void proceedWithResolution(String otpDocId, String lostPostId, Map<String, Object> otpData) {
         WriteBatch batch = db.batch();
 
         // Get rating and review from OTP data
@@ -193,18 +277,28 @@ public class OTPVerificationBottomSheet extends BottomSheetDialogFragment {
         int rating = ratingLong != null ? ratingLong.intValue() : 0;
         String review = (String) otpData.get("review");
 
-        // Update Post
-        Map<String, Object> postUpdates = new HashMap<>();
-        postUpdates.put("status", "resolved");
-        postUpdates.put("resolvedAt", Timestamp.now());
-        postUpdates.put("resolvedBy", helperUserId);
-        postUpdates.put("rating", rating);
-        if (review != null && !review.isEmpty()) {
-            postUpdates.put("review", review);
-        }
-        postUpdates.put("pendingOtp.verified", true);
+        // Update Lost Post (bài của người mất đồ)
+        Map<String, Object> lostPostUpdates = new HashMap<>();
+        lostPostUpdates.put("status", "resolved");
+        lostPostUpdates.put("resolvedAt", Timestamp.now());
+        lostPostUpdates.put("resolvedBy", helperUserId);
+        
+        batch.update(db.collection("posts").document(lostPostId), lostPostUpdates);
 
-        batch.update(db.collection("posts").document(postId), postUpdates);
+        // Update Found Post (bài của người trả đồ)
+        Map<String, Object> foundPostUpdates = new HashMap<>();
+        foundPostUpdates.put("status", "resolved");
+        foundPostUpdates.put("resolvedAt", Timestamp.now());
+        foundPostUpdates.put("resolvedBy", helperUserId);
+        foundPostUpdates.put("rating", rating);
+        if (review != null && !review.isEmpty()) {
+            foundPostUpdates.put("review", review);
+        }
+        
+        batch.update(db.collection("posts").document(postId), foundPostUpdates);
+        
+        // Mark OTP as verified
+        batch.update(db.collection("otpCodes").document(otpDocId), "verified", true);
 
         // Update helper's points and stats
         db.collection("users").document(helperUserId)

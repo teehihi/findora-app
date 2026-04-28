@@ -198,12 +198,13 @@ public class AIMatchingHelper {
      * 
      * ĐƯỢC GỌI TỪ:
      * - findMatches(): Tính điểm cho từng cặp bài đăng
+     * - OTPVerificationBottomSheet: Validate match khi User B nhập OTP
      * 
      * @param post1 Bài đăng thứ nhất (thường là bài đăng hiện tại)
      * @param post2 Bài đăng thứ hai (bài đăng cần so sánh)
      * @return Điểm match từ 0.0 đến 1.0
      */
-    private static double calculateMatchScore(Post post1, Post post2) {
+    public static double calculateMatchScore(Post post1, Post post2) {
         // 1. Image similarity - Ưu tiên cao nhất nếu có
         double imageScore = calculateImageSimilarity(post1, post2);
         boolean hasImageMatch = (post1.getImageLabel() != null && !post1.getImageLabel().isEmpty() &&

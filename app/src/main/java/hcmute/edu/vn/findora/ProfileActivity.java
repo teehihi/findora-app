@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -68,6 +69,10 @@ public class ProfileActivity extends AppCompatActivity {
         tvLevelUpDesc = findViewById(R.id.tvLevelUpDesc);
         circularProgress = findViewById(R.id.circularProgress);
         btnUpgrade = findViewById(R.id.btnUpgrade);
+        
+        // Click listener for upgrade button
+        btnUpgrade.setOnClickListener(v -> handleUpgradeClick());
+        
         ivAvatar = findViewById(R.id.ivAvatar);
         ivLevelIcon = findViewById(R.id.ivLevelIcon);
 
@@ -258,51 +263,229 @@ public class ProfileActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     long points = doc.contains("points") ? doc.getLong("points") : 0;
                     long returned = doc.contains("totalReturned") ? doc.getLong("totalReturned") : 0;
+                    String level = doc.contains("level") ? doc.getString("level") : "Người mới";
 
                     tvFindoPoints.setText(String.valueOf(points));
                     tvItemsReturned.setText(String.valueOf(returned));
 
-                    // Update level badge
-                    updateLevelBadge(points);
+                    // Update level badge từ Firestore (KHÔNG tự động tính)
+                    updateLevelBadgeFromFirestore(level, points);
 
-                    // Animate circular progress (next level = 100 pts per tier)
-                    long nextLevel = ((points / 100) + 1) * 100;
-                    long currentTierPoints = points % 100;
-                    int progressPercent = (int) ((currentTierPoints * 100) / 100);
+                    // Tính progress dựa trên level hiện tại
+                    long nextLevelPoints = getNextLevelPoints(level);
+                    long currentLevelPoints = getCurrentLevelPoints(level);
+                    long pointsInCurrentTier = points - currentLevelPoints;
+                    long pointsNeededForNextTier = nextLevelPoints - currentLevelPoints;
+                    
+                    int progressPercent = 0;
+                    if (pointsNeededForNextTier > 0) {
+                        progressPercent = (int) ((pointsInCurrentTier * 100) / pointsNeededForNextTier);
+                        progressPercent = Math.min(100, Math.max(0, progressPercent));
+                    }
 
                     animateProgress(progressPercent);
                     tvProgressPercent.setText(progressPercent + "%");
-                    tvLevelUpDesc.setText("Đạt " + nextLevel + " FP (FindoPoint) để lên cấp tiếp theo");
-
-                    // Pulse animation on upgrade button if close to next level (>= 80%)
-                    if (progressPercent >= 80) {
-                        startPulseAnimation(btnUpgrade);
+                    
+                    // Update description
+                    String nextLevelName = getNextLevelName(level);
+                    if (nextLevelName != null) {
+                        tvLevelUpDesc.setText("Đạt " + nextLevelPoints + " FP (FindoPoint) để lên cấp " + nextLevelName);
+                    } else {
+                        tvLevelUpDesc.setText("Bạn đã đạt cấp độ cao nhất!");
                     }
+
+                    // Check if user can upgrade và enable/disable nút
+                    checkUpgradeAvailability(level, points);
                 });
         }
     }
 
     private long currentPoints = 0;
+    private String currentLevel = "Người mới";
 
-    private void updateLevelBadge(long points) {
-        String name;
-        int iconRes;
-        if (points >= 1000) {
-            name = "Huyền thoại";
-            iconRes = R.drawable.ic_legendary;
-        } else if (points >= 500) {
-            name = "Thiên thần";
-            iconRes = R.drawable.ic_angel;
-        } else if (points >= 100) {
-            name = "Người tốt";
-            iconRes = R.drawable.ic_good;
-        } else {
-            name = "Người mới";
-            iconRes = R.drawable.ic_newbie;
-        }
-        tvLevelBadge.setText(name);
-        if (ivLevelIcon != null) ivLevelIcon.setImageResource(iconRes);
+    /**
+     * Update level badge từ Firestore (KHÔNG tự động tính toán)
+     * Chỉ hiển thị level mà user đã được cấp trong Firestore
+     */
+    private void updateLevelBadgeFromFirestore(String level, long points) {
+        currentLevel = level;
         currentPoints = points;
+        
+        int iconRes;
+        switch (level) {
+            case "Huyền thoại":
+                iconRes = R.drawable.ic_legendary;
+                break;
+            case "Thiên thần":
+                iconRes = R.drawable.ic_angel;
+                break;
+            case "Người tốt":
+                iconRes = R.drawable.ic_good;
+                break;
+            default:
+                iconRes = R.drawable.ic_newbie;
+                break;
+        }
+        
+        tvLevelBadge.setText(level);
+        if (ivLevelIcon != null) ivLevelIcon.setImageResource(iconRes);
+    }
+    
+    /**
+     * Kiểm tra xem user có thể nâng cấp không
+     * Nếu có → Enable nút và hiển thị animation
+     * Nếu không → Disable nút
+     */
+    private void checkUpgradeAvailability(String currentLevel, long points) {
+        boolean canUpgrade = false;
+        int nextLevelIconRes = R.drawable.ic_good; // Default
+        
+        if ("Người mới".equals(currentLevel) && points >= 100) {
+            canUpgrade = true;
+            nextLevelIconRes = R.drawable.ic_good;
+        } else if ("Người tốt".equals(currentLevel) && points >= 500) {
+            canUpgrade = true;
+            nextLevelIconRes = R.drawable.ic_angel;
+        } else if ("Thiên thần".equals(currentLevel) && points >= 1000) {
+            canUpgrade = true;
+            nextLevelIconRes = R.drawable.ic_legendary;
+        } else if ("Huyền thoại".equals(currentLevel)) {
+            // Đã max level
+            nextLevelIconRes = R.drawable.ic_legendary;
+        } else {
+            // Chưa đủ điểm, xác định icon của level tiếp theo
+            if ("Người mới".equals(currentLevel)) {
+                nextLevelIconRes = R.drawable.ic_good;
+            } else if ("Người tốt".equals(currentLevel)) {
+                nextLevelIconRes = R.drawable.ic_angel;
+            } else if ("Thiên thần".equals(currentLevel)) {
+                nextLevelIconRes = R.drawable.ic_legendary;
+            }
+        }
+        
+        if (canUpgrade) {
+            // Enable nút và đổi màu sang primary green
+            btnUpgrade.setEnabled(true);
+            btnUpgrade.setAlpha(1.0f);
+            btnUpgrade.setBackgroundResource(R.drawable.bg_button_primary_ios);
+            
+            // Đổi màu text và icon sang trắng
+            TextView tvUpgrade = btnUpgrade.findViewById(android.R.id.text1);
+            if (tvUpgrade == null) {
+                // Tìm TextView trong LinearLayout
+                for (int i = 0; i < ((android.view.ViewGroup) btnUpgrade).getChildCount(); i++) {
+                    android.view.View child = ((android.view.ViewGroup) btnUpgrade).getChildAt(i);
+                    if (child instanceof TextView) {
+                        tvUpgrade = (TextView) child;
+                        break;
+                    }
+                }
+            }
+            if (tvUpgrade != null) {
+                tvUpgrade.setTextColor(getResources().getColor(android.R.color.white));
+            }
+            
+            // Đổi màu icon sang trắng
+            android.widget.ImageView ivUpgrade = null;
+            for (int i = 0; i < ((android.view.ViewGroup) btnUpgrade).getChildCount(); i++) {
+                android.view.View child = ((android.view.ViewGroup) btnUpgrade).getChildAt(i);
+                if (child instanceof android.widget.ImageView) {
+                    ivUpgrade = (android.widget.ImageView) child;
+                    break;
+                }
+            }
+            if (ivUpgrade != null) {
+                ivUpgrade.setColorFilter(getResources().getColor(android.R.color.white));
+            }
+            
+            startPulseAnimation(btnUpgrade);
+            android.util.Log.d("ProfileActivity", "User can upgrade!");
+        } else {
+            // Disable nút và đổi màu sang xám
+            btnUpgrade.setEnabled(false);
+            btnUpgrade.setAlpha(0.5f);
+            btnUpgrade.setBackgroundResource(R.drawable.bg_upgrade_btn);
+            
+            // Đổi màu text và icon sang xám
+            TextView tvUpgrade = null;
+            for (int i = 0; i < ((android.view.ViewGroup) btnUpgrade).getChildCount(); i++) {
+                android.view.View child = ((android.view.ViewGroup) btnUpgrade).getChildAt(i);
+                if (child instanceof TextView) {
+                    tvUpgrade = (TextView) child;
+                    break;
+                }
+            }
+            if (tvUpgrade != null) {
+                tvUpgrade.setTextColor(getResources().getColor(R.color.text_secondary));
+            }
+            
+            // Đổi màu icon sang xám
+            android.widget.ImageView ivUpgrade = null;
+            for (int i = 0; i < ((android.view.ViewGroup) btnUpgrade).getChildCount(); i++) {
+                android.view.View child = ((android.view.ViewGroup) btnUpgrade).getChildAt(i);
+                if (child instanceof android.widget.ImageView) {
+                    ivUpgrade = (android.widget.ImageView) child;
+                    break;
+                }
+            }
+            if (ivUpgrade != null) {
+                ivUpgrade.setColorFilter(getResources().getColor(R.color.text_secondary));
+            }
+        }
+    }
+    
+    /**
+     * Lấy điểm cần thiết cho level tiếp theo
+     */
+    private long getNextLevelPoints(String currentLevel) {
+        switch (currentLevel) {
+            case "Người mới":
+                return 100;
+            case "Người tốt":
+                return 500;
+            case "Thiên thần":
+                return 1000;
+            case "Huyền thoại":
+                return 1000; // Đã max
+            default:
+                return 100;
+        }
+    }
+    
+    /**
+     * Lấy điểm bắt đầu của level hiện tại
+     */
+    private long getCurrentLevelPoints(String currentLevel) {
+        switch (currentLevel) {
+            case "Người mới":
+                return 0;
+            case "Người tốt":
+                return 100;
+            case "Thiên thần":
+                return 500;
+            case "Huyền thoại":
+                return 1000;
+            default:
+                return 0;
+        }
+    }
+    
+    /**
+     * Lấy tên level tiếp theo
+     */
+    private String getNextLevelName(String currentLevel) {
+        switch (currentLevel) {
+            case "Người mới":
+                return "Người tốt";
+            case "Người tốt":
+                return "Thiên thần";
+            case "Thiên thần":
+                return "Huyền thoại";
+            case "Huyền thoại":
+                return null; // Đã max
+            default:
+                return "Người tốt";
+        }
     }
 
     private void showLevelBadgeDialog() {
@@ -320,24 +503,25 @@ public class ProfileActivity extends AppCompatActivity {
             );
         }
 
-        // Set content based on current level
+        // Set content based on current level FROM FIRESTORE
         android.widget.ImageView ivBadge = dialog.findViewById(R.id.ivBadgeLarge);
         android.widget.TextView tvName = dialog.findViewById(R.id.tvBadgeName);
         android.widget.TextView tvRange = dialog.findViewById(R.id.tvBadgeRange);
         android.widget.TextView tvDesc = dialog.findViewById(R.id.tvBadgeDesc);
         android.widget.TextView tvPoints = dialog.findViewById(R.id.tvCurrentPoints);
 
-        if (currentPoints >= 1000) {
+        // Dùng currentLevel từ Firestore, không tính toán
+        if ("Huyền thoại".equals(currentLevel)) {
             ivBadge.setImageResource(R.drawable.ic_legendary);
             tvName.setText("Huyền thoại");
             tvRange.setText("1000+ FindoPoint");
             tvDesc.setText("Bạn là huyền thoại của cộng đồng Findora! Cảm ơn vì những đóng góp tuyệt vời.");
-        } else if (currentPoints >= 500) {
+        } else if ("Thiên thần".equals(currentLevel)) {
             ivBadge.setImageResource(R.drawable.ic_angel);
             tvName.setText("Thiên thần");
             tvRange.setText("500 – 999 FindoPoint");
             tvDesc.setText("Bạn đã trở thành thiên thần của cộng đồng, luôn sẵn sàng giúp đỡ mọi người!");
-        } else if (currentPoints >= 100) {
+        } else if ("Người tốt".equals(currentLevel)) {
             ivBadge.setImageResource(R.drawable.ic_good);
             tvName.setText("Người tốt");
             tvRange.setText("100 – 499 FindoPoint");
@@ -549,6 +733,207 @@ public class ProfileActivity extends AppCompatActivity {
             }
         }
     }
+    
+    /**
+     * Xử lý khi user click nút "Nâng cấp"
+     * 
+     * LOGIC:
+     * 1. Kiểm tra điểm hiện tại
+     * 2. Xác định level tiếp theo và điểm cần thiết
+     * 3. Nếu đủ điểm → Hiển thị dialog xác nhận
+     * 4. Nếu chưa đủ → Hiển thị thông báo cần thêm bao nhiêu điểm
+     */
+    private void handleUpgradeClick() {
+        // Xác định level tiếp theo và điểm cần thiết dựa trên currentLevel
+        String nextLevel;
+        long requiredPoints;
+        int nextIconRes;
+        
+        if ("Huyền thoại".equals(currentLevel)) {
+            // Đã đạt level tối đa
+            Toast.makeText(this, "Bạn đã đạt cấp độ cao nhất! 🎉", Toast.LENGTH_SHORT).show();
+            return;
+        } else if ("Thiên thần".equals(currentLevel)) {
+            nextLevel = "Huyền thoại";
+            requiredPoints = 1000;
+            nextIconRes = R.drawable.ic_legendary;
+        } else if ("Người tốt".equals(currentLevel)) {
+            nextLevel = "Thiên thần";
+            requiredPoints = 500;
+            nextIconRes = R.drawable.ic_angel;
+        } else {
+            // Người mới
+            nextLevel = "Người tốt";
+            requiredPoints = 100;
+            nextIconRes = R.drawable.ic_good;
+        }
+        
+        // Kiểm tra đủ điểm chưa
+        if (currentPoints < requiredPoints) {
+            long pointsNeeded = requiredPoints - currentPoints;
+            Toast.makeText(this, 
+                String.format("Bạn cần thêm %d FP để lên cấp %s", pointsNeeded, nextLevel), 
+                Toast.LENGTH_LONG).show();
+            return;
+        }
+        
+        // Đủ điểm → Hiển thị dialog xác nhận
+        showUpgradeConfirmDialog(nextLevel, nextIconRes);
+    }
+    
+    /**
+     * Hiển thị dialog xác nhận nâng cấp
+     */
+    private void showUpgradeConfirmDialog(String nextLevel, int nextIconRes) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_upgrade_confirm);
+        dialog.setCancelable(true);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                (int)(getResources().getDisplayMetrics().widthPixels * 0.85),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+
+        // Set icon
+        android.widget.ImageView ivNextLevelIcon = dialog.findViewById(R.id.ivNextLevelIcon);
+        if (ivNextLevelIcon != null) {
+            ivNextLevelIcon.setImageResource(nextIconRes);
+        }
+
+        // Set message
+        android.widget.TextView tvMessage = dialog.findViewById(R.id.tvUpgradeMessage);
+        if (tvMessage != null) {
+            tvMessage.setText(String.format(
+                "Bạn đã đủ điểm để lên cấp %s!\n\nBạn có muốn nâng cấp ngay bây giờ không?",
+                nextLevel
+            ));
+        }
+
+        // Để sau button
+        android.widget.TextView btnLater = dialog.findViewById(R.id.btnLater);
+        if (btnLater != null) {
+            btnLater.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        // Nâng cấp button
+        android.widget.TextView btnUpgradeNow = dialog.findViewById(R.id.btnUpgradeNow);
+        if (btnUpgradeNow != null) {
+            btnUpgradeNow.setOnClickListener(v -> {
+                dialog.dismiss();
+                upgradeLevel(nextLevel, nextIconRes);
+            });
+        }
+
+        // Scale animation
+        dialog.getWindow().getDecorView().setScaleX(0.8f);
+        dialog.getWindow().getDecorView().setScaleY(0.8f);
+        dialog.getWindow().getDecorView().setAlpha(0f);
+        dialog.getWindow().getDecorView().animate()
+            .scaleX(1f).scaleY(1f).alpha(1f)
+            .setDuration(200)
+            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+            .start();
+
+        dialog.show();
+    }
+    
+    /**
+     * Thực hiện nâng cấp level trong Firestore
+     */
+    private void upgradeLevel(String newLevel, int newIconRes) {
+        String userId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
+        if (userId == null) return;
+        
+        // Show loading
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Đang nâng cấp...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        // Update Firestore
+        db.collection("users").document(userId)
+            .update("level", newLevel)
+            .addOnSuccessListener(aVoid -> {
+                progressDialog.dismiss();
+                
+                // Update local variables
+                currentLevel = newLevel;
+                
+                // Update UI
+                tvLevelBadge.setText(newLevel);
+                if (ivLevelIcon != null) ivLevelIcon.setImageResource(newIconRes);
+                
+                // Show success dialog
+                showUpgradeSuccessDialog(newLevel, newIconRes);
+                
+                // Reload stats
+                loadUserStats();
+            })
+            .addOnFailureListener(e -> {
+                progressDialog.dismiss();
+                Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+    }
+    
+    /**
+     * Hiển thị dialog thành công sau khi nâng cấp
+     */
+    private void showUpgradeSuccessDialog(String newLevel, int newIconRes) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_level_badge);
+        dialog.setCancelable(true);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(0xCC000000));
+            dialog.getWindow().setLayout(
+                (int)(getResources().getDisplayMetrics().widthPixels * 0.85),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+
+        // Set content
+        android.widget.ImageView ivBadge = dialog.findViewById(R.id.ivBadgeLarge);
+        android.widget.TextView tvName = dialog.findViewById(R.id.tvBadgeName);
+        android.widget.TextView tvRange = dialog.findViewById(R.id.tvBadgeRange);
+        android.widget.TextView tvDesc = dialog.findViewById(R.id.tvBadgeDesc);
+        android.widget.TextView tvPoints = dialog.findViewById(R.id.tvCurrentPoints);
+
+        ivBadge.setImageResource(newIconRes);
+        tvName.setText(newLevel);
+        
+        if ("Huyền thoại".equals(newLevel)) {
+            tvRange.setText("1000+ FindoPoint");
+            tvDesc.setText("🎉 Chúc mừng! Bạn là huyền thoại của cộng đồng Findora!");
+        } else if ("Thiên thần".equals(newLevel)) {
+            tvRange.setText("500 – 999 FindoPoint");
+            tvDesc.setText("🎉 Chúc mừng! Bạn đã trở thành thiên thần của cộng đồng!");
+        } else if ("Người tốt".equals(newLevel)) {
+            tvRange.setText("100 – 499 FindoPoint");
+            tvDesc.setText("🎉 Chúc mừng! Bạn đã chứng minh mình là người tốt bụng!");
+        }
+
+        tvPoints.setText(currentPoints + " FP hiện tại");
+
+        // Scale animation
+        dialog.getWindow().getDecorView().setScaleX(0.8f);
+        dialog.getWindow().getDecorView().setScaleY(0.8f);
+        dialog.getWindow().getDecorView().setAlpha(0f);
+        dialog.getWindow().getDecorView().animate()
+            .scaleX(1f).scaleY(1f).alpha(1f)
+            .setDuration(300)
+            .setInterpolator(new android.view.animation.OvershootInterpolator())
+            .start();
+
+        dialog.show();
+    }
+
     
     @Override
     protected void onDestroy() {
